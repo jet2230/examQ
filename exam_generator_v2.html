@@ -457,6 +457,8 @@
             </div>
             <div class="header-buttons">
                 <span id="welcomeUser" style="margin-right: 20px;"></span>
+                <a href="/exam_questions.html" class="header-btn">📝 Exam Q's</a>
+                <a href="results" class="header-btn">🏠 Home</a>
                 <a href="#" onclick="showMyQuizzes()" class="header-btn">📚 My Quizzes</a>
                 <a href="results" class="header-btn">📊 Results</a>
                 <a href="#" onclick="logout()" class="header-btn">🚪 Logout</a>
@@ -831,7 +833,7 @@ IMPORTANT:
 
                 const data = await response.json();
                 if (data.success) {
-                    console.log('✓ Quiz results submitted to server');
+                    // Quiz results submitted to server
                 } else {
                     console.error('Failed to submit:', data.message);
                 }
@@ -999,6 +1001,15 @@ IMPORTANT:
 
         // Show welcome message on page load
         showWelcome();
+
+        // Check for quiz_id in URL
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const quizId = urlParams.get('quiz_id');
+            if (quizId) {
+                retakeQuizById(quizId, 'Quiz');
+            }
+        });
 
         function copyResults() {
             const topic = document.getElementById('examTopic').value || 'Quiz';

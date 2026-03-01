@@ -1,0 +1,219 @@
+{
+  "paper_id": "biology_2B_nov_2025",
+  "title": "Pearson Edexcel International GCSE (9–1) Friday 14 November 2025 Biology Paper 2B",
+  "qp_img_dir": "/static/exams/biology_2B_nov_2025/qp/",
+  "ms_img_dir": "/static/exams/biology_2B_nov_2025/ms/",
+  "questions": [
+    {
+      "id": 1,
+      "sub_questions": [
+        {
+          "sub_id": "1(a)",
+          "type": "calculation",
+          "suffix": "%",
+          "placeholder": "e.g. 57",
+          "qp_pages": [3, 2],
+          "ms_text": "Calculation: (17,000 / 30,000) * 100 = 56.66...% (1 mark). Final Answer: 57% (rounded to two significant figures) (1 mark).",
+          "max_marks": 2
+        },
+        {
+          "sub_id": "1(b)(i)",
+          "type": "mcq",
+          "options": ["A", "B", "C", "D"],
+          "qp_pages": [3, 2],
+          "ms_text": "Correct Answer: D (Plasmodium). Explanation: Amoeba, Chlorella, and Mucor are not parasites that cause malaria.",
+          "max_marks": 1
+        },
+        {
+          "sub_id": "1(b)(ii)",
+          "type": "text",
+          "qp_pages": [3, 2],
+          "ms_text": "1. Adrenal glands release adrenaline (1); 2. Adrenaline increases heart rate / fight or flight response (1).",
+          "max_marks": 2
+        },
+        {
+          "sub_id": "1(c)",
+          "type": "text",
+          "qp_pages": [4, 2],
+          "ms_text": "1. Muscles contract / stimulates contractions / stimulates peristalsis (1); 2. Moves faeces / waste through gut / colon / intestines (1).",
+          "max_marks": 2
+        },
+        {
+          "sub_id": "1(e)",
+          "type": "text",
+          "qp_pages": [4, 2],
+          "ms_text": "1. Thicken / repair uterus lining / endometrium (1); 2. So embryo can implant / implantation can occur (1); 3. So placenta can grow into lining (1). (Maximum 2 marks)",
+          "max_marks": 2
+        },
+        {
+          "sub_id": "1(f)",
+          "type": "short",
+          "qp_pages": [5, 2],
+          "ms_text": "Correct Answer: Mitosis. Explanation: Human body cell tumours grow through mitosis.",
+          "max_marks": 1
+        },
+        {
+          "sub_id": "1(g)",
+          "type": "text",
+          "qp_pages": [5, 3],
+          "ms_text": "1. More air breathed in / more air passes to alveoli (1); 2. Maintains concentration gradient / steeper concentration gradient (1); 3. More oxygen diffuses (into blood) / faster diffusion (of oxygen) (1). (Maximum 2 marks)",
+          "max_marks": 2
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "sub_questions": [
+        {
+          "sub_id": "2(a)(i)",
+          "type": "list",
+          "count": 2,
+          "placeholder": "Enter substance",
+          "qp_pages": [6],
+          "ms_text": "1. Sucrose / sugar (1); 2. Amino acids (1). (Ignore glucose, starch, minerals, nutrients)",
+          "max_marks": 2
+        },
+        {
+          "sub_id": "2(a)(ii)",
+          "type": "text",
+          "qp_pages": [7, 6],
+          "ms_text": "Investigate aphids and transpiration: 1. Use same species/size plants; 2. Control group: no aphids vs Experimental: aphids; 3. Measure mass change (before/after); 4. Leave for same time; 5. Control light/temp/humidity; 6. Repeat for averages. (Max 4 marks)",
+          "max_marks": 4
+        },
+        {
+          "sub_id": "2(b)",
+          "type": "text",
+          "qp_pages": [9, 8],
+          "ms_text": "Effectiveness of P and Q: 1. Both reduce aphid numbers; 2. P reduces aphids more/faster initially; 3. Q is better for long-term (stays low); 4. P allows increase after 7-8 weeks (resistance/breakdown). (Max 4 marks)",
+          "max_marks": 4
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "sub_questions": [
+        {
+          "sub_id": "3(a)",
+          "type": "mcq",
+          "options": ["A", "B", "C", "D"],
+          "qp_pages": [10],
+          "ms_text": "Correct Answer: D (renal vein transporting blood away from the kidney). K is the renal vein.",
+          "max_marks": 1
+        },
+        {
+          "sub_id": "3(b)(i)",
+          "type": "text",
+          "qp_pages": [11, 10],
+          "ms_text": "Glucose concentration (W to X): 1. Selective reabsorption into blood; 2. Occurs in proximal convoluted tubule (PCT); 3. Via active transport. (Max 2 marks)",
+          "max_marks": 2
+        },
+        {
+          "sub_id": "3(b)(ii)",
+          "type": "text",
+          "qp_pages": [11, 10],
+          "ms_text": "Urea concentration (X to Y): 1. Water is reabsorbed by osmosis; 2. In loop of Henle; 3. Urea is not reabsorbed (remains in filtrate). (Max 2 marks)",
+          "max_marks": 2
+        },
+        {
+          "sub_id": "3(b)(iii)",
+          "type": "text",
+          "qp_pages": [12, 11, 10],
+          "ms_text": "Dehydration effect on urea: 1. High blood concentration detected by hypothalamus; 2. Pituitary gland releases ADH; 3. Collecting duct becomes more permeable; 4. More water reabsorbed into blood; 5. Urea concentration in urine increases. (Max 4 marks)",
+          "max_marks": 4
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "sub_questions": [
+        {
+          "sub_id": "4(a)",
+          "type": "mcq",
+          "options": ["A", "B", "C", "D"],
+          "qp_pages": [14],
+          "ms_text": "Correct Answer: C (carbon, hydrogen, oxygen, and nitrogen). Enzymes are proteins and contain all four elements.",
+          "max_marks": 1
+        },
+        {
+          "sub_id": "4(b)(i)",
+          "type": "list",
+          "count": 2,
+          "placeholder": "Enter control variable",
+          "qp_pages": [14],
+          "ms_text": "1. Temperature; 2. Potato age/variety; 3. Size/shape of slice; 4. Volume of buffer. (Max 2 marks)",
+          "max_marks": 2
+        },
+        {
+          "sub_id": "4(b)(ii)",
+          "type": "text",
+          "qp_pages": [14],
+          "ms_text": "Improving method: 1. Judging browning is subjective; 2. Use a colorimeter / standard color chart; 3. Smaller pH intervals; 4. Repeats for averages. (Max 2 marks)",
+          "max_marks": 2
+        },
+        {
+          "sub_id": "4(b)(iii)",
+          "type": "text",
+          "qp_pages": [15, 14],
+          "ms_text": "pH effect on enzymes: 1. Optimum pH is 7; 2. Away from 7, enzyme denatures; 3. Active site shape changes; 4. Substrate (polyphenol) no longer fits. (Max 3 marks)",
+          "max_marks": 3
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "sub_questions": [
+        {
+          "sub_id": "5(a)(i)",
+          "type": "list",
+          "count": 2,
+          "placeholder": "Enter value from table",
+          "qp_pages": [16],
+          "ms_text": "1. 9.4 (mean for mahogany); 2. 8 (range for mahogany).",
+          "max_marks": 2
+        },
+        {
+          "sub_id": "5(a)(ii)",
+          "type": "text",
+          "qp_pages": [16],
+          "ms_text": "Placing quadrats: 1. Use random number generator for coordinates; 2. Prevents bias; 3. Representative sample; 4. Control time of day/year. (Max 3 marks)",
+          "max_marks": 3
+        },
+        {
+          "sub_id": "5(b)(ii)",
+          "type": "text",
+          "qp_pages": [17],
+          "ms_text": "Indicator changes: 1. Jar A orange (CO2 equal); 2. Jar B yellow (CO2 increases); 3. In A, photosynthesis = respiration; 4. In B, respiration > photosynthesis. (Max 4 marks)",
+          "max_marks": 4
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "sub_questions": [
+        {
+          "sub_id": "6(a)",
+          "type": "text",
+          "qp_pages": [20],
+          "ms_text": "Protein synthesis: 1. Transcription in nucleus (mRNA made); 2. mRNA moves to ribosome; 3. tRNA brings amino acids; 4. Anticodons bind to codons; 5. Polypeptide chain formed. (Max 4 marks)",
+          "max_marks": 4
+        },
+        {
+          "sub_id": "6(b)(i)",
+          "type": "calculation",
+          "suffix": "%",
+          "placeholder": "Calculation result",
+          "qp_pages": [21],
+          "ms_text": "Calculation: ((250 - 20) / 20) * 100 = 1150%. Award 3 marks for 1150.",
+          "max_marks": 3
+        },
+        {
+          "sub_id": "6(b)(ii)",
+          "type": "text",
+          "qp_pages": [21],
+          "ms_text": "Edible vaccine evaluation: 1. Antibodies produced after 3 days; 2. Memory cells made; 3. Secondary response faster/bigger; 4. No needles (cheap/easy); 5. Small sample size/unreliable results. (Max 5 marks)",
+          "max_marks": 5
+        }
+      ]
+    }
+  ]
+}

@@ -4,6 +4,7 @@ Quiz Server with User Management
 Handles user authentication, quiz generation, and result tracking
 """
 
+import requests
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import os
@@ -143,6 +144,105 @@ def admin_login_page():
 def admin_users_page():
     """Serve the admin user management page"""
     return send_from_directory('.', 'admin_users.html')
+
+
+@app.route('/exam_questions.html')
+def exam_questions_page():
+    """Serve the official exam list page (Gallery)"""
+    return send_from_directory('.', 'exam_questions.html')
+
+
+@app.route('/official_exam_player.html')
+def official_exam_player_page():
+    """Serve the interactive official exam player"""
+    return send_from_directory('.', 'official_exam_player.html')
+
+
+@app.route('/api/official-exams/list')
+def list_official_exams():
+    """List available official exam papers"""
+    # For now, manually list the ones we've processed
+    return jsonify({
+        'exams': [
+            {
+                'id': 'biology_2B_nov_2025',
+                'title': 'Biology Paper 2B - Nov 2025',
+                'subject': 'Biology',
+                'paper': '2B',
+                'date': 'Nov 2025'
+            }
+        ]
+    })
+
+@app.route('/api/official-exams/<paper_id>')
+def get_official_exam(paper_id):
+    """Get the structured data for a specific official exam"""
+    data_path = f'exam_data/{paper_id}.json'
+    if os.path.exists(data_path):
+        with open(data_path, 'r') as f:
+            return jsonify(json.load(f))
+    return jsonify({'error': 'Exam not found'}), 404
+
+@app.route('/api/official-exams/grade', methods=['POST'])
+def grade_official_question():
+    """Grade a user's answer using LLaMA and the official mark scheme"""
+    try:
+        data = request.json
+        paper_id = data.get('paper_id')
+        question_id = data.get('question_id')
+        sub_id = data.get('sub_id')
+        user_answer = data.get('user_answer')
+        mark_scheme = data.get('mark_scheme')
+        max_marks = data.get('max_marks', 1)
+
+        # Prompt for LLaMA
+        prompt = f"""You are an expert IGCSE Edexcel Biology Examiner. 
+Your task is to mark a student's answer based STRICTLY on the official Mark Scheme provided.
+
+PAPER ID: {paper_id}
+QUESTION: {sub_id}
+MAX MARKS: {max_marks}
+
+OFFICIAL MARK SCHEME:
+{mark_scheme}
+
+STUDENT'S ANSWER:
+{user_answer}
+
+MARKING INSTRUCTIONS:
+1. MANDATORY: If the student's answer is blank, empty, or contains no relevant attempt at the question, you MUST award 0 marks. Set "marks_awarded" to 0.
+2. The student's answer contains "WORKING:" and "FINAL ANSWER:" sections. 
+3. Award marks (0 to {max_marks}) based STRICTLY on the "OFFICIAL MARK SCHEME" provided above.
+4. For calculations: If the "FINAL ANSWER" is correct but the "WORKING" is EMPTY, award 1 mark. If both are correct, award {max_marks}.
+5. Provide a professional explanation. 
+6. CRITICAL: If the student did not receive full marks, you MUST provide a "MODEL ANSWER" section in your feedback. This MODEL ANSWER must be derived ONLY from the OFFICIAL MARK SCHEME.
+
+RESPONSE FORMAT (JSON ONLY):
+{{
+  "marks_awarded": 0,
+  "max_marks": {max_marks},
+  "feedback": "Evaluation. \n\nMODEL ANSWER: [Correct steps and answer]",
+  "marking_points_met": []
+}}
+"""
+
+        # Call local Ollama
+        response = requests.post('http://localhost:11434/api/generate', json={
+            'model': 'llama3',
+            'prompt': prompt,
+            'stream': False,
+            'format': 'json',
+            'temperature': 0.0
+        })
+
+        if response.status_code == 200:
+            result = response.json().get('response', '{}')
+            return jsonify(json.loads(result)), 200
+        else:
+            return jsonify({'error': 'Failed to connect to LLaMA'}), 500
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/api/register', methods=['POST'])
@@ -360,6 +460,29 @@ def save_quiz_to_db():
             'success': True,
             'quiz_id': quiz_id,
             'message': 'Quiz saved successfully!'
+        }), 200
+
+    except Exception as e:
+        return jsonify({'success': False, 'message': f"Error: {str(e)}"}), 500
+
+
+@app.route('/api/quizzes/list', methods=['GET'])
+def get_all_quizzes_list():
+    """Get all available quizzes for users to take"""
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT id, topic, created_by, created_at
+            FROM quizzes
+            ORDER BY created_at DESC
+        ''', )
+        quizzes = cursor.fetchall()
+        conn.close()
+
+        return jsonify({
+            'success': True,
+            'quizzes': [dict(q) for q in quizzes]
         }), 200
 
     except Exception as e:

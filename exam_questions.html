@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Official Exam Papers - Gallery</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        .header h1 { font-size: 2.5em; margin-bottom: 10px; }
+        .header p { opacity: 0.9; font-size: 1.1em; }
+        .content { padding: 40px; }
+        .category-section { margin-bottom: 40px; }
+        .category-title {
+            font-size: 1.8em;
+            color: #1e3c72;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #eee;
+            display: flex;
+            align-items: center;
+        }
+        .category-icon { margin-right: 15px; }
+        .paper-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .paper-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid #e0e0e0;
+            transition: all 0.3s;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .paper-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            border-color: #1e3c72;
+        }
+        .paper-title {
+            font-size: 1.2em;
+            color: #333;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 20px;
+        }
+        .paper-tag {
+            display: inline-block;
+            background: #1e3c72;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.8em;
+            margin-right: 5px;
+        }
+        .btn-start {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 700;
+            text-align: center;
+            text-decoration: none;
+        }
+        .navbar {
+            padding: 15px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+        }
+        .nav-links a {
+            text-decoration: none;
+            color: #1e3c72;
+            font-weight: 600;
+            margin-left: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="navbar">
+            <div style="font-weight: 800; color: #1e3c72; font-size: 1.2em;">🎓 ExamQ Papers</div>
+            <div class="nav-links">
+                <a href="/">🏠 Generator</a>
+                <a href="/results">📊 Results</a>
+                <a href="#" onclick="logout()">🚪 Logout</a>
+            </div>
+        </div>
+
+        <div class="header">
+            <h1>Official Exam Papers</h1>
+            <p>Select a categorized IGCSE paper to start your practice session</p>
+        </div>
+
+        <div class="content" id="examContent">
+            <!-- Categories will be injected here -->
+            <div style="text-align: center; padding: 40px;">Loading exam papers...</div>
+        </div>
+    </div>
+
+    <script>
+        function logout() {
+            localStorage.removeItem('quiz_username');
+            localStorage.removeItem('quiz_admin_username');
+            window.location.href = 'login.html';
+        }
+
+        async function loadExams() {
+            try {
+                const response = await fetch('/api/official-exams/list');
+                const data = await response.json();
+                
+                const content = document.getElementById('examContent');
+                content.innerHTML = '';
+
+                // Group by Subject
+                const grouped = {};
+                data.exams.forEach(exam => {
+                    if (!grouped[exam.subject]) grouped[exam.subject] = [];
+                    grouped[exam.subject].push(exam);
+                });
+
+                for (const subject in grouped) {
+                    const section = document.createElement('div');
+                    section.className = 'category-section';
+                    
+                    let icon = '📖';
+                    if (subject.toLowerCase().includes('biology')) icon = '🔬';
+                    if (subject.toLowerCase().includes('physics')) icon = '⚡';
+                    if (subject.toLowerCase().includes('math')) icon = '🔢';
+
+                    section.innerHTML = `
+                        <h2 class="category-title">
+                            <span class="category-icon">${icon}</span>
+                            ${subject}
+                        </h2>
+                        <div class="paper-grid">
+                            ${grouped[subject].map(exam => `
+                                <div class="paper-card" onclick="window.location.href='/official_exam_player.html?paper_id=${exam.id}'">
+                                    <div>
+                                        <div class="paper-title">${exam.title}</div>
+                                        <div class="paper-meta">
+                                            <span class="paper-tag">${exam.paper}</span>
+                                            <span class="paper-tag">${exam.date}</span>
+                                        </div>
+                                    </div>
+                                    <a href="/official_exam_player.html?paper_id=${exam.id}" class="btn-start">Start Exam</a>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                    content.appendChild(section);
+                }
+
+            } catch (error) {
+                console.error("Failed to load exams:", error);
+                document.getElementById('examContent').innerHTML = '<div style="color: red; text-align: center;">Error loading exam papers.</div>';
+            }
+        }
+
+        loadExams();
+    </script>
+</body>
+</html>
