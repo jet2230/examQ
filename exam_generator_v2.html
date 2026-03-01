@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Question Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-buttons {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-btn {
+            background: white;
+            color: #667eea;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+
+        .header-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .setup-form {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group .help-text {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 6px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+            margin-top: 10px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .quiz-section {
+            display: none;
+        }
+
+        .quiz-section.show {
+            display: block;
+        }
+
+        .question-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .question-number {
+            color: #667eea;
+            font-weight: bold;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        .question-text {
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .options {
+            display: grid;
+            gap: 10px;
+        }
+
+        .option {
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+        }
+
+        .option:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .option.selected {
+            border-color: #667eea;
+            background: #e8edff;
+        }
+
+        .option input {
+            margin-right: 12px;
+            transform: scale(1.2);
+        }
+
+        .option-label {
+            font-weight: 600;
+            margin-right: 10px;
+            color: #667eea;
+        }
+
+        .results {
+            display: none;
+        }
+
+        .results.show {
+            display: block;
+        }
+
+        .score-card {
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .score-card h2 {
+            font-size: 3em;
+            margin: 10px 0;
+        }
+
+        .result-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #6c757d;
+        }
+
+        .result-card.correct {
+            border-left-color: #28a745;
+            background: #d4edda;
+        }
+
+        .result-card.incorrect {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+
+        .result-info {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .result-info span {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        .your-answer {
+            background: #fff;
+            border: 1px solid #dee2e6;
+        }
+
+        .correct-answer {
+            background: #28a745;
+            color: white;
+        }
+
+        .error-message {
+            display: none;
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .modal {
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .modal-content {
+            background: white;
+            margin: 40px auto;
+            max-width: 800px;
+            border-radius: 20px;
+            padding: 30px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 15px;
+        }
+
+        .modal-header h2 {
+            color: #667eea;
+            margin: 0;
+        }
+
+        .close {
+            font-size: 28px;
+            color: #999;
+            cursor: pointer;
+            line-height: 20px;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        .quiz-history-item {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .quiz-history-item.correct {
+            border-left-color: #28a745;
+        }
+
+        .quiz-history-item.incorrect {
+            border-left-color: #dc3545;
+        }
+
+        .quiz-history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .quiz-history-header h3 {
+            font-size: 1.2em;
+            color: #333;
+            margin: 0;
+        }
+
+        .quiz-history-score {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .quiz-history-meta {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        .quiz-history-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 1.5em;
+            }
+            .content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>🎓 Exam Question Generator</h1>
+                <p>Generate custom multiple choice quizzes using LLaMA</p>
+            </div>
+            <div class="header-buttons">
+                <span id="welcomeUser" style="margin-right: 20px;"></span>
+                <a href="#" onclick="showMyQuizzes()" class="header-btn">📚 My Quizzes</a>
+                <a href="results" class="header-btn">📊 Results</a>
+                <a href="#" onclick="logout()" class="header-btn">🚪 Logout</a>
+            </div>
+        </div>
+
+        <div class="content">
+            <!-- Error Message -->
+            <div class="error-message" id="errorMessage"></div>
+
+            <!-- Setup Form -->
+            <div class="setup-form" id="setupForm">
+                <div class="form-group">
+                    <label for="examTopic">📖 What topic do you want to be quizzed on?</label>
+                    <input type="text" id="examTopic" list="topicSuggestions" placeholder="e.g., Biology blood cells, Mathematics algebra" autocomplete="off" required>
+                    <datalist id="topicSuggestions">
+                        <option value="Biology cells">
+                        <option value="Biology blood cells">
+                        <option value="Biology circulation">
+                        <option value="Biology respiration">
+                        <option value="Chemistry atomic structure">
+                        <option value="Chemistry periodic table">
+                        <option value="Physics energy">
+                        <option value="Physics electricity">
+                        <option value="Mathematics algebra">
+                        <option value="Mathematics geometry">
+                        <option value="Mathematics calculus">
+                        <option value="History World War II">
+                        <option value="Geography rivers">
+                    </datalist>
+                    <div class="help-text">Enter any topic you want to study</div>
+                </div>
+
+                <!-- Hidden settings -->
+                <input type="hidden" id="numQuestions" value="5">
+                <input type="hidden" id="llamaEndpoint" value="http://localhost:11434/api/generate">
+                <input type="hidden" id="llamaModel" value="llama3">
+
+                <button class="btn" onclick="generateQuiz()">Generate Quiz</button>
+            </div>
+
+            <!-- Loading -->
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>🤖 Connecting to LLaMA and generating questions...</p>
+                <p style="font-size: 0.9em; color: #666; margin-top: 10px;">This may take a minute</p>
+            </div>
+
+            <!-- Quiz Section -->
+            <div class="quiz-section" id="quizSection">
+                <div id="quizContent"></div>
+                <div class="btn-group">
+                    <button class="btn" onclick="submitQuiz()">Submit Answers</button>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results" id="resultsSection">
+                <div class="score-card">
+                    <h2 id="score">0 / 0</h2>
+                    <p id="percentage">0%</p>
+                </div>
+                <div id="resultDetails"></div>
+                <div class="btn-group">
+                    <button class="btn" onclick="retakeQuiz()">🔄 Retake Quiz</button>
+                    <button class="btn btn-secondary" onclick="resetQuiz()">Create New Quiz</button>
+                    <button class="btn btn-secondary" onclick="logout()">🚪 Logout</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- My Quizzes Modal -->
+    <div id="myQuizzesModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📚 My Quiz History</h2>
+                <span class="close" onclick="closeMyQuizzes()">&times;</span>
+            </div>
+            <div id="myQuizzesBody">
+                <p style="text-align: center;">Loading...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let questions = null;
+        let currentQuizId = null;
+        const STORAGE_KEY = 'examTopics_history';
+
+        function loadPastTopics() {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            return stored ? JSON.parse(stored) : [];
+        }
+
+        function saveTopic(topic) {
+            let topics = loadPastTopics();
+            topics = topics.filter(t => t.toLowerCase() !== topic.toLowerCase());
+            topics.unshift(topic);
+            topics = topics.slice(0, 20);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(topics));
+        }
+
+        function updateSuggestions() {
+            const datalist = document.getElementById('topicSuggestions');
+            const pastTopics = loadPastTopics();
+            const defaults = Array.from(datalist.querySelectorAll('option')).map(opt => opt.value);
+
+            pastTopics.forEach(topic => {
+                if (!defaults.includes(topic)) {
+                    const option = document.createElement('option');
+                    option.value = topic;
+                    datalist.appendChild(option);
+                }
+            });
+        }
+
+        updateSuggestions();
+
+        // Check if user is logged in
+        function checkLogin() {
+            const username = localStorage.getItem('quiz_username');
+            if (!username) {
+                // Redirect to login
+                window.location.href = 'login.html';
+                return false;
+            }
+            return username;
+        }
+
+        // Check login on page load
+        if (!localStorage.getItem('quiz_username')) {
+            window.location.href = 'login.html';
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = '❌ ' + message;
+            errorDiv.classList.add('show');
+            setTimeout(() => errorDiv.classList.remove('show'), 5000);
+        }
+
+        function hideError() {
+            document.getElementById('errorMessage').classList.remove('show');
+        }
+
+        async function generateQuiz() {
+            hideError();
+
+            const topic = document.getElementById('examTopic').value.trim();
+            const numQuestions = parseInt(document.getElementById('numQuestions').value);
+            const endpoint = document.getElementById('llamaEndpoint').value.trim();
+            const model = document.getElementById('llamaModel').value.trim();
+
+            if (!topic) {
+                showError('Please enter an exam topic');
+                return;
+            }
+
+            if (!numQuestions || numQuestions < 1 || numQuestions > 20) {
+                showError('Number of questions must be between 1 and 20');
+                return;
+            }
+
+            if (!endpoint) {
+                showError('Please enter a LLaMA endpoint');
+                return;
+            }
+
+            if (!model) {
+                showError('Please enter a model name');
+                return;
+            }
+
+            saveTopic(topic);
+
+            document.getElementById('setupForm').classList.add('hidden');
+            document.getElementById('loading').classList.add('show');
+
+            const prompt = `Generate ${numQuestions} multiple choice questions about: ${topic}
+
+For each question, provide:
+1. The question text
+2. 4 options (A, B, C, D)
+3. The correct answer letter
+
+Format your response as valid JSON ONLY, with this exact structure:
+{
+    "questions": [
+        {
+            "question": "Question text here?",
+            "options": {
+                "A": "Option A text",
+                "B": "Option B text",
+                "C": "Option C text",
+                "D": "Option D text"
+            },
+            "correct": "A"
+        }
+    ]
+}
+
+IMPORTANT: Return ONLY the JSON, no other text. Ensure all questions are about ${topic}.`;
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        model: model,
+                        prompt: prompt,
+                        stream: false,
+                        temperature: 0.8
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`LLaMA API returned status ${response.status}`);
+                }
+
+                const data = await response.json();
+                const responseText = data.response || '';
+
+                const jsonStart = responseText.indexOf('{');
+                const jsonEnd = responseText.lastIndexOf('}') + 1;
+
+                if (jsonStart === -1 || jsonEnd === 0) {
+                    throw new Error('Could not find JSON in LLaMA response');
+                }
+
+                const jsonStr = responseText.substring(jsonStart, jsonEnd);
+                questions = JSON.parse(jsonStr);
+
+                if (!questions.questions || questions.questions.length === 0) {
+                    throw new Error('No questions generated');
+                }
+
+                // Save quiz to database
+                const username = localStorage.getItem('quiz_username');
+                try {
+                    const saveResponse = await fetch('http://localhost:5001/api/save-quiz', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            topic: topic,
+                            questions: questions.questions,
+                            created_by: username
+                        })
+                    });
+                    const saveData = await saveResponse.json();
+                    if (saveData.success) {
+                        currentQuizId = saveData.quiz_id;
+                    }
+                } catch (saveError) {
+                    console.error('Failed to save quiz to database:', saveError);
+                    // Continue anyway - quiz can still be taken
+                }
+
+                renderQuiz(topic);
+
+            } catch (error) {
+                console.error('Error:', error);
+                let errorMsg = error.message;
+
+                if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                    errorMsg = 'Cannot connect to LLaMA. Make sure Ollama is running and CORS is enabled. Start Ollama with: OLLAMA_ORIGINS="*" ollama serve';
+                }
+
+                showError(errorMsg);
+                document.getElementById('loading').classList.remove('show');
+                document.getElementById('setupForm').classList.remove('hidden');
+            }
+        }
+
+        function renderQuiz(topic) {
+            document.getElementById('loading').classList.remove('show');
+            document.getElementById('quizSection').classList.add('show');
+
+            const quizContent = document.getElementById('quizContent');
+            quizContent.innerHTML = '';
+
+            questions.questions.forEach((q, index) => {
+                const card = document.createElement('div');
+                card.className = 'question-card';
+                card.innerHTML = `
+                    <div class="question-number">Question ${index + 1} of ${questions.questions.length}</div>
+                    <div class="question-text">${q.question}</div>
+                    <div class="options">
+                        ${['A', 'B', 'C', 'D'].map(opt => `
+                            <label class="option">
+                                <input type="radio" name="q${index}" value="${opt}">
+                                <span class="option-label">${opt})</span>
+                                ${q.options[opt]}
+                            </label>
+                        `).join('')}
+                    </div>
+                `;
+                quizContent.appendChild(card);
+            });
+        }
+
+        async function submitQuiz() {
+            let correct = 0;
+            const resultDetails = document.getElementById('resultDetails');
+            resultDetails.innerHTML = '';
+
+            const questionResults = [];
+            const username = checkLogin();
+
+            questions.questions.forEach((q, index) => {
+                const selected = document.querySelector(`input[name="q${index}"]:checked`);
+                const userAnswer = selected ? selected.value : null;
+                const isCorrect = userAnswer === q.correct;
+
+                if (isCorrect) correct++;
+
+                const resultCard = document.createElement('div');
+                resultCard.className = `result-card ${isCorrect ? 'correct' : 'incorrect'}`;
+                resultCard.innerHTML = `
+                    <div class="question-text">${index + 1}. ${q.question}</div>
+                    <div class="result-info">
+                        <span class="your-answer">Your answer: ${userAnswer || 'Not answered'} - ${userAnswer ? q.options[userAnswer] : 'N/A'}</span>
+                        <span class="correct-answer">Correct answer: ${q.correct}) - ${q.options[q.correct]}</span>
+                    </div>
+                `;
+                resultDetails.appendChild(resultCard);
+
+                // Collect for server submission
+                questionResults.push({
+                    question: q.question,
+                    userAnswer: userAnswer || 'Not answered',
+                    userAnswerText: userAnswer ? q.options[userAnswer] : 'N/A',
+                    correctAnswer: q.correct,
+                    correctAnswerText: q.options[q.correct],
+                    isCorrect: isCorrect
+                });
+            });
+
+            const score = `${correct} / ${questions.questions.length}`;
+            const percentage = `${Math.round((correct / questions.questions.length) * 100)}%`;
+
+            document.getElementById('score').textContent = score;
+            document.getElementById('percentage').textContent = percentage;
+
+            // Show results to student
+            document.getElementById('quizSection').classList.remove('show');
+            document.getElementById('resultsSection').classList.add('show');
+
+            // Submit results to server
+            const topic = document.getElementById('examTopic').value || 'Quiz';
+
+            try {
+                const response = await fetch('http://localhost:5001/api/submit-quiz', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: username,
+                        topic: topic,
+                        score: score,
+                        percentage: percentage,
+                        questions: questionResults,
+                        quiz_id: currentQuizId
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    console.log('✓ Quiz results submitted to server');
+                } else {
+                    console.error('Failed to submit:', data.message);
+                }
+            } catch (error) {
+                console.error('Error submitting quiz:', error);
+            }
+        }
+
+        function retakeQuiz() {
+            document.getElementById('resultsSection').classList.remove('show');
+            document.getElementById('quizContent').innerHTML = '';
+            document.getElementById('quizSection').classList.add('show');
+            renderQuiz(document.getElementById('examTopic').value || 'Quiz');
+        }
+
+        function resetQuiz() {
+            questions = null;
+            document.getElementById('resultsSection').classList.remove('show');
+            document.getElementById('quizContent').innerHTML = '';
+            document.getElementById('setupForm').classList.remove('hidden');
+            document.getElementById('examTopic').value = '';
+            updateSuggestions();
+        }
+
+        function logout() {
+            localStorage.removeItem('quiz_username');
+            window.location.href = 'login.html';
+        }
+
+        function showWelcome() {
+            const username = localStorage.getItem('quiz_username');
+            if (username) {
+                document.getElementById('welcomeUser').textContent = '👤 ' + username;
+            }
+        }
+
+        function showMyQuizzes() {
+            document.getElementById('myQuizzesModal').style.display = 'block';
+            loadMyQuizzes();
+        }
+
+        function closeMyQuizzes() {
+            document.getElementById('myQuizzesModal').style.display = 'none';
+        }
+
+        async function loadMyQuizzes() {
+            const username = localStorage.getItem('quiz_username');
+            const modalBody = document.getElementById('myQuizzesBody');
+            modalBody.innerHTML = '<p style="text-align: center;">Loading...</p>';
+
+            try {
+                const response = await fetch(`http://localhost:5001/api/my-quizzes?username=${username}`);
+                const data = await response.json();
+
+                if (!data.success) {
+                    modalBody.innerHTML = '<p style="text-align: center; color: #dc3545;">Error loading quizzes</p>';
+                    return;
+                }
+
+                const created = data.created_quizzes || [];
+                const attempts = data.attempts || [];
+
+                if (created.length === 0 && attempts.length === 0) {
+                    modalBody.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">No quizzes yet. Generate your first quiz!</p>';
+                    return;
+                }
+
+                let html = '';
+
+                // Show created quizzes
+                if (created.length > 0) {
+                    html += '<h3 style="margin-bottom: 15px;">📝 Created Quizzes</h3>';
+                    created.forEach(quiz => {
+                        html += `
+                            <div class="quiz-history-item">
+                                <div class="quiz-history-header">
+                                    <h3>${quiz.topic}</h3>
+                                </div>
+                                <div class="quiz-history-meta">
+                                    Created: ${new Date(quiz.created_at).toLocaleString()}
+                                </div>
+                                <div class="quiz-history-actions">
+                                    <button class="btn btn-small" onclick="retakeQuizById(${quiz.id}, '${quiz.topic.replace(/'/g, "\\'")}')">🔄 Retake Quiz</button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+
+                // Show attempts
+                if (attempts.length > 0) {
+                    html += '<h3 style="margin: 25px 0 15px;">📊 Quiz Attempts</h3>';
+                    attempts.forEach(attempt => {
+                        const scorePercent = parseInt(attempt.percentage);
+                        let scoreClass = '';
+                        if (scorePercent >= 80) scoreClass = 'correct';
+                        else if (scorePercent < 50) scoreClass = 'incorrect';
+
+                        html += `
+                            <div class="quiz-history-item ${scoreClass}">
+                                <div class="quiz-history-header">
+                                    <h3>${attempt.topic}</h3>
+                                    <span class="quiz-history-score">${attempt.score} (${attempt.percentage})</span>
+                                </div>
+                                <div class="quiz-history-meta">
+                                    Completed: ${new Date(attempt.timestamp).toLocaleString()}
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+
+                modalBody.innerHTML = html;
+
+            } catch (error) {
+                console.error('Error loading quizzes:', error);
+                modalBody.innerHTML = '<p style="text-align: center; color: #dc3545;">Error loading quizzes. Make sure server is running.</p>';
+            }
+        }
+
+        async function retakeQuizById(quizId, topic) {
+            // Close modal
+            closeMyQuizzes();
+
+            // Reset UI
+            document.getElementById('setupForm').classList.add('hidden');
+            document.getElementById('loading').classList.add('show');
+
+            try {
+                const response = await fetch(`http://localhost:5001/api/quiz/${quizId}`);
+                const data = await response.json();
+
+                if (!data.success) {
+                    showError('Failed to load quiz');
+                    document.getElementById('loading').classList.remove('show');
+                    document.getElementById('setupForm').classList.remove('hidden');
+                    return;
+                }
+
+                // Set the quiz data
+                questions = { questions: data.quiz.questions };
+                currentQuizId = data.quiz.id;
+                document.getElementById('examTopic').value = data.quiz.topic;
+
+                // Render quiz
+                document.getElementById('loading').classList.remove('show');
+                renderQuiz(data.quiz.topic);
+
+            } catch (error) {
+                console.error('Error loading quiz:', error);
+                showError('Error loading quiz from server');
+                document.getElementById('loading').classList.remove('show');
+                document.getElementById('setupForm').classList.remove('hidden');
+            }
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('myQuizzesModal');
+            if (event.target === modal) {
+                closeMyQuizzes();
+            }
+        }
+
+        // Show welcome message on page load
+        showWelcome();
+
+        function copyResults() {
+            const topic = document.getElementById('examTopic').value || 'Quiz';
+            const score = document.getElementById('score').textContent;
+            const percentage = document.getElementById('percentage').textContent;
+
+            var results = 'QUIZ RESULTS\n';
+            results += '================================\n';
+            results += 'Topic: ' + topic + '\n';
+            results += 'Score: ' + score + ' (' + percentage + ')\n';
+            results += 'Date: ' + new Date().toLocaleString() + '\n';
+            results += '\n--------------------------------\n\n';
+
+            questions.questions.forEach(function(q, index) {
+                const selected = document.querySelector('input[name="q' + index + '"]:checked');
+                const userAnswer = selected ? selected.value : null;
+                const isCorrect = userAnswer === q.correct;
+                const status = isCorrect ? '✓ CORRECT' : '✗ INCORRECT';
+
+                results += 'Question ' + (index + 1) + ': ' + status + '\n';
+                results += q.question + '\n';
+                results += 'Your answer: ' + (userAnswer || 'Not answered') + ' - ' + (userAnswer ? q.options[userAnswer] : 'N/A') + '\n';
+                results += 'Correct answer: ' + q.correct + ') - ' + q.options[q.correct] + '\n\n';
+            });
+
+            navigator.clipboard.writeText(results).then(function() {
+                alert('✓ Results copied to clipboard!\n\nYou can now paste them anywhere.');
+            }).catch(function(err) {
+                alert('Failed to copy. Please select and copy manually.');
+            });
+        }
+
+        function downloadResults() {
+            const topic = document.getElementById('examTopic').value || 'Quiz';
+            const score = document.getElementById('score').textContent;
+            const percentage = document.getElementById('percentage').textContent();
+
+            var results = 'QUIZ RESULTS\n';
+            results += '================================\n';
+            results += 'Topic: ' + topic + '\n';
+            results += 'Score: ' + score + ' (' + percentage + ')\n';
+            results += 'Date: ' + new Date().toLocaleString() + '\n';
+            results += '\n--------------------------------\n\n';
+
+            questions.questions.forEach(function(q, index) {
+                const selected = document.querySelector('input[name="q' + index + '"]:checked');
+                const userAnswer = selected ? selected.value : null;
+                const isCorrect = userAnswer === q.correct;
+                const status = isCorrect ? '✓ CORRECT' : '✗ INCORRECT';
+
+                results += 'Question ' + (index + 1) + ': ' + status + '\n';
+                results += q.question + '\n';
+                results += 'Your answer: ' + (userAnswer || 'Not answered') + ' - ' + (userAnswer ? q.options[userAnswer] : 'N/A') + '\n';
+                results += 'Correct answer: ' + q.correct + ') - ' + q.options[q.correct] + '\n\n';
+            });
+
+            const now = new Date();
+            const dateStr = now.getFullYear() +
+                String(now.getMonth() + 1).padStart(2, '0') +
+                String(now.getDate()).padStart(2, '0') + '_' +
+                String(now.getHours()).padStart(2, '0') +
+                String(now.getMinutes()).padStart(2, '0');
+            const filename = topic.toLowerCase().replace(/[^a-z0-9]+/g, '_') + '_results_' + dateStr + '.txt';
+
+            const blob = new Blob([results], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            alert('Results saved to: ' + filename);
+        }
+
+        function downloadQuiz() {
+            if (!questions) {
+                alert('Please generate a quiz first!');
+                return;
+            }
+
+            const topic = document.getElementById('examTopic').value || 'Quiz';
+            const now = new Date();
+            const dateStr = now.getFullYear() +
+                String(now.getMonth() + 1).padStart(2, '0') +
+                String(now.getDate()).padStart(2, '0') + '_' +
+                String(now.getHours()).padStart(2, '0') +
+                String(now.getMinutes()).padStart(2, '0') +
+                String(now.getSeconds()).padStart(2, '0');
+            const filename = topic.toLowerCase().replace(/[^a-z0-9]+/g, '_') + '_' + dateStr + '_quiz.html';
+            const quizContent = document.getElementById('quizContent').innerHTML;
+
+            fetch('quiz_template.html')
+                .then(function(response) { return response.text(); })
+                .then(function(template) {
+                    var html = template
+                        .replace(/__TOPIC__/g, topic)
+                        .replace('__QUIZ_CONTENT__', quizContent)
+                        .replace('__QUESTIONS__', JSON.stringify(questions));
+
+                    // Save to project directory via server
+                    return fetch('http://localhost:5001/save-quiz', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            html: html,
+                            filename: filename
+                        })
+                    });
+                })
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
+                    if (data.success) {
+                        alert('Quiz saved to project directory: ' + filename);
+                    } else {
+                        throw new Error(data.message);
+                    }
+                })
+                .catch(function(error) {
+                    console.error('Error:', error);
+                    alert('Error saving quiz: ' + error.message + '\n\nMake sure the email server is running on port 5001.');
+                });
+        }
+
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('option')) {
+                const radio = e.target.querySelector('input[type="radio"]');
+                if (radio) {
+                    radio.checked = true;
+                    const allOptions = e.target.parentElement.querySelectorAll('.option');
+                    allOptions.forEach(opt => opt.classList.remove('selected'));
+                    e.target.classList.add('selected');
+                }
+            }
+        });
+
+        document.getElementById('examTopic').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') generateQuiz();
+        });
+    </script>
+</body>
+</html>
