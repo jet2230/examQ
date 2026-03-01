@@ -1,0 +1,64 @@
+{
+  "paper_id": "KBI0_1B_17May2016",
+  "title": "Pearson Edexcel International GCSE Biology (Double Award) Paper 1B",
+  "subject": "Biology",
+  "qp_img_dir": "/static/exams/KBI0_1B_17May2016/qp/",
+  "er_text": "",
+  "questions": [
+    {
+      "id": 1,
+      "sub_questions": [
+        {
+          "sub_id": "1(a)(i)",
+          "type": "text",
+          "qp_pages": [
+            2
+          ],
+          "ms_text": "Name three structures found in a plant cell that are not found in a neurone.",
+          "max_marks": 3
+        },
+        {
+          "sub_id": "1(a)(ii)",
+          "type": "text",
+          "qp_pages": [
+            2
+          ],
+          "ms_text": "",
+          "max_marks": 3
+        },
+        {
+          "sub_id": "1(a)(iii)",
+          "type": "text",
+          "qp_pages": [
+            2
+          ],
+          "ms_text": "",
+          "max_marks": 3
+        },
+        {
+          "sub_id": "1(b)",
+          "type": "calculation",
+          "qp_pages": [
+            3
+          ],
+          "ms_text": "Show your working. Calculate the time, in seconds, that it would take a nerve impulse to travel from the spinal cord to the foot of this human.",
+          "max_marks": 2
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "sub_questions": [
+        {
+          "sub_id": "2(a)",
+          "type": "list",
+          "qp_pages": [
+            4
+          ],
+          "ms_text": "Describe the changes in the global production of farmed fish and beef cattle since 1950.",
+          "max_marks": 3
+        }
+      ]
+    }
+  ]
+}

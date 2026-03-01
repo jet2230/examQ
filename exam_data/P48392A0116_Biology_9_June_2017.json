@@ -1,0 +1,36 @@
+{
+  "paper_id": "P48392A0116_Biology_9_June_2017",
+  "title": "Pearson Edexcel Certificate Pearson Edexcel International GCSE Biology Unit: KBI0/4BI0 Paper: 2B",
+  "qp_img_dir": "/static/exams/P48392A0116_Biology_9_June_2017/qp/",
+  "ms_img_dir": "/static/exams/P48392A0116_Biology_9_June_2017/ms/",
+  "questions": [
+    {
+      "id": 1,
+      "sub_questions": [
+        {
+          "sub_id": "1(a)",
+          "type": "text",
+          "qp_pages": [
+            2
+          ],
+          "ms_text": "Suggest how excess lipids (fats and oils) increase the risk of heart disease.",
+          "max_marks": 3
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "sub_questions": [
+        {
+          "sub_id": "2(a)",
+          "type": "text",
+          "qp_pages": [
+            5
+          ],
+          "ms_text": "Exact mark scheme answer",
+          "max_marks": 3
+        }
+      ]
+    }
+  ]
+}

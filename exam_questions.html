@@ -38,58 +38,78 @@
             border-bottom: 3px solid #eee;
             display: flex;
             align-items: center;
+            justify-content: space-between;
         }
-        .category-icon { margin-right: 15px; }
+        .paper-count-badge {
+            background: #667eea;
+            color: white;
+            font-size: 0.5em;
+            padding: 4px 12px;
+            border-radius: 15px;
+            vertical-align: middle;
+        }
+        .sub-group-title {
+            font-size: 1.2em;
+            color: #555;
+            margin: 25px 0 15px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .sub-group-title::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: #eee;
+        }
         .paper-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
         }
         .paper-card {
             background: #f8f9fa;
-            border-radius: 15px;
-            padding: 25px;
+            border-radius: 12px;
+            padding: 15px;
             border: 1px solid #e0e0e0;
             transition: all 0.3s;
             cursor: pointer;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
-        }
-        .paper-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-            border-color: #1e3c72;
+            gap: 10px;
         }
         .paper-title {
-            font-size: 1.2em;
+            font-size: 1em;
             color: #333;
             font-weight: 700;
-            margin-bottom: 10px;
+            line-height: 1.4;
+            min-height: 2.8em;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
         .paper-meta {
             color: #666;
-            font-size: 0.9em;
-            margin-bottom: 20px;
-        }
-        .paper-tag {
-            display: inline-block;
-            background: #1e3c72;
-            color: white;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 0.8em;
-            margin-right: 5px;
+            font-size: 0.85em;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         .btn-start {
             background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             color: white;
             border: none;
-            padding: 12px;
-            border-radius: 8px;
+            padding: 10px;
+            border-radius: 6px;
             font-weight: 700;
             text-align: center;
             text-decoration: none;
+            font-size: 0.9em;
         }
         .navbar {
             padding: 15px 40px;
@@ -104,6 +124,69 @@
             font-weight: 600;
             margin-left: 20px;
         }
+        .search-container {
+            max-width: 800px;
+            margin: -30px auto 30px;
+            padding: 0 20px;
+            position: relative;
+            z-index: 10;
+        }
+        .search-input {
+            width: 100%;
+            padding: 15px 25px;
+            border-radius: 30px;
+            border: none;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            font-size: 1.1em;
+            outline: none;
+            transition: all 0.3s;
+        }
+        .search-input:focus {
+            box-shadow: 0 10px 30px rgba(30, 60, 114, 0.25);
+            transform: translateY(-2px);
+        }
+        
+        .subject-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid #ddd;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+        .subject-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            border-color: #1e3c72;
+            background: white;
+        }
+        .subject-icon {
+            font-size: 4em;
+        }
+        .subject-name {
+            font-size: 1.5em;
+            font-weight: 800;
+            color: #1e3c72;
+        }
+        .subject-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            padding: 20px 0;
+        }
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #1e3c72;
+            text-decoration: none;
+            font-weight: 700;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -111,6 +194,7 @@
         <div class="navbar">
             <div style="font-weight: 800; color: #1e3c72; font-size: 1.2em;">🎓 ExamQ Papers</div>
             <div class="nav-links">
+                <span id="welcomeUser" style="margin-right: 15px; font-weight: 600; color: #1e3c72;"></span>
                 <a href="/">🏠 Generator</a>
                 <a href="/results">📊 Results</a>
                 <a href="#" onclick="logout()">🚪 Logout</a>
@@ -118,73 +202,184 @@
         </div>
 
         <div class="header">
-            <h1>Official Exam Papers</h1>
-            <p>Select a categorized IGCSE paper to start your practice session</p>
+            <h1 id="mainTitle">Official Exam Papers</h1>
+            <p id="mainSubtitle">Select a subject to browse available papers</p>
         </div>
 
-        <div class="content" id="examContent">
-            <!-- Categories will be injected here -->
-            <div style="text-align: center; padding: 40px;">Loading exam papers...</div>
+        <div class="search-container" id="searchContainer" style="display:none;">
+            <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search exams..." oninput="filterExams()">
+        </div>
+
+        <div class="content">
+            <div id="subjectView" class="subject-grid">
+                <!-- Subjects will be injected here -->
+            </div>
+            
+            <div id="paperView" style="display:none;">
+                <span class="back-btn" onclick="showSubjects()">← Back to Subjects</span>
+                <div id="examContent"></div>
+            </div>
         </div>
     </div>
 
     <script>
+        let allExams = [];
+        let allProgress = {};
+        let currentSubject = null;
+
         function logout() {
             localStorage.removeItem('quiz_username');
             localStorage.removeItem('quiz_admin_username');
             window.location.href = 'login.html';
         }
 
+        function parseExamDate(dateStr) {
+            if (!dateStr) return new Date(0);
+            const months = {
+                'jan': 0, 'feb': 1, 'mar': 2, 'apr': 3, 'may': 4, 'jun': 5,
+                'jul': 6, 'aug': 7, 'sep': 8, 'oct': 9, 'nov': 10, 'dec': 11
+            };
+            const parts = dateStr.toLowerCase().split(' ');
+            if (parts.length === 2) {
+                const month = months[parts[0]] || 0;
+                const year = parseInt(parts[1]);
+                return new Date(year, month, 1);
+            }
+            return new Date(0);
+        }
+
         async function loadExams() {
+            const username = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
+            if (username) {
+                const welcomeEl = document.getElementById('welcomeUser');
+                if (welcomeEl) welcomeEl.textContent = '👤 ' + username;
+            }
+
             try {
-                const response = await fetch('/api/official-exams/list');
-                const data = await response.json();
+                const [examRes, progRes] = await Promise.all([
+                    fetch('/api/official-exams/list'),
+                    fetch(`/api/student/exam-progress/list?username=${username}`)
+                ]);
                 
-                const content = document.getElementById('examContent');
-                content.innerHTML = '';
-
-                // Group by Subject
-                const grouped = {};
-                data.exams.forEach(exam => {
-                    if (!grouped[exam.subject]) grouped[exam.subject] = [];
-                    grouped[exam.subject].push(exam);
-                });
-
-                for (const subject in grouped) {
-                    const section = document.createElement('div');
-                    section.className = 'category-section';
-                    
-                    let icon = '📖';
-                    if (subject.toLowerCase().includes('biology')) icon = '🔬';
-                    if (subject.toLowerCase().includes('physics')) icon = '⚡';
-                    if (subject.toLowerCase().includes('math')) icon = '🔢';
-
-                    section.innerHTML = `
-                        <h2 class="category-title">
-                            <span class="category-icon">${icon}</span>
-                            ${subject}
-                        </h2>
-                        <div class="paper-grid">
-                            ${grouped[subject].map(exam => `
-                                <div class="paper-card" onclick="window.location.href='/official_exam_player.html?paper_id=${exam.id}'">
-                                    <div>
-                                        <div class="paper-title">${exam.title}</div>
-                                        <div class="paper-meta">
-                                            <span class="paper-tag">${exam.paper}</span>
-                                            <span class="paper-tag">${exam.date}</span>
-                                        </div>
-                                    </div>
-                                    <a href="/official_exam_player.html?paper_id=${exam.id}" class="btn-start">Start Exam</a>
-                                </div>
-                            `).join('')}
-                        </div>
-                    `;
-                    content.appendChild(section);
-                }
+                const examData = await examRes.json();
+                const progData = await progRes.json();
+                
+                allExams = examData.exams || [];
+                allProgress = progData.progress || {};
+                
+                showSubjects();
 
             } catch (error) {
-                console.error("Failed to load exams:", error);
-                document.getElementById('examContent').innerHTML = '<div style="color: red; text-align: center;">Error loading exam papers.</div>';
+                console.error("Failed to load:", error);
+            }
+        }
+
+        function showSubjects() {
+            currentSubject = null;
+            document.getElementById('subjectView').style.display = 'grid';
+            document.getElementById('paperView').style.display = 'none';
+            document.getElementById('searchContainer').style.display = 'none';
+            document.getElementById('mainTitle').textContent = "Official Exam Papers";
+            document.getElementById('mainSubtitle').textContent = "Select a subject to browse available papers";
+
+            const subjects = [...new Set(allExams.map(e => e.subject))].sort();
+            const grid = document.getElementById('subjectView');
+            grid.innerHTML = '';
+
+            subjects.forEach(s => {
+                const count = allExams.filter(e => e.subject === s).length;
+                let icon = '📖';
+                if (s.toLowerCase().includes('biology')) icon = '🔬';
+                else if (s.toLowerCase().includes('physics')) icon = '⚡';
+                else if (s.toLowerCase().includes('math')) icon = '🔢';
+                else if (s.toLowerCase().includes('english')) icon = '✍️';
+
+                const card = document.createElement('div');
+                card.className = 'subject-card';
+                card.onclick = () => selectSubject(s);
+                card.innerHTML = `
+                    <div class="subject-icon">${icon}</div>
+                    <div class="subject-name">${s}</div>
+                    <div style="color: #666;">${count} Papers Available</div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function selectSubject(subject) {
+            currentSubject = subject;
+            document.getElementById('subjectView').style.display = 'none';
+            document.getElementById('paperView').style.display = 'block';
+            document.getElementById('searchContainer').style.display = 'block';
+            document.getElementById('mainTitle').textContent = subject + " Papers";
+            document.getElementById('mainSubtitle').textContent = `Showing all categorized ${subject} papers`;
+            
+            filterExams();
+        }
+
+        function filterExams() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = allExams.filter(exam => 
+                exam.subject === currentSubject && (
+                    exam.title.toLowerCase().includes(query) || 
+                    exam.date.toLowerCase().includes(query) ||
+                    exam.paper.toLowerCase().includes(query)
+                )
+            );
+            renderExams(filtered);
+        }
+
+        function renderExams(exams) {
+            const content = document.getElementById('examContent');
+            content.innerHTML = '';
+
+            if (exams.length === 0) {
+                content.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;">No papers found.</div>';
+                return;
+            }
+
+            const paperTypes = [...new Set(exams.map(e => e.paper))].sort();
+
+            for (const paperType of paperTypes) {
+                const paperList = exams.filter(e => e.paper === paperType);
+                paperList.sort((a, b) => parseExamDate(b.date) - parseExamDate(a.date));
+
+                const typeGroup = document.createElement('div');
+                typeGroup.innerHTML = `
+                    <h3 class="sub-group-title">Paper ${paperType}</h3>
+                    <div class="paper-grid">
+                        ${paperList.map(exam => {
+                            const prog = allProgress[exam.id];
+                            let statusClass = 'status-not-started';
+                            let statusText = 'Not Started';
+                            let btnText = 'Start';
+
+                            if (prog) {
+                                if (prog.status === 'completed') {
+                                    statusClass = 'status-completed';
+                                    statusText = 'Finished';
+                                    btnText = 'Review';
+                                } else {
+                                    statusClass = 'status-started';
+                                    statusText = 'Resume';
+                                    btnText = 'Continue';
+                                }
+                            }
+
+                            return `
+                                <div class="paper-card" onclick="window.location.href='/official_exam_player.html?paper_id=${exam.id}'">
+                                    <div class="paper-title">${exam.title}</div>
+                                    <div class="paper-meta">
+                                        <span style="font-weight: 700; color: #1e3c72;">${exam.date}</span>
+                                        <div class="status-badge ${statusClass}" style="margin-top:0;">${statusText}</div>
+                                    </div>
+                                    <a href="/official_exam_player.html?paper_id=${exam.id}" class="btn-start">${btnText}</a>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+                content.appendChild(typeGroup);
             }
         }
 

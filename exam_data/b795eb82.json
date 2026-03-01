@@ -1,0 +1,40 @@
+{
+  "paper_id": "b795eb82",
+  "title": null,
+  "qp_img_dir": "/static/exams/b795eb82/qp/",
+  "ms_img_dir": "/static/exams/b795eb82/ms/",
+  "questions": [
+    {
+      "id": 1,
+      "sub_questions": [
+        {
+          "sub_id": "1(a)",
+          "type": "text",
+          "qp_pages": [
+            2
+          ],
+          "ms_text": "What is meant by the term insect-pollinated (line 1)?",
+          "max_marks": 1
+        },
+        {
+          "sub_id": "1(b)",
+          "type": "text",
+          "qp_pages": [
+            3
+          ],
+          "ms_text": "Give one feature of ragwort flowers, mentioned in the passage, that indicates they are pollinated by insects.",
+          "max_marks": 1
+        },
+        {
+          "sub_id": "1(c)",
+          "type": "text",
+          "qp_pages": [
+            3
+          ],
+          "ms_text": "Explain how the feeding behaviour of many insect larvae affects the growth of a ragwort plant (lines 3 and 4).",
+          "max_marks": 3
+        }
+      ]
+    }
+  ]
+}

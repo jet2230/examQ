@@ -1,0 +1,219 @@
+{
+  "paper_id": "KBI0_4BI0_Science_Double_Award_9_January_2013",
+  "title": "Edexcel Certificate International GCSE Biology Unit: KBI0/4BI0 Science (Double Award) Paper: 1B Wednesday, 9 January 2013 - Morning",
+  "qp_img_dir": "/static/exams/KBI0_4BI0_Science_Double_Award_9_January_2013/qp/",
+  "ms_img_dir": "/static/exams/KBI0_4BI0_Science_Double_Award_9_January_2013/ms/",
+  "questions": [
+    {
+      "id": 1,
+      "sub_questions": [
+        {
+          "sub_id": "1(a)",
+          "type": "mcq",
+          "options": [
+            "A",
+            "B"
+          ],
+          "qp_pages": [
+            2
+          ],
+          "ms_text": "trachea / wind pipe / cartilage; alveoli / alveolus / air sacs",
+          "max_marks": 1
+        },
+        {
+          "sub_id": "1(b)(i)",
+          "type": "text",
+          "qp_pages": [
+            2
+          ],
+          "ms_text": "X \u2013 oxygen / O2; Y - carbon dioxide / CO2",
+          "max_marks": 2
+        },
+        {
+          "sub_id": "1(b)(ii)",
+          "type": "calculation",
+          "qp_pages": [
+            3
+          ],
+          "ms_text": "8.4",
+          "max_marks": 1
+        },
+        {
+          "sub_id": "1(b)(iii)",
+          "type": "mcq",
+          "options": [
+            "A",
+            "B"
+          ],
+          "qp_pages": [
+            3
+          ],
+          "ms_text": "B diffusion",
+          "max_marks": 1
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "sub_questions": [
+        {
+          "sub_id": "2",
+          "type": "text",
+          "qp_pages": [
+            4
+          ],
+          "ms_text": "humans / people / farmers / scientists / breeders; characteristics / features / named feature / traits / qualities; offspring; repeated / continued / done / carried on / ongoing",
+          "max_marks": 4
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "sub_questions": [
+        {
+          "sub_id": "3(a)(i)",
+          "type": "text",
+          "qp_pages": [
+            5
+          ],
+          "ms_text": "rice",
+          "max_marks": 1
+        },
+        {
+          "sub_id": "3(a)(ii)",
+          "type": "text",
+          "qp_pages": [
+            5
+          ],
+          "ms_text": "(Asian) toad",
+          "max_marks": 1
+        },
+        {
+          "sub_id": "3(b)",
+          "type": "list",
+          "qp_pages": [
+            5
+          ],
+          "ms_text": "sunlight; water / rain / moisture; carbon dioxide / CO2; minerals / ions / nutrients / salts; temperature / warmth",
+          "max_marks": 2
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "sub_questions": [
+        {
+          "sub_id": "4(a)",
+          "type": "text",
+          "qp_pages": [
+            7
+          ],
+          "ms_text": "(trap/absorb) light / chlorophyll; photosynthesis / starch / glucose",
+          "max_marks": 2
+        },
+        {
+          "sub_id": "4(b)",
+          "type": "list",
+          "qp_pages": [
+            7
+          ],
+          "ms_text": "A cell wall; B vacuole; C cytoplasm",
+          "max_marks": 3
+        },
+        {
+          "sub_id": "4(c)(i)",
+          "type": "mcq",
+          "options": [
+            "A",
+            "B"
+          ],
+          "qp_pages": [
+            7
+          ],
+          "ms_text": "C; A",
+          "max_marks": 2
+        },
+        {
+          "sub_id": "4(c)(ii)",
+          "type": "text",
+          "qp_pages": [
+            7
+          ],
+          "ms_text": "(converted to) glucose; respiration / energy",
+          "max_marks": 2
+        },
+        {
+          "sub_id": "4(c)(iii)",
+          "type": "text",
+          "qp_pages": [
+            7
+          ],
+          "ms_text": "boil (in ethanol); heat (in ethanol)",
+          "max_marks": 3
+        },
+        {
+          "sub_id": "4(iv)",
+          "type": "mcq",
+          "options": [
+            "A"
+          ],
+          "qp_pages": [
+            7
+          ],
+          "ms_text": "iodine / iodide",
+          "max_marks": 1
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "sub_questions": [
+        {
+          "sub_id": "5(a)",
+          "type": "text",
+          "qp_pages": [
+            8
+          ],
+          "ms_text": "constipation; lack of water / lots of water absorbed / drink less water; lack of fibre / less vegetables",
+          "max_marks": 1
+        },
+        {
+          "sub_id": "5(b)",
+          "type": "text",
+          "qp_pages": [
+            8
+          ],
+          "ms_text": "diarrhoea; less water absorbed; food poisoning / infection",
+          "max_marks": 1
+        },
+        {
+          "sub_id": "5(c)",
+          "type": "text",
+          "qp_pages": [
+            8
+          ],
+          "ms_text": "peristalsis; contraction; muscles; pushed / squeezed / waves",
+          "max_marks": 3
+        },
+        {
+          "sub_id": "5(d)(i)",
+          "type": "text",
+          "qp_pages": [
+            8
+          ],
+          "ms_text": "rectum",
+          "max_marks": 1
+        },
+        {
+          "sub_id": "5(d)(ii)",
+          "type": "text",
+          "qp_pages": [
+            8
+          ],
+          "ms_text": "anus",
+          "max_marks": 1
+        }
+      ]
+    }
+  ]
+}

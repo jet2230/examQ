@@ -1,0 +1,31 @@
+{
+  "paper_id": "P40125RA_4BI0_2012-01",
+  "title": "Edexcel International GCSE Biology Paper 2B",
+  "qp_img_dir": "/static/exams/P40125RA_4BI0_2012-01/qp/",
+  "ms_img_dir": "/static/exams/P40125RA_4BI0_2012-01/ms/",
+  "questions": [
+    {
+      "id": 1,
+      "sub_questions": [
+        {
+          "sub_id": "1(a)",
+          "type": "text",
+          "qp_pages": [
+            2
+          ],
+          "ms_text": "Snail meat is healthy to eat because it is high in protein and low in fat.",
+          "max_marks": 2
+        },
+        {
+          "sub_id": "1(b)",
+          "type": "text",
+          "qp_pages": [
+            2
+          ],
+          "ms_text": "Conservationists are pleased that snail farming exists as it helps to conserve natural snail populations which are at risk due to being collected in large numbers.",
+          "max_marks": 1
+        }
+      ]
+    }
+  ]
+}

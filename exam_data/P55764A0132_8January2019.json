@@ -1,0 +1,31 @@
+{
+  "paper_id": "P55764A0132_8January2019",
+  "title": "Pearson Edexcel International GCSE Science (Double Award) 4SC0 Paper: 1B",
+  "qp_img_dir": "/static/exams/P55764A0132_8January2019/qp/",
+  "ms_img_dir": "/static/exams/P55764A0132_8January2019/ms/",
+  "questions": [
+    {
+      "id": 1,
+      "sub_questions": [
+        {
+          "sub_id": "1(a)",
+          "type": "text",
+          "qp_pages": [
+            2
+          ],
+          "ms_text": "D; / B only ; / impulses/ signals to brain/CNS;",
+          "max_marks": 3
+        },
+        {
+          "sub_id": "1(b)",
+          "type": "text",
+          "qp_pages": [
+            3
+          ],
+          "ms_text": "no connection to optic nerve;",
+          "max_marks": 2
+        }
+      ]
+    }
+  ]
+}

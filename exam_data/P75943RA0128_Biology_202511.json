@@ -1,0 +1,76 @@
+{
+  "paper_id": "P75943RA0128_Biology_202511",
+  "title": "Pearson Edexcel International GCSE (9\u20131) Biology Paper: 4BI1",
+  "qp_img_dir": "/static/exams/P75943RA0128_Biology_202511/qp/",
+  "ms_img_dir": "/static/exams/P75943RA0128_Biology_202511/ms/",
+  "questions": [
+    {
+      "id": 1,
+      "sub_questions": [
+        {
+          "sub_id": "1(a)(i)",
+          "type": "mcq",
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "qp_pages": [
+            2
+          ],
+          "ms_text": "D (S) A is not the answer as P is a vacuole B is not the answer as Q is the cytoplasm C is not the answer as R is the cell membrane",
+          "max_marks": 1
+        },
+        {
+          "sub_id": "1(a)(ii)",
+          "type": "mcq",
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "qp_pages": [
+            2
+          ],
+          "ms_text": "B (Q) A is not the answer as P is a vacuole C is not the answer as R is the cell membrane D is not the answer as S is the nucleus",
+          "max_marks": 1
+        },
+        {
+          "sub_id": "1(a)(iii)",
+          "type": "mcq",
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "qp_pages": [
+            2
+          ],
+          "ms_text": "D (S) A is not the answer as P is the vacuole B is not the answer as Q is the cytoplasm C is not the answer as R is the cell membrane",
+          "max_marks": 1
+        },
+        {
+          "sub_id": "1(a)(iv)",
+          "type": "calculation",
+          "qp_pages": [
+            3
+          ],
+          "ms_text": "2 marks for correct length and units (43 to 44 mm or 4.3 to 4.4 cm) OR for \u00f7 65 some candidates may use 4,3 cm allow as 4.3cm",
+          "max_marks": 2
+        },
+        {
+          "sub_id": "1(b)",
+          "type": "text",
+          "qp_pages": [
+            2
+          ],
+          "ms_text": "An answer that makes reference to three of the following: Amoeba has nucleus/eq, Amoeba has cytoplasm/eq, Amoeba has organelles/eq, Virus has protein coat/envelope/eq, Amoeba has cell membrane",
+          "max_marks": 3
+        }
+      ]
+    }
+  ]
+}

@@ -172,10 +172,17 @@
 </head>
 <body>
     <div class="header">
-        <h2 id="paperTitle">Loading...</h2>
+        <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
+            <h2 id="paperTitle">Loading...</h2>
+            <select id="questionSelector" onchange="jumpToQuestion(this.value)" style="padding: 10px 15px; border-radius: 8px; font-weight: 700; color: #1e3c72; border: none; cursor: pointer; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); font-size: 0.9em; min-width: 160px;">
+                <option value="">Jump to Question...</option>
+            </select>
+        </div>
         <div class="header-buttons">
+            <span id="welcomeUser" style="margin-right: 15px; font-weight: 600; color: white;"></span>
             <a href="/results" class="header-btn">🏠 Home</a>
             <a href="/exam_questions.html" class="header-btn">📝 Papers</a>
+            <a href="#" onclick="logout()" class="header-btn" style="background: #dc3545; color: white;">🚪 Logout</a>
         </div>
     </div>
 
@@ -194,8 +201,12 @@
     <script>
         let examData = null;
         let currentQuestionIdx = 0;
+        let savedAnswers = {};
+        let isCompleted = false;
+        
         const urlParams = new URLSearchParams(window.location.search);
         const paperId = urlParams.get('paper_id') || 'biology_2B_nov_2025';
+        const username = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
 
         // THE SIMPLE SCROLL FUNCTION
         function jump(pageNum) {
@@ -205,11 +216,52 @@
             }
         }
 
+        function jumpToQuestion(idx) {
+            if (idx === "") return;
+            currentQuestionIdx = parseInt(idx);
+            render();
+            saveProgress();
+        }
+
         async function init() {
+            // Set welcome user
+            if (username) {
+                const welcomeEl = document.getElementById('welcomeUser');
+                if (welcomeEl) welcomeEl.textContent = '👤 ' + username;
+            }
+
+            // 1. Fetch Data
             const resp = await fetch(`/api/official-exams/${paperId}`);
             examData = await resp.json();
             document.getElementById('paperTitle').textContent = examData.title;
+            
+            // 2. Load Progress
+            try {
+                const pResp = await fetch(`/api/student/exam-progress/get?username=${username}&paper_id=${paperId}`);
+                const pData = await pResp.json();
+                if (pData.success) {
+                    currentQuestionIdx = pData.current_question_idx || 0;
+                    savedAnswers = pData.answers || {};
+                    isCompleted = pData.status === 'completed';
+                }
+            } catch (e) {}
+
+            // 3. Setup Selector
+            const selector = document.getElementById('questionSelector');
+            examData.questions.forEach((q, index) => {
+                const opt = document.createElement('option');
+                opt.value = index;
+                opt.textContent = "Question " + q.id;
+                selector.appendChild(opt);
+            });
+            
             render();
+        }
+
+        function logout() {
+            localStorage.removeItem('quiz_username');
+            localStorage.removeItem('quiz_admin_username');
+            window.location.href = 'login.html';
         }
 
         let scrollObserver = null;
@@ -218,8 +270,9 @@
         function render() {
             const q = examData.questions[currentQuestionIdx];
             document.getElementById('currentQuestionId').textContent = "Question " + q.id;
+            document.getElementById('questionSelector').value = currentQuestionIdx;
             
-            // 1. Draw Images
+            // 1. Images
             const viewer = document.getElementById('paperViewer');
             viewer.innerHTML = '';
             const pages = [...new Set(q.sub_questions.flatMap(sq => sq.qp_pages))].sort((a,b) => a-b);
@@ -231,7 +284,7 @@
                 viewer.appendChild(img);
             });
 
-            // 2. Draw Answers
+            // 2. Answers
             const list = document.getElementById('subQuestionsList');
             list.innerHTML = '';
             
@@ -249,7 +302,7 @@
                 });
             }, {
                 root: document.querySelector('.answer-panel'),
-                rootMargin: '-20% 0px -70% 0px', // Trigger when question enters the top portion
+                rootMargin: '-20% 0px -70% 0px',
                 threshold: 0
             });
 
@@ -259,43 +312,61 @@
                 div.className = 'sub-question-item';
                 div.setAttribute('data-page', pNum);
                 
+                const saved = savedAnswers[sq.sub_id] || {};
+
                 let inputHtml = `
                     <div class="sub-header"><span>(${sq.sub_id})</span><span class="mark-badge">[${sq.max_marks}]</span></div>`;
                 
                 if (sq.type === 'mcq') {
                     inputHtml += `<div class="mcq-container">`;
                     sq.options.forEach(opt => {
-                        inputHtml += `<div class="mcq-option" onclick="jump(${pNum}); setMcq('${sq.sub_id}', '${opt}', this)">${opt}</div>`;
+                        const isSel = saved.value === opt ? 'selected' : '';
+                        inputHtml += `<div class="mcq-option ${isSel}" onclick="jump(${pNum}); setMcq('${sq.sub_id}', '${opt}', this)">${opt}</div>`;
                     });
-                    inputHtml += `</div><input type="hidden" id="ans_${sq.sub_id}">`;
+                    inputHtml += `</div><input type="hidden" id="ans_${sq.sub_id}" value="${saved.value || ''}">`;
                 } else if (sq.type === 'calculation') {
                     inputHtml += `<div class="calculation-container">
                         <div class="working-label">Working:</div>
-                        <textarea id="work_${sq.sub_id}" onfocus="jump(${pNum})" placeholder="Show steps..."></textarea>
+                        <textarea id="work_${sq.sub_id}" onfocus="jump(${pNum})" placeholder="Show steps...">${saved.work || ''}</textarea>
                         <div style="text-align:right; margin-top:10px;">
-                            <b>Final:</b> <input type="text" id="ans_${sq.sub_id}" onfocus="jump(${pNum})" style="width:100px;"> ${sq.suffix || ''}
+                            <b>Final:</b> <input type="text" id="ans_${sq.sub_id}" onfocus="jump(${pNum})" style="width:100px;" value="${saved.value || ''}"> ${sq.suffix || ''}
                         </div>
                     </div>`;
                 } else if (sq.type === 'list') {
+                    const listVals = saved.value ? saved.value.split('; ') : [];
                     for(let i=1; i<=sq.count; i++) {
-                        inputHtml += `<div style="margin-bottom:5px;">${i}. <input type="text" class="list-in-${sq.sub_id}" onfocus="jump(${pNum})" style="width:80%;"></div>`;
+                        const v = listVals[i-1] ? listVals[i-1].replace(/^\d+\.\s*/, '') : '';
+                        inputHtml += `<div style="margin-bottom:5px;">${i}. <input type="text" class="list-in-${sq.sub_id}" onfocus="jump(${pNum})" style="width:80%;" value="${v}"></div>`;
                     }
                 } else {
-                    inputHtml += `<textarea id="ans_${sq.sub_id}" onfocus="jump(${pNum})" placeholder="Type answer here..."></textarea>`;
+                    inputHtml += `<textarea id="ans_${sq.sub_id}" onfocus="jump(${pNum})" placeholder="Type answer here...">${saved.value || ''}</textarea>`;
                 }
+
+                const fbShow = saved.marks !== undefined ? 'show' : '';
+                const fbClass = saved.marks == sq.max_marks ? 'feedback-good' : (saved.marks > 0 ? 'feedback-partial' : 'feedback-bad');
 
                 inputHtml += `<button class="grade-btn" onclick="grade('${sq.sub_id}', ${sq.max_marks}, \`${sq.ms_text}\`, '${sq.type}')">Submit & Grade</button>
                     <div id="err_${sq.sub_id}" class="error-msg">⚠️ Please provide an answer or show some working.</div>
-                    <div id="fb_${sq.sub_id}" class="feedback-box">
-                        <b>Marks: <span id="m_${sq.sub_id}"></span> / ${sq.max_marks}</b>
-                        <p id="t_${sq.sub_id}" style="margin-top:10px;"></p>
+                    <div id="fb_${sq.sub_id}" class="feedback-box ${fbShow} ${fbClass}">
+                        <b>Marks: <span id="m_${sq.sub_id}">${saved.marks || 0}</span> / ${sq.max_marks}</b>
+                        <p id="t_${sq.sub_id}" style="margin-top:10px;">${saved.feedback || ''}</p>
                         <div style="margin-top:10px; font-size:0.8em; background:#eee; padding:5px;"><b>Mark Scheme:</b><br>${sq.ms_text}</div>
-                    </div>`;
+                    </div></div>`;
                 
                 div.innerHTML = inputHtml;
                 list.appendChild(div);
                 scrollObserver.observe(div);
             });
+
+            if (currentQuestionIdx === examData.questions.length - 1) {
+                const finishBtn = document.createElement('button');
+                finishBtn.className = 'control-btn';
+                finishBtn.style.background = isCompleted ? '#28a745' : '#dc3545';
+                finishBtn.style.marginTop = '40px';
+                finishBtn.textContent = isCompleted ? '✅ Exam Completed' : '🏁 Finish Exam';
+                finishBtn.onclick = finishExam;
+                list.appendChild(finishBtn);
+            }
 
             document.getElementById('prevBtn').disabled = (currentQuestionIdx === 0);
             document.getElementById('nextBtn').disabled = (currentQuestionIdx === examData.questions.length - 1);
@@ -311,7 +382,8 @@
         }
 
         async function grade(subId, max, ms, type) {
-            let answer = "";
+            let val = "";
+            let work = "";
             let isBlank = false;
             const errDiv = document.getElementById('err_' + subId);
             const fbDiv = document.getElementById('fb_' + subId);
@@ -319,15 +391,14 @@
             if (type === 'list') {
                 const inputs = Array.from(document.querySelectorAll('.list-in-' + subId));
                 if (inputs.every(i => !i.value.trim())) isBlank = true;
-                answer = inputs.map(i => i.value).join("; ");
+                val = inputs.map((i, idx) => `${idx+1}. ${i.value}`).join("; ");
             } else if (type === 'calculation') {
-                const work = document.getElementById('work_'+subId).value.trim();
-                const final = document.getElementById('ans_'+subId).value.trim();
-                if (!work && !final) isBlank = true;
-                answer = "WORKING: " + work + " | FINAL: " + final;
+                work = document.getElementById('work_'+subId).value.trim();
+                val = document.getElementById('ans_'+subId).value.trim();
+                if (!work && !val) isBlank = true;
             } else {
-                answer = document.getElementById('ans_' + subId).value.trim();
-                if (!answer) isBlank = true;
+                val = document.getElementById('ans_' + subId).value.trim();
+                if (!val) isBlank = true;
             }
 
             if (isBlank) {
@@ -337,27 +408,66 @@
             }
             
             errDiv.style.display = 'none';
-
             const btn = event.target;
             btn.disabled = true; btn.textContent = "Grading...";
+
+            const answerStr = type === 'calculation' ? `WORKING: ${work} | FINAL: ${val}` : val;
 
             const res = await fetch('/api/official-exams/grade', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({paper_id: paperId, sub_id: subId, user_answer: answer, mark_scheme: ms, max_marks: max})
+                body: JSON.stringify({paper_id: paperId, sub_id: subId, user_answer: answerStr, mark_scheme: ms, max_marks: max})
             });
             
             const data = await res.json();
-            const fb = document.getElementById('fb_' + subId);
-            fb.className = 'feedback-box show ' + (data.marks_awarded == max ? 'feedback-good' : (data.marks_awarded > 0 ? 'feedback-partial' : 'feedback-bad'));
+            
+            savedAnswers[subId] = {
+                value: val,
+                work: work,
+                marks: data.marks_awarded,
+                feedback: data.feedback
+            };
+
+            fbDiv.className = 'feedback-box show ' + (data.marks_awarded == max ? 'feedback-good' : (data.marks_awarded > 0 ? 'feedback-partial' : 'feedback-bad'));
             document.getElementById('m_' + subId).textContent = data.marks_awarded;
             document.getElementById('t_' + subId).innerText = data.feedback;
+            
             btn.disabled = false; btn.textContent = "Re-submit & Grade";
+            saveProgress();
+        }
+
+        async function saveProgress() {
+            await fetch('/api/student/exam-progress/save', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    username: username,
+                    paper_id: paperId,
+                    current_question_idx: currentQuestionIdx,
+                    answers: savedAnswers
+                })
+            });
+        }
+
+        async function finishExam() {
+            if (!confirm("Are you sure you want to finish the exam? This will lock your current progress.")) return;
+            const res = await fetch('/api/student/exam-progress/complete', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ username, paper_id: paperId })
+            });
+            const data = await res.json();
+            if (data.success) {
+                isCompleted = true;
+                render();
+                alert("Exam marked as completed!");
+            }
         }
 
         function changeQuestion(n) {
             currentQuestionIdx += n;
             render();
+            saveProgress();
         }
 
         init();

@@ -1,0 +1,63 @@
+{
+  "paper_id": "KBI0_1B_23-May-2013_P41552A",
+  "title": "Edexcel Certificate International GCSE Biology Unit: KBI0/4BI0 Paper: 1B",
+  "qp_img_dir": "/static/exams/KBI0_1B_23-May-2013_P41552A/qp/",
+  "ms_img_dir": "/static/exams/KBI0_1B_23-May-2013_P41552A/ms/",
+  "questions": [
+    {
+      "id": 1,
+      "sub_questions": [
+        {
+          "sub_id": "1(a)",
+          "type": "text",
+          "qp_pages": [
+            2
+          ],
+          "ms_text": "Use the information in the food web to complete the statements in the table.",
+          "max_marks": 4
+        },
+        {
+          "sub_id": "1(b)(i)",
+          "type": "text",
+          "qp_pages": [
+            3
+          ],
+          "ms_text": "What effect would a decrease in the population size of caterpillars have on the population size of blue jays?",
+          "max_marks": 1
+        },
+        {
+          "sub_id": "1(b)(ii)",
+          "type": "text",
+          "qp_pages": [
+            3
+          ],
+          "ms_text": "What is meant by the term 'population'?",
+          "max_marks": 1
+        },
+        {
+          "sub_id": "1(c)",
+          "type": "list",
+          "qp_pages": [
+            3
+          ],
+          "ms_text": "Name two different molecules that are found in the blood of deer that the tick could feed on.",
+          "max_marks": 2
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "sub_questions": [
+        {
+          "sub_id": "2(a)",
+          "type": "text",
+          "qp_pages": [
+            4
+          ],
+          "ms_text": "Use the information in the diagrams and your own knowledge to give three ways in which the structure of an artery differs from the structure of a vein.",
+          "max_marks": 3
+        }
+      ]
+    }
+  ]
+}

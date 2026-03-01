@@ -1,0 +1,31 @@
+{
+  "paper_id": "P48227A-KBI0-4BI0-2017-January-Paper-2B",
+  "title": "Pearson Edexcel International GCSE Biology Paper 2B",
+  "qp_img_dir": "/static/exams/P48227A-KBI0-4BI0-2017-January-Paper-2B/qp/",
+  "ms_img_dir": "/static/exams/P48227A-KBI0-4BI0-2017-January-Paper-2B/ms/",
+  "questions": [
+    {
+      "id": 1,
+      "sub_questions": [
+        {
+          "sub_id": "1(a)",
+          "type": "text",
+          "qp_pages": [
+            2
+          ],
+          "ms_text": "(a) (i) Asexual reproduction is commonly used in plants (line 1).\nGive an example of a method of asexual reproduction used by a plant.",
+          "max_marks": 1
+        },
+        {
+          "sub_id": "1(ii)",
+          "type": "text",
+          "qp_pages": [
+            2
+          ],
+          "ms_text": "(ii) Suggest why plants alter their method of reproduction from asexual to sexual when environmental conditions are changing (lines 2 and 3).",
+          "max_marks": 1
+        }
+      ]
+    }
+  ]
+}

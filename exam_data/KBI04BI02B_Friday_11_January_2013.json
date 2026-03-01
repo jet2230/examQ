@@ -1,0 +1,31 @@
+{
+  "paper_id": "KBI04BI02B_Friday_11_January_2013",
+  "title": "Edexcel International GCSE Biology Paper 2B",
+  "qp_img_dir": "/static/exams/KBI04BI02B_Friday_11_January_2013/qp/",
+  "ms_img_dir": "/static/exams/KBI04BI02B_Friday_11_January_2013/ms/",
+  "questions": [
+    {
+      "id": 1,
+      "sub_questions": [
+        {
+          "sub_id": "1(a)",
+          "type": "text",
+          "qp_pages": [
+            2
+          ],
+          "ms_text": "Explain what is meant by the term gene (line 3).",
+          "max_marks": 2
+        },
+        {
+          "sub_id": "1(b)",
+          "type": "text",
+          "qp_pages": [
+            2
+          ],
+          "ms_text": "Suggest what is meant by the term superovulate (line 2).",
+          "max_marks": 1
+        }
+      ]
+    }
+  ]
+}

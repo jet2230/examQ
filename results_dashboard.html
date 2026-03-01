@@ -250,6 +250,7 @@
                 <a href="/exam_questions.html" style="background: white; color: #667eea; padding: 10px 15px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.9em; width: 150px; text-align: center;">📝 Exam Q's</a>
                 <span id="adminOnlyButtons">
                     <a href="/admin_users.html">Manage Users</a>
+                    <a href="/admin_exams.html">Manage Exams</a>
                 </span>
                 <a href="/">Generate Quiz</a>
                 <a href="#" onclick="logout()" style="background: #dc3545; color: white; padding: 10px 15px; border-radius: 8px; text-decoration: none; font-weight: 600;">Logout</a>
@@ -282,6 +283,13 @@
 
             <div class="quiz-list" id="quizList">
                 <p style="text-align: center; color: #999; padding: 40px;">Loading quiz results...</p>
+            </div>
+
+            <div id="officialProgressSection" style="margin-top: 50px;">
+                <h2 style="margin-bottom: 20px; color: #1e3c72;">📝 Official Exam Progress</h2>
+                <div id="officialExamList" class="quiz-list">
+                    <!-- Official progress will be injected here -->
+                </div>
             </div>
         </div>
     </div>
@@ -324,11 +332,67 @@
                     displayResults(allResults);
                     updateStats(allResults);
                     populateDateFilter(allResults);
+                    
+                    // Also load official progress
+                    loadOfficialProgress(username);
                 })
                 .catch(error => {
                     console.error('Error loading results:', error);
                     document.getElementById('quizList').innerHTML = '<p style="text-align: center; color: #dc3545; padding: 40px;">Error loading results: ' + error.message + '</p>';
                 });
+        }
+
+        async function loadOfficialProgress(username) {
+            try {
+                const [examRes, progRes] = await Promise.all([
+                    fetch('/api/official-exams/list'),
+                    fetch(`/api/student/exam-progress/list?username=${username}`)
+                ]);
+                
+                const examData = await examRes.json();
+                const progData = await progRes.json();
+                const progressMap = progData.progress || {};
+                
+                const list = document.getElementById('officialExamList');
+                list.innerHTML = '';
+
+                if (!examData.exams || examData.exams.length === 0) {
+                    list.innerHTML = '<p style="color: #999; padding: 20px;">No official exams assigned.</p>';
+                    return;
+                }
+
+                examData.exams.forEach(exam => {
+                    const prog = progressMap[exam.id];
+                    if (!prog) return; // Skip if not started
+
+                    const card = document.createElement('div');
+                    card.className = 'quiz-card';
+                    if (prog.status === 'completed') card.style.borderLeftColor = '#28a745';
+                    else card.style.borderLeftColor = '#f6ad55';
+
+                    const date = new Date(prog.last_updated).toLocaleString();
+                    
+                    card.innerHTML = `
+                        <div class="quiz-header">
+                            <h3>${exam.title}</h3>
+                            <span class="quiz-score" style="font-size: 1em; color: ${prog.status === 'completed' ? '#28a745' : '#f6ad55'}">
+                                ${prog.status.toUpperCase()}
+                            </span>
+                        </div>
+                        <div class="quiz-meta">
+                            📅 Last Activity: ${date}<br>
+                            📂 Paper: ${exam.paper} (${exam.date})
+                        </div>
+                    `;
+                    card.onclick = () => window.location.href = `/official_exam_player.html?paper_id=${exam.id}`;
+                    list.appendChild(card);
+                });
+
+                if (list.children.length === 0) {
+                    list.innerHTML = '<p style="color: #999; padding: 20px;">You haven\'t started any official exam papers yet.</p>';
+                }
+
+            } catch (e) { console.error("Error loading progress:", e); }
         }
 
         function displayResults(results) {

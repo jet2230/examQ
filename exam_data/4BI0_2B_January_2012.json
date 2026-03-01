@@ -1,0 +1,31 @@
+{
+  "paper_id": "4BI0_2B_January_2012",
+  "title": "Edexcel International GCSE Biology Paper 2B",
+  "qp_img_dir": "/static/exams/4BI0_2B_January_2012/qp/",
+  "ms_img_dir": "/static/exams/4BI0_2B_January_2012/ms/",
+  "questions": [
+    {
+      "id": 1,
+      "sub_questions": [
+        {
+          "sub_id": "1(a)",
+          "type": "text",
+          "qp_pages": [
+            2
+          ],
+          "ms_text": "Why snail meat is healthy to eat (line 4).",
+          "max_marks": 2
+        },
+        {
+          "sub_id": "1(b)",
+          "type": "short-answer",
+          "qp_pages": [
+            2
+          ],
+          "ms_text": "Suggest a reason why conservationists are pleased that snail farming exists.",
+          "max_marks": 1
+        }
+      ]
+    }
+  ]
+}

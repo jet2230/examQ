@@ -1,0 +1,31 @@
+{
+  "paper_id": "KBI02B_20150108_PearsonEdexcelCertificate",
+  "title": "Pearson Edexcel Certificate International GCSE Biology Unit: KBI04BI0 Paper: 2B",
+  "qp_img_dir": "/static/exams/KBI02B_20150108_PearsonEdexcelCertificate/qp/",
+  "ms_img_dir": "/static/exams/KBI02B_20150108_PearsonEdexcelCertificate/ms/",
+  "questions": [
+    {
+      "id": 1,
+      "sub_questions": [
+        {
+          "sub_id": "1(a)",
+          "type": "text",
+          "qp_pages": [
+            2
+          ],
+          "ms_text": "Two causes of emphysema are: \r\n- Smoking\r\n- Breathing in dust or fumes",
+          "max_marks": 2
+        },
+        {
+          "sub_id": "1(b)",
+          "type": "text",
+          "qp_pages": [
+            3
+          ],
+          "ms_text": "The function of this enzyme is to protect the lungs from being digested by white blood cells.",
+          "max_marks": 2
+        }
+      ]
+    }
+  ]
+}

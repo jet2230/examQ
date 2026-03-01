@@ -1,0 +1,87 @@
+{
+  "paper_id": "P45628A_17_May_2016",
+  "title": "Pearson Edexcel International GCSE Science (Double Award) KSC0/4SC0",
+  "qp_img_dir": "/static/exams/P45628A_17_May_2016/qp/",
+  "ms_img_dir": "/static/exams/P45628A_17_May_2016/ms/",
+  "questions": [
+    {
+      "id": 1,
+      "sub_questions": [
+        {
+          "sub_id": "1(a)(i)",
+          "type": "text",
+          "qp_pages": [
+            2
+          ],
+          "ms_text": "Name three structures found in a plant cell that are not found in a neurone.",
+          "max_marks": 3
+        },
+        {
+          "sub_id": "1(a)(ii)",
+          "type": "text",
+          "qp_pages": [
+            2
+          ],
+          "ms_text": "Three possible answers: (list three structures).",
+          "max_marks": 3
+        },
+        {
+          "sub_id": "1(b)",
+          "type": "text",
+          "qp_pages": [
+            2,
+            3
+          ],
+          "ms_text": "Name the parts of a reflex arc. Complete the table.",
+          "max_marks": 4
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "sub_questions": [
+        {
+          "sub_id": "2(a)",
+          "type": "text",
+          "qp_pages": [
+            4
+          ],
+          "ms_text": "Describe the changes in global production of farmed fish and beef cattle since 1950.",
+          "max_marks": 3
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "sub_questions": [
+        {
+          "sub_id": "3(a)(i)",
+          "type": "text",
+          "qp_pages": [
+            5
+          ],
+          "ms_text": "Describe the process of fertilization.",
+          "max_marks": 1
+        },
+        {
+          "sub_id": "3(b)(i)",
+          "type": "text",
+          "qp_pages": [
+            5
+          ],
+          "ms_text": "Explain why X sperm has more light.",
+          "max_marks": 2
+        },
+        {
+          "sub_id": "3(c)",
+          "type": "calculation",
+          "qp_pages": [
+            5
+          ],
+          "ms_text": "Calculate the time it would take a nerve impulse to travel from the spinal cord to the foot of this human.",
+          "max_marks": 2
+        }
+      ]
+    }
+  ]
+}

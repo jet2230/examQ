@@ -1,0 +1,69 @@
+{
+  "paper_id": "P44248A_2015_01_07_Biology_1B",
+  "title": "Pearson Edexcel International GCSE Science (Double Award) KSC0/4SC0 Paper 1B",
+  "qp_img_dir": "/static/exams/P44248A_2015_01_07_Biology_1B/qp/",
+  "ms_img_dir": "/static/exams/P44248A_2015_01_07_Biology_1B/ms/",
+  "questions": [
+    {
+      "id": 1,
+      "sub_questions": [
+        {
+          "sub_id": "1(a)",
+          "type": "mcq",
+          "options": [
+            ""
+          ],
+          "qp_pages": [
+            2
+          ],
+          "ms_text": "complete the table by naming each hormone and its source.",
+          "max_marks": 5
+        },
+        {
+          "sub_id": "1(b)",
+          "type": "text",
+          "qp_pages": [
+            2
+          ],
+          "ms_text": "Suggest why cells do not store glucose.",
+          "max_marks": 2
+        },
+        {
+          "sub_id": "1(c)",
+          "type": "mcq",
+          "options": [
+            ""
+          ],
+          "qp_pages": [
+            3
+          ],
+          "ms_text": "Give the letter of the line which represents changes in the relative level of glycogen.",
+          "max_marks": 1
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "sub_questions": [
+        {
+          "sub_id": "4(a)",
+          "type": "text",
+          "qp_pages": [
+            4
+          ],
+          "ms_text": "Suggest why a red onion is often used when carrying out this investigation.",
+          "max_marks": 1
+        },
+        {
+          "sub_id": "4(b)(i)",
+          "type": "text",
+          "qp_pages": [
+            4
+          ],
+          "ms_text": "Explain what is meant by the term osmosis.",
+          "max_marks": 2
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,100 @@
+{
+  "paper_id": "P40132A_KBI0_4BI0_20120515",
+  "title": "Edexcel International GCSE Biology Unit: KBI0/4BI0, Paper 1B",
+  "qp_img_dir": "/static/exams/P40132A_KBI0_4BI0_20120515/qp/",
+  "ms_img_dir": "/static/exams/P40132A_KBI0_4BI0_20120515/ms/",
+  "questions": [
+    {
+      "id": 1,
+      "sub_questions": [
+        {
+          "sub_id": "1(a)",
+          "type": "text",
+          "qp_pages": [
+            2
+          ],
+          "ms_text": "Tick () if the feature is present or cross () if it's absent.",
+          "max_marks": 4
+        },
+        {
+          "sub_id": "1(b)",
+          "type": "list",
+          "qp_pages": [
+            2
+          ],
+          "ms_text": "Two groups of organisms that include pathogens are:",
+          "max_marks": 2
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "sub_questions": [
+        {
+          "sub_id": "2(a)",
+          "type": "fill_table",
+          "qp_pages": [
+            3
+          ],
+          "ms_text": "Complete the table by writing the name of the correct blood vessel in each empty box.",
+          "max_marks": 2
+        },
+        {
+          "sub_id": "2(b)(i-iii)",
+          "type": "text",
+          "qp_pages": [
+            3
+          ],
+          "ms_text": "Answers to parts (i), (ii), and (iii) are:",
+          "max_marks": 3
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "sub_questions": [
+        {
+          "sub_id": "4(a)",
+          "type": "text",
+          "qp_pages": [
+            4
+          ],
+          "ms_text": "Explain why the oil layer is necessary.",
+          "max_marks": 2
+        },
+        {
+          "sub_id": "4(b)(i-iii)",
+          "type": "text",
+          "qp_pages": [
+            4
+          ],
+          "ms_text": "Answers to parts (i), (ii), and (iii) are:",
+          "max_marks": 3
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "sub_questions": [
+        {
+          "sub_id": "5(a)",
+          "type": "text",
+          "qp_pages": [
+            6
+          ],
+          "ms_text": "Explain why the small surface area to volume ratio is important.",
+          "max_marks": 2
+        },
+        {
+          "sub_id": "5(b)",
+          "type": "text",
+          "qp_pages": [
+            6
+          ],
+          "ms_text": "Describe how insulation helps maintain body temperature.",
+          "max_marks": 2
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "paper_id": "4BI1_2020_01_14_Biology_2B",
+  "title": "International GCSE (9\u20131) Biology Paper: 2B",
+  "qp_img_dir": "/static/exams/4BI1_2020_01_14_Biology_2B/qp/",
+  "ms_img_dir": "/static/exams/4BI1_2020_01_14_Biology_2B/ms/",
+  "questions": [
+    {
+      "id": 1,
+      "sub_questions": [
+        {
+          "sub_id": "1(a)",
+          "type": "text",
+          "qp_pages": [
+            2
+          ],
+          "ms_text": "Explain why cattle with damaged lungs have gas exchange problems.",
+          "max_marks": 5
+        },
+        {
+          "sub_id": "1(b)(i)",
+          "type": "calculation",
+          "qp_pages": [
+            3
+          ],
+          "ms_text": "Award full marks for correct numerical answer without working.",
+          "max_marks": 1
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "sub_questions": [
+        {
+          "sub_id": "2(a)",
+          "type": "text",
+          "qp_pages": [
+            6
+          ],
+          "ms_text": "An answer that makes reference to three of the following: ...",
+          "max_marks": 3
+        },
+        {
+          "sub_id": "2(b)",
+          "type": "mcq",
+          "options": [
+            "plasmodium",
+            "malaria"
+          ],
+          "qp_pages": [
+            6
+          ],
+          "ms_text": "An answer that makes reference to suitable organism and matched disease:",
+          "max_marks": 1
+        }
+      ]
+    }
+  ]
+}

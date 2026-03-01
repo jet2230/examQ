@@ -174,14 +174,14 @@
         {
           "sub_id": "5(a)(ii)",
           "type": "text",
-          "qp_pages": [16],
+          "qp_pages": [17, 16],
           "ms_text": "Placing quadrats: 1. Use random number generator for coordinates; 2. Prevents bias; 3. Representative sample; 4. Control time of day/year. (Max 3 marks)",
           "max_marks": 3
         },
         {
           "sub_id": "5(b)(ii)",
           "type": "text",
-          "qp_pages": [17],
+          "qp_pages": [19, 18],
           "ms_text": "Indicator changes: 1. Jar A orange (CO2 equal); 2. Jar B yellow (CO2 increases); 3. In A, photosynthesis = respiration; 4. In B, respiration > photosynthesis. (Max 4 marks)",
           "max_marks": 4
         }
@@ -193,7 +193,7 @@
         {
           "sub_id": "6(a)",
           "type": "text",
-          "qp_pages": [20],
+          "qp_pages": [21],
           "ms_text": "Protein synthesis: 1. Transcription in nucleus (mRNA made); 2. mRNA moves to ribosome; 3. tRNA brings amino acids; 4. Anticodons bind to codons; 5. Polypeptide chain formed. (Max 4 marks)",
           "max_marks": 4
         },
@@ -202,14 +202,14 @@
           "type": "calculation",
           "suffix": "%",
           "placeholder": "Calculation result",
-          "qp_pages": [21],
+          "qp_pages": [23, 22],
           "ms_text": "Calculation: ((250 - 20) / 20) * 100 = 1150%. Award 3 marks for 1150.",
           "max_marks": 3
         },
         {
           "sub_id": "6(b)(ii)",
           "type": "text",
-          "qp_pages": [21],
+          "qp_pages": [23, 22],
           "ms_text": "Edible vaccine evaluation: 1. Antibodies produced after 3 days; 2. Memory cells made; 3. Secondary response faster/bigger; 4. No needles (cheap/easy); 5. Small sample size/unreliable results. (Max 5 marks)",
           "max_marks": 5
         }

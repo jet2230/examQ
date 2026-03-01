@@ -1,0 +1,32 @@
+{
+  "paper_id": "P44249A_Biology_08-Jan-2015",
+  "title": "Pearson Edexcel Certificate International GCSE Biology Paper 2B",
+  "subject": "Biology",
+  "qp_img_dir": "/static/exams/P44249A_Biology_08-Jan-2015/qp/",
+  "er_text": "",
+  "questions": [
+    {
+      "id": 1,
+      "sub_questions": [
+        {
+          "sub_id": "1(a)",
+          "type": "text",
+          "qp_pages": [
+            2
+          ],
+          "ms_text": "Give two causes of emphysema.",
+          "max_marks": 2
+        },
+        {
+          "sub_id": "1(b)",
+          "type": "text",
+          "qp_pages": [
+            2
+          ],
+          "ms_text": "Suggest the function of this enzyme in the white blood cells in the lungs.",
+          "max_marks": 2
+        }
+      ]
+    }
+  ]
+}

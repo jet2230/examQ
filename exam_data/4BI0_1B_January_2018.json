@@ -1,0 +1,31 @@
+{
+  "paper_id": "4BI0_1B_January_2018",
+  "title": "International GCSE Biology, Paper 1B",
+  "qp_img_dir": "/static/exams/4BI0_1B_January_2018/qp/",
+  "ms_img_dir": "/static/exams/4BI0_1B_January_2018/ms/",
+  "questions": [
+    {
+      "id": 1,
+      "sub_questions": [
+        {
+          "sub_id": "1(a)",
+          "type": "text",
+          "qp_pages": [
+            2
+          ],
+          "ms_text": "(i) Lactobacillus; (ii) Mucor; (iii) bean; (iv) mosquito;",
+          "max_marks": 4
+        },
+        {
+          "sub_id": "1(b)",
+          "type": "text",
+          "qp_pages": [
+            3
+          ],
+          "ms_text": "(i) only reproduce in living cells, protein coat, only DNA/RNA, one type of nucleic acid; (ii) HIV/effect on immune system;",
+          "max_marks": 3
+        }
+      ]
+    }
+  ]
+}

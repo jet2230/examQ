@@ -53,14 +53,57 @@ def init_db():
             username TEXT NOT NULL,
             score TEXT NOT NULL,
             percentage TEXT NOT NULL,
-            answers_json TEXT NOT NULL,
-            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            attempt_data_json TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (quiz_id) REFERENCES quizzes (id)
         )
     ''')
 
+    # Create official_exams table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS official_exams (
+            id TEXT PRIMARY KEY,
+            title TEXT NOT NULL,
+            subject TEXT NOT NULL,
+            paper TEXT NOT NULL,
+            date TEXT NOT NULL,
+            data_json_path TEXT NOT NULL,
+            er_text TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+
+    # Create official_exam_progress table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS official_exam_progress (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL,
+            paper_id TEXT NOT NULL,
+            current_question_idx INTEGER DEFAULT 0,
+            answers_json TEXT,
+            status TEXT DEFAULT 'started',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            completed_at TIMESTAMP,
+            FOREIGN KEY (paper_id) REFERENCES official_exams (id)
+        )
+    ''')
+
+    # Insert default exam if table is empty
+    cursor.execute("SELECT COUNT(*) FROM official_exams")
+    if cursor.fetchone()[0] == 0:
+        cursor.execute('''
+            INSERT INTO official_exams (id, title, subject, paper, date, data_json_path)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (
+            'biology_2B_nov_2025', 
+            'Pearson Edexcel International GCSE (9–1) Friday 14 November 2025 Biology Paper 2B',
+            'Biology', '2B', 'Nov 2025', 'exam_data/biology_2B_nov_2025.json'
+        ))
+
     conn.commit()
     conn.close()
+
 
 
 def load_users():
@@ -140,10 +183,19 @@ def admin_login_page():
     return send_from_directory('.', 'admin_login.html')
 
 
+import PyPDF2
+from pdf2image import convert_from_path
+
 @app.route('/admin_users.html')
 def admin_users_page():
     """Serve the admin user management page"""
     return send_from_directory('.', 'admin_users.html')
+
+
+@app.route('/admin_exams.html')
+def admin_exams_page():
+    """Serve the official exam management page"""
+    return send_from_directory('.', 'admin_exams.html')
 
 
 @app.route('/exam_questions.html')
@@ -160,19 +212,20 @@ def official_exam_player_page():
 
 @app.route('/api/official-exams/list')
 def list_official_exams():
-    """List available official exam papers"""
-    # For now, manually list the ones we've processed
-    return jsonify({
-        'exams': [
-            {
-                'id': 'biology_2B_nov_2025',
-                'title': 'Biology Paper 2B - Nov 2025',
-                'subject': 'Biology',
-                'paper': '2B',
-                'date': 'Nov 2025'
-            }
-        ]
-    })
+    """List available official exam papers from database"""
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, title, subject, paper, date FROM official_exams ORDER BY created_at DESC")
+        exams = cursor.fetchall()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'exams': [dict(e) for e in exams]
+        }), 200
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 @app.route('/api/official-exams/<paper_id>')
 def get_official_exam(paper_id):
@@ -182,6 +235,229 @@ def get_official_exam(paper_id):
         with open(data_path, 'r') as f:
             return jsonify(json.load(f))
     return jsonify({'error': 'Exam not found'}), 404
+
+def extract_pdf_text(filepath):
+    """Extract full text from a PDF file with page markers"""
+    try:
+        with open(filepath, 'rb') as file:
+            reader = PyPDF2.PdfReader(file)
+            text = ""
+            for i, page in enumerate(reader.pages):
+                text += f"--- PAGE {i+1} ---\n"
+                text += page.extract_text() + "\n"
+            return text
+    except Exception as e:
+        return f"Error: {str(e)}"
+
+@app.route('/api/admin/list-files', methods=['POST'])
+def list_server_files():
+    """List PDF files recursively in a server directory for the admin browser"""
+    try:
+        data = request.json
+        dir_path = data.get('dir_path', '/home/obo/playground/examQ/resources/igcse_edxcel_exampapers/biology/')
+        admin_username = data.get('admin_username')
+
+        # Verify admin
+        users = load_users()
+        if admin_username not in users or users[admin_username].get('role') != 'admin':
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+
+        if not os.path.exists(dir_path):
+            return jsonify({'success': False, 'message': 'Directory not found'}), 404
+
+        files = []
+        # Recursive walk
+        for root, dirs, filenames in os.walk(dir_path):
+            for f in sorted(filenames):
+                if f.endswith('.pdf'):
+                    full_path = os.path.join(root, f)
+                    files.append({
+                        'name': f,
+                        'path': full_path,
+                        'size': f"{os.path.getsize(full_path) / 1024 / 1024:.2f} MB"
+                    })
+
+        return jsonify({'success': True, 'files': files, 'current_dir': dir_path}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@app.route('/api/admin/process-exam', methods=['POST'])
+def process_official_exam():
+    """Intelligently process a new official exam paper from PDF paths"""
+    try:
+        data = request.json
+        qp_path = data.get('qp_path')
+        ms_path = data.get('ms_path')
+        er_path = data.get('er_path') # Optional Examiner Report
+        admin_username = data.get('admin_username')
+
+        if not qp_path or not ms_path:
+            return jsonify({'success': False, 'message': 'Both QP and MS paths are required'}), 400
+
+        # Verify admin
+        users = load_users()
+        if admin_username not in users or users[admin_username].get('role') != 'admin':
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+
+        if not os.path.exists(qp_path) or not os.path.exists(ms_path):
+            return jsonify({'success': False, 'message': 'PDF files not found on server'}), 400
+
+        # 1. Extract Text
+        qp_text = extract_pdf_text(qp_path)
+        ms_text = extract_pdf_text(ms_path)
+        er_text = ""
+        if er_path and os.path.exists(er_path):
+            er_text = extract_pdf_text(er_path)
+
+        # 2. Use LLaMA to determine Metadata
+        meta_prompt = f"""Analyze this IGCSE exam paper header text and return JSON metadata.
+TEXT:
+{qp_text[:2000]}
+
+JSON FORMAT:
+{{
+  "id": "subject_paper_date_slug",
+  "title": "Full Exam Title",
+  "subject": "Biology/Physics/Math/English",
+  "paper": "1B/2B/1/2/etc",
+  "date": "Month Year"
+}}
+"""
+        meta_resp = requests.post('http://localhost:11434/api/generate', json={
+            'model': 'llama3', 'prompt': meta_prompt, 'stream': False, 'format': 'json', 'temperature': 0
+        })
+        metadata = json.loads(meta_resp.json().get('response', '{}'))
+        paper_id = metadata.get('id', str(uuid.uuid4())[:8])
+
+        # CHECK FOR DUPLICATE
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT id FROM official_exams WHERE id = ?", (paper_id,))
+        exists = cursor.fetchone()
+        conn.close()
+
+        if exists:
+            return jsonify({
+                'success': True, 
+                'message': f'Skipped "{metadata.get("title")}" - Already in library.',
+                'paper_id': paper_id,
+                'skipped': True
+            }), 200
+
+        # 3. Use LLaMA to generate Question Mapping
+        map_prompt = f"""Analyze this IGCSE exam paper and its mark scheme. 
+Generate a mapping of each main question to its page numbers and the relevant mark scheme text.
+
+QP TEXT SNIPPET:
+{qp_text[:5000]}
+
+MS TEXT SNIPPET:
+{ms_text[:5000]}
+
+JSON FORMAT (STRICT):
+{{
+  "questions": [
+    {{
+      "id": 1,
+      "sub_questions": [
+        {{
+          "sub_id": "1(a)",
+          "type": "mcq", 
+          "options": ["A", "B", "C", "D"],
+          "qp_pages": [2],
+          "ms_text": "Exact mark scheme answer",
+          "max_marks": 1
+        }},
+        {{
+          "sub_id": "1(b)",
+          "type": "text",
+          "qp_pages": [2],
+          "ms_text": "Detailed mark scheme points",
+          "max_marks": 2
+        }}
+      ]
+    }}
+  ]
+}}
+
+TYPE RULES:
+- Use "mcq" ONLY if the question has A,B,C,D options. ALWAYS include "options": ["A", "B", "C", "D"] for these.
+- Use "calculation" for multi-mark math questions.
+- Use "list" for "Name two..." type questions.
+- Use "text" for all others (especially long English answers).
+"""
+        map_resp = requests.post('http://localhost:11434/api/generate', json={
+            'model': 'llama3', 'prompt': map_prompt, 'stream': False, 'format': 'json', 'temperature': 0
+        })
+        mapping_data = json.loads(map_resp.json().get('response', '{"questions": []}'))
+
+        # 4. Convert PDF to Images
+        qp_img_dir = f"static/exams/{paper_id}/qp"
+        os.makedirs(qp_img_dir, exist_ok=True)
+        images = convert_from_path(qp_path, dpi=150)
+        for i, image in enumerate(images):
+            image.save(os.path.join(qp_img_dir, f"page_{i+1:02d}.png"), 'PNG')
+
+        # 5. Save Final JSON
+        final_data = {
+            "paper_id": paper_id,
+            "title": metadata.get('title'),
+            "subject": metadata.get('subject'),
+            "qp_img_dir": f"/{qp_img_dir}/",
+            "er_text": er_text,
+            "questions": mapping_data.get('questions', [])
+        }
+        json_path = f"exam_data/{paper_id}.json"
+        os.makedirs('exam_data', exist_ok=True)
+        with open(json_path, 'w') as f:
+            json.dump(final_data, f, indent=2)
+
+        # 6. Add to Database
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT OR REPLACE INTO official_exams (id, title, subject, paper, date, data_json_path, er_text)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            paper_id, metadata.get('title'), metadata.get('subject'), 
+            metadata.get('paper'), metadata.get('date'), json_path, er_text
+        ))
+        conn.commit()
+        conn.close()
+
+        return jsonify({
+            'success': True, 
+            'message': f'Exam "{metadata.get("title")}" processed!',
+            'paper_id': paper_id
+        }), 200
+
+    except Exception as e:
+        return jsonify({'success': False, 'message': f"Process Error: {str(e)}"}), 500
+
+@app.route('/api/admin/delete-exam', methods=['POST'])
+def delete_official_exam():
+    """Remove an official exam from the library"""
+    try:
+        data = request.json
+        paper_id = data.get('paper_id')
+        admin_username = data.get('admin_username')
+
+        # Verify admin
+        users = load_users()
+        if admin_username not in users or users[admin_username].get('role') != 'admin':
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM official_exams WHERE id = ?", (paper_id,))
+        conn.commit()
+        conn.close()
+
+        return jsonify({'success': True, 'message': 'Exam deleted'}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
 
 @app.route('/api/official-exams/grade', methods=['POST'])
 def grade_official_question():
@@ -195,8 +471,16 @@ def grade_official_question():
         mark_scheme = data.get('mark_scheme')
         max_marks = data.get('max_marks', 1)
 
+        # Get Examiner Report if available
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT er_text FROM official_exams WHERE id = ?", (paper_id,))
+        row = cursor.fetchone()
+        er_text = row['er_text'] if row and row['er_text'] else ""
+        conn.close()
+
         # Prompt for LLaMA
-        prompt = f"""You are an expert IGCSE Edexcel Biology Examiner. 
+        prompt = f"""You are an expert IGCSE Edexcel Examiner. 
 Your task is to mark a student's answer based STRICTLY on the official Mark Scheme provided.
 
 PAPER ID: {paper_id}
@@ -206,22 +490,23 @@ MAX MARKS: {max_marks}
 OFFICIAL MARK SCHEME:
 {mark_scheme}
 
+EXAMINER REPORT (REAL-WORLD ADVICE):
+{er_text[:3000]}
+
 STUDENT'S ANSWER:
 {user_answer}
 
 MARKING INSTRUCTIONS:
-1. MANDATORY: If the student's answer is blank, empty, or contains no relevant attempt at the question, you MUST award 0 marks. Set "marks_awarded" to 0.
-2. The student's answer contains "WORKING:" and "FINAL ANSWER:" sections. 
-3. Award marks (0 to {max_marks}) based STRICTLY on the "OFFICIAL MARK SCHEME" provided above.
-4. For calculations: If the "FINAL ANSWER" is correct but the "WORKING" is EMPTY, award 1 mark. If both are correct, award {max_marks}.
-5. Provide a professional explanation. 
-6. CRITICAL: If the student did not receive full marks, you MUST provide a "MODEL ANSWER" section in your feedback. This MODEL ANSWER must be derived ONLY from the OFFICIAL MARK SCHEME.
+1. MANDATORY: If the student's answer is blank, award 0 marks.
+2. Award marks (0 to {max_marks}) based on the "OFFICIAL MARK SCHEME".
+3. Use the "EXAMINER REPORT" to provide high-quality feedback on what examiners are actually looking for.
+4. If the student did not receive full marks, you MUST provide a "MODEL ANSWER" based on the mark scheme.
 
 RESPONSE FORMAT (JSON ONLY):
 {{
   "marks_awarded": 0,
   "max_marks": {max_marks},
-  "feedback": "Evaluation. \n\nMODEL ANSWER: [Correct steps and answer]",
+  "feedback": "Evaluation. \n\nMODEL ANSWER: [Correct steps]",
   "marking_points_met": []
 }}
 """
@@ -243,6 +528,126 @@ RESPONSE FORMAT (JSON ONLY):
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/student/exam-progress/save', methods=['POST'])
+def save_exam_progress():
+    """Save student's current progress on an official exam"""
+    try:
+        data = request.json
+        username = data.get('username')
+        paper_id = data.get('paper_id')
+        current_idx = data.get('current_question_idx', 0)
+        answers = data.get('answers', {})
+
+        if not username or not paper_id:
+            return jsonify({'success': False, 'message': 'Missing data'}), 400
+
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        # Check if record exists
+        cursor.execute("SELECT id FROM official_exam_progress WHERE username = ? AND paper_id = ?", (username, paper_id))
+        row = cursor.fetchone()
+        
+        if row:
+            cursor.execute('''
+                UPDATE official_exam_progress 
+                SET current_question_idx = ?, answers_json = ?, last_updated = CURRENT_TIMESTAMP
+                WHERE username = ? AND paper_id = ?
+            ''', (current_idx, json.dumps(answers), username, paper_id))
+        else:
+            cursor.execute('''
+                INSERT INTO official_exam_progress (username, paper_id, current_question_idx, answers_json)
+                VALUES (?, ?, ?, ?)
+            ''', (username, paper_id, current_idx, json.dumps(answers)))
+            
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/student/exam-progress/get', methods=['GET'])
+def get_exam_progress():
+    """Retrieve saved progress for a specific student and paper"""
+    try:
+        username = request.args.get('username')
+        paper_id = request.args.get('paper_id')
+        
+        if not username or not paper_id:
+            return jsonify({'success': False}), 400
+
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT current_question_idx, answers_json, status 
+            FROM official_exam_progress 
+            WHERE username = ? AND paper_id = ?
+        ''', (username, paper_id))
+        row = cursor.fetchone()
+        conn.close()
+
+        if row:
+            return jsonify({
+                'success': True,
+                'current_question_idx': row['current_question_idx'],
+                'answers': json.loads(row['answers_json'] or '{}'),
+                'status': row['status']
+            }), 200
+        else:
+            return jsonify({'success': False, 'message': 'No progress found'}), 404
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/student/exam-progress/list', methods=['GET'])
+def list_student_progress():
+    """List progress for all official exams for a specific student"""
+    try:
+        username = request.args.get('username')
+        if not username:
+            return jsonify({'success': False}), 400
+
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT paper_id, status, last_updated, current_question_idx 
+            FROM official_exam_progress 
+            WHERE username = ?
+        ''', (username,))
+        rows = cursor.fetchall()
+        conn.close()
+
+        progress = {r['paper_id']: {
+            'status': r['status'],
+            'last_updated': r['last_updated'],
+            'current_question_idx': r['current_question_idx']
+        } for r in rows}
+
+        return jsonify({'success': True, 'progress': progress}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/student/exam-progress/complete', methods=['POST'])
+def complete_exam_progress():
+    """Mark an exam as completed"""
+    try:
+        data = request.json
+        username = data.get('username')
+        paper_id = data.get('paper_id')
+
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute('''
+            UPDATE official_exam_progress 
+            SET status = 'completed', completed_at = CURRENT_TIMESTAMP, last_updated = CURRENT_TIMESTAMP
+            WHERE username = ? AND paper_id = ?
+        ''', (username, paper_id))
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 
 @app.route('/api/register', methods=['POST'])
