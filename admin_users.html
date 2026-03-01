@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - User Management</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+        }
+        @media (min-width: 768px) {
+            body { padding: 20px; }
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            width: 100%;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+            text-align: center;
+        }
+        @media (min-width: 768px) {
+            .header {
+                padding: 30px;
+                flex-direction: row;
+                justify-content: space-between;
+                text-align: left;
+            }
+        }
+        .header h1 { font-size: 1.8em; margin-bottom: 5px; }
+        .header-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+        }
+        @media (min-width: 768px) {
+            .header-buttons {
+                width: auto;
+                justify-content: flex-end;
+            }
+        }
+        .header-buttons a {
+            background: white;
+            color: #667eea;
+            padding: 10px 15px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.2s;
+            display: inline-block;
+            width: 170px;
+            text-align: center;
+            font-size: 0.9em;
+        }
+        @media (min-width: 768px) {
+            .header-buttons a {
+                padding: 10px 20px;
+                font-size: 1em;
+                margin-left: 10px;
+            }
+        }
+        .content { padding: 15px; overflow-x: auto; }
+        @media (min-width: 768px) {
+            .content { padding: 30px; }
+        }
+        .user-list {
+            width: 100%;
+            min-width: 600px;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .user-list th, .user-list td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        .user-list th {
+            background-color: #f8f9fa;
+            color: #333;
+            font-weight: 600;
+        }
+        .user-list tr:hover { background-color: #f8f9fa; }
+        .btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            color: white;
+            margin-right: 5px;
+        }
+        .btn-edit { background-color: #667eea; }
+        .btn-pwd { background-color: #f6ad55; }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            padding: 20px;
+        }
+        .modal.show { display: block; }
+        .modal-content {
+            background: white;
+            margin: 10% auto;
+            max-width: 500px;
+            border-radius: 20px;
+            padding: 30px;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .modal-header h2 { color: #667eea; }
+        .close {
+            font-size: 28px;
+            color: #999;
+            cursor: pointer;
+        }
+        .close:hover { color: #000; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; color: #555; }
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #eee;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        .btn-submit {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .message { margin-top: 15px; text-align: center; font-weight: 600; }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>👥 User Control Panel</h1>
+                <p>Manage users, change usernames and reset passwords</p>
+            </div>
+            <div class="header-buttons">
+                <a href="/results">Back to Dashboard</a>
+            </div>
+        </div>
+
+        <div class="content">
+            <table class="user-list">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Role</th>
+                        <th>Quizzes Taken</th>
+                        <th>Created At</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="userTableBody">
+                    <tr><td colspan="5" style="text-align:center;">Loading users...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Edit User Modal -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit User</h2>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <form id="editForm" onsubmit="submitEdit(event)">
+                <input type="hidden" id="oldUsername">
+                <div class="form-group">
+                    <label>New Username (leave blank to keep current)</label>
+                    <input type="text" id="newUsername" placeholder="Enter new username">
+                </div>
+                <div class="form-group">
+                    <label>New Password (leave blank to keep current)</label>
+                    <input type="password" id="newPassword" placeholder="Enter new password">
+                </div>
+                <button type="submit" class="btn-submit">Save Changes</button>
+                <div id="formMessage" class="message"></div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        async function loadUsers() {
+            const adminUsername = localStorage.getItem('quiz_admin_username') || localStorage.getItem('quiz_username');
+            if (!adminUsername) {
+                window.location.href = 'admin_login.html';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/admin/users', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ admin_username: adminUsername })
+                });
+
+                const data = await response.json();
+                if (!data.success) {
+                    alert(data.message || 'Error loading users');
+                    window.location.href = 'admin_login.html';
+                    return;
+                }
+
+                const tbody = document.getElementById('userTableBody');
+                tbody.innerHTML = '';
+
+                Object.entries(data.users).forEach(([username, user]) => {
+                    const tr = document.createElement('tr');
+                    
+                    const dateObj = new Date(user.created_at);
+                    const dateStr = isNaN(dateObj) ? 'N/A' : dateObj.toLocaleDateString();
+
+                    tr.innerHTML = `
+                        <td><strong>${username}</strong></td>
+                        <td>${user.role}</td>
+                        <td>${user.quizzes_taken || 0}</td>
+                        <td>${dateStr}</td>
+                        <td>
+                            <button class="btn btn-edit" onclick="openModal('${username}')">Edit</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('userTableBody').innerHTML = 
+                    '<tr><td colspan="5" style="text-align:center;color:red;">Failed to load users</td></tr>';
+            }
+        }
+
+        function openModal(username) {
+            document.getElementById('oldUsername').value = username;
+            document.getElementById('newUsername').value = username;
+            document.getElementById('newPassword').value = '';
+            document.getElementById('formMessage').textContent = '';
+            document.getElementById('editModal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('editModal').classList.remove('show');
+        }
+
+        async function submitEdit(event) {
+            event.preventDefault();
+            const adminUsername = localStorage.getItem('quiz_admin_username') || localStorage.getItem('quiz_username');
+            
+            const oldUsername = document.getElementById('oldUsername').value;
+            const newUsername = document.getElementById('newUsername').value.trim();
+            const newPassword = document.getElementById('newPassword').value;
+            
+            const messageEl = document.getElementById('formMessage');
+
+            if (!newUsername && !newPassword) {
+                messageEl.textContent = 'Please provide a new username or new password.';
+                messageEl.className = 'message error';
+                return;
+            }
+
+            messageEl.textContent = 'Updating...';
+            messageEl.className = 'message';
+
+            try {
+                const response = await fetch('/api/admin/update-user', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        admin_username: adminUsername,
+                        old_username: oldUsername,
+                        new_username: newUsername !== oldUsername ? newUsername : null,
+                        new_password: newPassword || null
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    messageEl.textContent = 'User updated successfully!';
+                    messageEl.className = 'message success';
+                    setTimeout(() => {
+                        closeModal();
+                        loadUsers();
+                    }, 1500);
+                } else {
+                    messageEl.textContent = data.message || 'Update failed.';
+                    messageEl.className = 'message error';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                messageEl.textContent = 'Network error occurred.';
+                messageEl.className = 'message error';
+            }
+        }
+
+        // Close modal on outside click
+        window.onclick = function(event) {
+            const modal = document.getElementById('editModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+
+        // Initialize
+        loadUsers();
+    </script>
+</body>
+</html>

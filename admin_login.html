@@ -171,7 +171,7 @@
             btn.textContent = 'Logging in...';
 
             // Send login request
-            fetch('http://localhost:5001/api/login', {
+            fetch('/api/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
@@ -185,6 +185,7 @@
                     }
 
                     // Save admin credentials to localStorage
+                    localStorage.removeItem('quiz_username');
                     localStorage.setItem('quiz_admin_username', data.username);
                     showSuccess(data.message);
 

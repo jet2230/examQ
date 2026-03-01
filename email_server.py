@@ -139,12 +139,18 @@ def admin_login_page():
     return send_from_directory('.', 'admin_login.html')
 
 
+@app.route('/admin_users.html')
+def admin_users_page():
+    """Serve the admin user management page"""
+    return send_from_directory('.', 'admin_users.html')
+
+
 @app.route('/api/register', methods=['POST'])
 def register():
     """Register a new user"""
     try:
         data = request.json
-        username = data.get('username', '').strip().lower()
+        username = (data.get('username') or '').strip().lower()
         password = data.get('password', '')
 
         if not username or not password:
@@ -178,7 +184,7 @@ def login():
     """Authenticate user"""
     try:
         data = request.json
-        username = data.get('username', '').strip().lower()
+        username = (data.get('username') or '').strip().lower()
         password = data.get('password', '')
 
         if not username or not password:
@@ -208,7 +214,7 @@ def change_password():
     """Change user password"""
     try:
         data = request.json
-        username = data.get('username', '').strip().lower()
+        username = (data.get('username') or '').strip().lower()
         old_password = data.get('old_password', '')
         new_password = data.get('new_password', '')
 
@@ -237,7 +243,7 @@ def reset_password():
     """Reset password (simple - just returns a new random password)"""
     try:
         data = request.json
-        username = data.get('username', '').strip().lower()
+        username = (data.get('username') or '').strip().lower()
 
         if not username:
             return jsonify({'success': False, 'message': 'Username required'}), 400
@@ -466,8 +472,19 @@ def verify_admin():
 
 @app.route('/api/results')
 def get_results():
-    """Get all quiz results for the dashboard"""
+    """Get quiz results for the dashboard. Admins see all, users see only their own."""
     try:
+        username = request.args.get('username', '')
+        
+        if not username:
+            return jsonify({'results': []}), 200
+
+        # Load users to check role
+        users = load_users()
+        is_admin = False
+        if username in users and users[username].get('role') == 'admin':
+            is_admin = True
+
         results = []
 
         # Walk through results directory
@@ -479,10 +496,83 @@ def get_results():
                         if filename.endswith('.json'):
                             filepath = os.path.join(date_path, filename)
                             with open(filepath, 'r') as f:
-                                quiz_data = json.load(f)
-                                results.append(quiz_data)
+                                try:
+                                    quiz_data = json.load(f)
+                                    # Filter: if admin, show all. If not admin, only show matching username.
+                                    if is_admin or quiz_data.get('username') == username:
+                                        results.append(quiz_data)
+                                except (json.JSONDecodeError, IOError):
+                                    continue
 
         return jsonify({'results': results}), 200
+
+    except Exception as e:
+        return jsonify({'success': False, 'message': f"Error: {str(e)}"}), 500
+
+
+@app.route('/api/admin/users', methods=['POST'])
+def get_admin_users():
+    """Get all users for admin dashboard"""
+    try:
+        data = request.json
+        admin_username = data.get('admin_username', '')
+
+        users = load_users()
+
+        if admin_username not in users or users[admin_username].get('role') != 'admin':
+            return jsonify({'success': False, 'message': 'Admin access required'}), 403
+
+        safe_users = {}
+        for username, user_data in users.items():
+            safe_users[username] = {
+                'role': user_data.get('role', 'student'),
+                'created_at': user_data.get('created_at', ''),
+                'quizzes_taken': user_data.get('quizzes_taken', 0)
+            }
+
+        return jsonify({'success': True, 'users': safe_users}), 200
+
+    except Exception as e:
+        return jsonify({'success': False, 'message': f"Error: {str(e)}"}), 500
+
+
+@app.route('/api/admin/update-user', methods=['POST'])
+def admin_update_user():
+    """Admin update user (username or password)"""
+    try:
+        data = request.json
+        admin_username = data.get('admin_username', '')
+        old_username = data.get('old_username', '')
+        new_username = (data.get('new_username') or '').strip().lower()
+        new_password = data.get('new_password', '')
+
+        users = load_users()
+
+        if admin_username not in users or users[admin_username].get('role') != 'admin':
+            return jsonify({'success': False, 'message': 'Admin access required'}), 403
+
+        if old_username not in users:
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+
+        if new_password:
+            users[old_username]['password'] = hash_password(new_password)
+
+        if new_username and new_username != old_username:
+            if new_username in users:
+                return jsonify({'success': False, 'message': 'New username already exists'}), 400
+
+            users[new_username] = users.pop(old_username)
+            
+            conn = get_db()
+            cursor = conn.cursor()
+            cursor.execute('UPDATE quizzes SET created_by = ? WHERE created_by = ?', (new_username, old_username))
+            cursor.execute('UPDATE quiz_attempts SET username = ? WHERE username = ?', (new_username, old_username))
+            conn.commit()
+            conn.close()
+
+        save_users(users)
+
+        return jsonify({'success': True, 'message': 'User updated successfully'}), 200
 
     except Exception as e:
         return jsonify({'success': False, 'message': f"Error: {str(e)}"}), 500
@@ -523,22 +613,40 @@ def health():
     return jsonify({'status': 'ok'}), 200
 
 
+import socket
+
+def get_local_ip():
+    """Get the local IP address of this machine"""
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except:
+        return "localhost"
+
 if __name__ == '__main__':
+    # Initialize database
+    init_db()
+    
+    local_ip = get_local_ip()
     print("=" * 60)
     print("🎓 Quiz Server with Login")
     print("=" * 60)
-    print(f"\nServer will run on: http://localhost:5001")
+    print(f"\nServer will run on: http://{local_ip}:5001")
     print(f"\n✓ User registration: ENABLED")
     print(f"✓ Login required: ENABLED")
     print(f"✓ Quiz tracking: ENABLED")
     print(f"✓ Results saved to: {QUIZ_RESULTS_DIR}/")
     print(f"✓ Database: {DB_FILE}")
     print(f"\nPages:")
-    print(f"  - Student Login:  http://localhost:5001/login.html")
-    print(f"  - Student Register: http://localhost:5001/register.html")
-    print(f"  - Quiz Generator: http://localhost:5001/")
-    print(f"  - Admin Login:    http://localhost:5001/admin_login.html")
-    print(f"  - Admin Dashboard: http://localhost:5001/results")
+    print(f"  - Student Login:  http://{local_ip}:5001/login.html")
+    print(f"  - Student Register: http://{local_ip}:5001/register.html")
+    print(f"  - Quiz Generator: http://{local_ip}:5001/")
+    print(f"  - Admin Login:    http://{local_ip}:5001/admin_login.html")
+    print(f"  - Admin Dashboard: http://{local_ip}:5001/results")
+    print(f"  - Admin Users:    http://{local_ip}:5001/admin_users.html")
     print(f"\nAdmin credentials:")
     print(f"  Username: admin")
     print(f"  Password: pass123")

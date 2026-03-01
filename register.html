@@ -184,7 +184,7 @@
             btn.textContent = 'Creating account...';
 
             // Send registration request
-            fetch('http://localhost:5001/api/register', {
+            fetch('/api/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })

@@ -15,7 +15,7 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            padding: 20px;
+            padding: 10px;
         }
 
         .container {
@@ -25,44 +25,74 @@
             border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             overflow: hidden;
+            width: 100%;
         }
 
         .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 30px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
             text-align: center;
         }
 
+        @media (min-width: 768px) {
+            body { padding: 20px; }
+            .header {
+                padding: 30px;
+                flex-direction: row;
+                justify-content: space-between;
+                text-align: left;
+            }
+        }
+
         .header h1 {
-            font-size: 2em;
-            margin-bottom: 10px;
+            font-size: 1.8em;
+            margin-bottom: 5px;
         }
 
         .header p {
             opacity: 0.9;
         }
 
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
         .header-buttons {
             display: flex;
-            align-items: center;
-            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+        }
+
+        @media (min-width: 768px) {
+            .header-buttons {
+                width: auto;
+                justify-content: flex-end;
+            }
         }
 
         .header-btn {
             background: white;
             color: #667eea;
-            padding: 10px 20px;
+            padding: 10px 15px;
             border-radius: 8px;
             text-decoration: none;
             font-weight: 600;
             transition: transform 0.2s;
+            font-size: 0.9em;
+            flex: 1;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        @media (min-width: 768px) {
+            .header-btn {
+                padding: 10px 20px;
+                flex: none;
+                font-size: 1em;
+            }
         }
 
         .header-btn:hover {
@@ -606,30 +636,28 @@
             document.getElementById('setupForm').classList.add('hidden');
             document.getElementById('loading').classList.add('show');
 
-            const prompt = `Generate ${numQuestions} multiple choice questions about: ${topic}
+            const prompt = `Generate ${numQuestions} multiple choice questions about: ${topic}. 
 
-For each question, provide:
-1. The question text
-2. 4 options (A, B, C, D)
-3. The correct answer letter
-
-Format your response as valid JSON ONLY, with this exact structure:
+Return a JSON object with this EXACT structure:
 {
     "questions": [
         {
-            "question": "Question text here?",
+            "question": "The question text",
             "options": {
-                "A": "Option A text",
-                "B": "Option B text",
-                "C": "Option C text",
-                "D": "Option D text"
+                "A": "Option 1",
+                "B": "Option 2",
+                "C": "Option 3",
+                "D": "Option 4"
             },
             "correct": "A"
         }
     ]
 }
 
-IMPORTANT: Return ONLY the JSON, no other text. Ensure all questions are about ${topic}.`;
+IMPORTANT:
+1. Return ONLY the JSON object.
+2. Use valid JSON formatting (escape double quotes with backslashes if they appear in text).
+3. Ensure all ${numQuestions} questions are covered.`;
 
             try {
                 const response = await fetch(endpoint, {
@@ -641,7 +669,8 @@ IMPORTANT: Return ONLY the JSON, no other text. Ensure all questions are about $
                         model: model,
                         prompt: prompt,
                         stream: false,
-                        temperature: 0.8
+                        format: "json",
+                        temperature: 0.7
                     })
                 });
 
@@ -652,24 +681,30 @@ IMPORTANT: Return ONLY the JSON, no other text. Ensure all questions are about $
                 const data = await response.json();
                 const responseText = data.response || '';
 
-                const jsonStart = responseText.indexOf('{');
-                const jsonEnd = responseText.lastIndexOf('}') + 1;
+                try {
+                    // Try to parse the entire response first
+                    questions = JSON.parse(responseText);
+                } catch (e) {
+                    // Fallback to finding the JSON block
+                    const jsonStart = responseText.indexOf('{');
+                    const jsonEnd = responseText.lastIndexOf('}') + 1;
 
-                if (jsonStart === -1 || jsonEnd === 0) {
-                    throw new Error('Could not find JSON in LLaMA response');
+                    if (jsonStart === -1 || jsonEnd === 0) {
+                        throw new Error('Could not find JSON in LLaMA response');
+                    }
+
+                    const jsonStr = responseText.substring(jsonStart, jsonEnd);
+                    questions = JSON.parse(jsonStr);
                 }
 
-                const jsonStr = responseText.substring(jsonStart, jsonEnd);
-                questions = JSON.parse(jsonStr);
-
-                if (!questions.questions || questions.questions.length === 0) {
-                    throw new Error('No questions generated');
+                if (!questions || !questions.questions || !Array.isArray(questions.questions) || questions.questions.length === 0) {
+                    throw new Error('No valid questions found in LLaMA response');
                 }
 
                 // Save quiz to database
                 const username = localStorage.getItem('quiz_username');
                 try {
-                    const saveResponse = await fetch('http://localhost:5001/api/save-quiz', {
+                    const saveResponse = await fetch('/api/save-quiz', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -781,7 +816,7 @@ IMPORTANT: Return ONLY the JSON, no other text. Ensure all questions are about $
             const topic = document.getElementById('examTopic').value || 'Quiz';
 
             try {
-                const response = await fetch('http://localhost:5001/api/submit-quiz', {
+                const response = await fetch('/api/submit-quiz', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -823,6 +858,7 @@ IMPORTANT: Return ONLY the JSON, no other text. Ensure all questions are about $
 
         function logout() {
             localStorage.removeItem('quiz_username');
+            localStorage.removeItem('quiz_admin_username');
             window.location.href = 'login.html';
         }
 
@@ -848,7 +884,7 @@ IMPORTANT: Return ONLY the JSON, no other text. Ensure all questions are about $
             modalBody.innerHTML = '<p style="text-align: center;">Loading...</p>';
 
             try {
-                const response = await fetch(`http://localhost:5001/api/my-quizzes?username=${username}`);
+                const response = await fetch(`/api/my-quizzes?username=${username}`);
                 const data = await response.json();
 
                 if (!data.success) {
@@ -926,7 +962,7 @@ IMPORTANT: Return ONLY the JSON, no other text. Ensure all questions are about $
             document.getElementById('loading').classList.add('show');
 
             try {
-                const response = await fetch(`http://localhost:5001/api/quiz/${quizId}`);
+                const response = await fetch(`/api/quiz/${quizId}`);
                 const data = await response.json();
 
                 if (!data.success) {
@@ -998,7 +1034,7 @@ IMPORTANT: Return ONLY the JSON, no other text. Ensure all questions are about $
         function downloadResults() {
             const topic = document.getElementById('examTopic').value || 'Quiz';
             const score = document.getElementById('score').textContent;
-            const percentage = document.getElementById('percentage').textContent();
+            const percentage = document.getElementById('percentage').textContent;
 
             var results = 'QUIZ RESULTS\n';
             results += '================================\n';
@@ -1066,7 +1102,7 @@ IMPORTANT: Return ONLY the JSON, no other text. Ensure all questions are about $
                         .replace('__QUESTIONS__', JSON.stringify(questions));
 
                     // Save to project directory via server
-                    return fetch('http://localhost:5001/save-quiz', {
+                    return fetch('/save-quiz', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({

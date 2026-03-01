@@ -14,7 +14,10 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            padding: 20px;
+            padding: 10px;
+        }
+        @media (min-width: 768px) {
+            body { padding: 20px; }
         }
         .container {
             max-width: 1400px;
@@ -23,27 +26,61 @@
             border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             overflow: hidden;
+            width: 100%;
         }
         .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 30px;
+            padding: 20px;
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
+            gap: 15px;
             align-items: center;
+            text-align: center;
+        }
+        @media (min-width: 768px) {
+            .header {
+                padding: 30px;
+                flex-direction: row;
+                justify-content: space-between;
+                text-align: left;
+            }
         }
         .header h1 {
-            font-size: 2em;
+            font-size: 1.8em;
             margin-bottom: 5px;
+        }
+        .header-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+        }
+        @media (min-width: 768px) {
+            .header-buttons {
+                width: auto;
+                justify-content: flex-end;
+            }
         }
         .header-buttons a {
             background: white;
             color: #667eea;
-            padding: 10px 20px;
+            padding: 10px 15px;
             border-radius: 8px;
             text-decoration: none;
             font-weight: 600;
             transition: transform 0.2s;
+            display: inline-block;
+            width: 150px;
+            text-align: center;
+            font-size: 0.9em;
+        }
+        @media (min-width: 768px) {
+            .header-buttons a {
+                padding: 10px 20px;
+                font-size: 1em;
+            }
         }
         .header-buttons a:hover {
             transform: translateY(-2px);
@@ -204,11 +241,16 @@
     <div class="container">
         <div class="header">
             <div>
-                <h1>📊 Teacher Dashboard</h1>
-                <p>View all submitted quiz results</p>
+                <h1 id="dashboardTitle">📊 Teacher Dashboard</h1>
+                <p id="dashboardSubtitle">View all submitted quiz results</p>
             </div>
             <div class="header-buttons">
+                <span id="welcomeUser" style="margin-right: 15px; font-weight: 600;"></span>
+                <span id="adminOnlyButtons">
+                    <a href="/admin_users.html">Manage Users</a>
+                </span>
                 <a href="/">Generate Quiz</a>
+                <a href="#" onclick="logout()" style="background: #dc3545; color: white; padding: 10px 15px; border-radius: 8px; text-decoration: none; font-weight: 600;">Logout</a>
             </div>
         </div>
 
@@ -220,7 +262,7 @@
                 </div>
                 <div class="stat-card">
                     <h3 id="totalStudents">0</h3>
-                    <p>Students</p>
+                    <p id="studentStatLabel">Students</p>
                 </div>
                 <div class="stat-card">
                     <h3 id="avgScore">0%</h3>
@@ -254,9 +296,21 @@
 
     <script>
         let allResults = [];
+        let isUserAdmin = false;
+
+        function logout() {
+            localStorage.removeItem('quiz_username');
+            localStorage.removeItem('quiz_admin_username');
+            window.location.href = 'login.html';
+        }
 
         function loadResults() {
-            fetch('/api/results')
+            const username = localStorage.getItem('quiz_admin_username') || localStorage.getItem('quiz_username');
+            if (username) {
+                document.getElementById('welcomeUser').textContent = '👤 ' + username;
+            }
+            
+            fetch(`/api/results?username=${username}`)
                 .then(response => {
                     if (!response.ok) {
                         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -279,7 +333,7 @@
             const quizList = document.getElementById('quizList');
 
             if (results.length === 0) {
-                quizList.innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">No quiz results yet. Students need to take quizzes first!</p>';
+                quizList.innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">No quiz results yet. Go take some quizzes!</p>';
                 return;
             }
 
@@ -301,7 +355,7 @@
                         <span class="quiz-score">${quiz.score} (${quiz.percentage})</span>
                     </div>
                     <div class="quiz-meta">
-                        👤 Student: <strong>${quiz.username}</strong><br>
+                        👤 ${isUserAdmin ? 'Student: <strong>' + quiz.username + '</strong>' : 'My Result'}<br>
                         📅 Date: ${new Date(quiz.timestamp).toLocaleString()}
                     </div>
                 `;
@@ -313,8 +367,14 @@
         function updateStats(results) {
             document.getElementById('totalQuizzes').textContent = results.length;
 
-            const students = new Set(results.map(r => r.username));
-            document.getElementById('totalStudents').textContent = students.size;
+            if (isUserAdmin) {
+                const students = new Set(results.map(r => r.username));
+                document.getElementById('totalStudents').textContent = students.size;
+                document.getElementById('studentStatLabel').textContent = 'Students';
+            } else {
+                document.getElementById('totalStudents').textContent = results.length > 0 ? '✓' : '0';
+                document.getElementById('studentStatLabel').textContent = 'Completed';
+            }
 
             if (results.length > 0) {
                 const avgPercent = results.reduce((sum, r) => sum + parseInt(r.percentage), 0) / results.length;
@@ -405,43 +465,43 @@
             }
         }
 
-        // Check for admin login on page load
-        async function checkAdminAccess() {
-            const adminUsername = localStorage.getItem('quiz_admin_username') || localStorage.getItem('quiz_username');
+        // Check for login on page load
+        async function checkAccess() {
+            const username = localStorage.getItem('quiz_admin_username') || localStorage.getItem('quiz_username');
 
-            if (!adminUsername) {
-                // Redirect to admin login
-                window.location.href = 'admin_login.html';
+            if (!username) {
+                window.location.href = 'login.html';
                 return false;
             }
 
             // Verify admin access
             try {
-                const response = await fetch('http://localhost:5001/api/verify-admin', {
+                const response = await fetch('/api/verify-admin', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: adminUsername })
+                    body: JSON.stringify({ username: username })
                 });
 
                 const data = await response.json();
-                if (!data.success) {
-                    alert('Admin access required. Please login as admin.');
-                    window.location.href = 'admin_login.html';
-                    return false;
+                isUserAdmin = data.success;
+                
+                // Update UI based on role
+                if (!isUserAdmin) {
+                    document.getElementById('dashboardTitle').textContent = '📊 My Quiz Results';
+                    document.getElementById('dashboardSubtitle').textContent = 'View your recent performance';
+                    document.getElementById('adminOnlyButtons').style.display = 'none';
                 }
+                
                 return true;
             } catch (error) {
-                console.error('Error verifying admin:', error);
-                alert('Error verifying admin access.');
-                return false;
+                console.error('Error verifying access:', error);
+                return true; // Fallback to allowing access, filtering will happen in API
             }
         }
 
         // Load results on page load
-        checkAdminAccess().then(isAdmin => {
-            if (isAdmin) {
-                loadResults();
-            }
+        checkAccess().then(() => {
+            loadResults();
         });
     </script>
 </body>
