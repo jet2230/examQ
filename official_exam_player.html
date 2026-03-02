@@ -233,13 +233,13 @@
         let lastJumpedPage = null;
         let isManualJumping = false;
 
-        function jump(pageNum, elementToFocus) {
+        function jump(pageNum, element) {
             const img = document.getElementById('page_' + pageNum);
             if (!img) return;
 
             let alignment = 'start';
-            if (elementToFocus) {
-                const item = elementToFocus.closest('.sub-question-item');
+            if (element) {
+                const item = element.closest('.sub-question-item') || element;
                 if (item && item.getAttribute('data-align') === 'end') {
                     alignment = 'end';
                 }
@@ -248,7 +248,7 @@
             img.scrollIntoView({ behavior: 'smooth', block: alignment });
             lastJumpedPage = pageNum;
             
-            if (elementToFocus) {
+            if (element && (element.tagName === 'TEXTAREA' || element.tagName === 'INPUT' || element.tagName === 'CANVAS')) {
                 isManualJumping = true;
                 setTimeout(() => { isManualJumping = false; }, 1000);
             }
@@ -524,7 +524,7 @@
 
                 if (bestItem) {
                     const pNum = bestItem.getAttribute('data-page');
-                    if (pNum) jump(pNum);
+                    if (pNum) jump(pNum, bestItem);
                 }
             };
 

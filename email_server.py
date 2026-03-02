@@ -388,6 +388,7 @@ JSON FORMAT:
 
 TYPE RULES:
 - Include "final_label" for calculation questions if the question asks for a specific value like "Rate", "Volume", "Percentage", otherwise omit or set to "Final Answer".
+- Use "draw" for questions that ask to "Draw...", "Complete the diagram...", "Sketch...", or "Pyramid of...".
 """
             page_resp = requests.post('http://localhost:11434/api/generate', json={
                 'model': 'llama3', 'prompt': page_prompt, 'stream': False, 'format': 'json', 'temperature': 0
@@ -528,6 +529,7 @@ def grade_official_question():
         question_id = data.get('question_id')
         sub_id = data.get('sub_id')
         user_answer = data.get('user_answer')
+        image_data = data.get('image_data') # Extract base64 image if present
         mark_scheme = data.get('mark_scheme')
         max_marks = data.get('max_marks', 1)
 
@@ -557,37 +559,65 @@ STUDENT'S ANSWER:
 {user_answer}
 
 MARKING INSTRUCTIONS:
-1. HELP REQUESTS: If the student explicitly asks for help (e.g., "show me", "tell me", "I don't know", "what is the answer"), you must award 0 marks. However, your feedback MUST warmly explain the concept and provide a clear step-by-step breakdown of how to reach the correct answer based on the mark scheme. DO NOT just say "irrelevant answer". Be a helpful tutor.
-2. MANDATORY: If the student's answer is blank, nonsensical, or irrelevant (and not a help request), award 0 marks.
-3. CALCULATION HANDLING: 
+1. MCQ (MULTIPLE CHOICE): If the question type is "mcq", you must be absolute. Compare the STUDENT'S ANSWER (which will be a single letter like A, B, C, or D) to the correct letter in the OFFICIAL MARK SCHEME. If it matches, award FULL MARKS (usually 1). If it does not match, award 0.
+2. HELP REQUESTS: If the student explicitly asks for help (e.g., "show me", "tell me", "I don't know", "what is the answer"), you must award 0 marks. However, your feedback MUST warmly explain the concept and provide a clear step-by-step breakdown of how to reach the correct answer based on the mark scheme. DO NOT just say "irrelevant answer". Be a helpful tutor.
+2. DRAWING QUESTIONS: If the answer is "[DRAWING_SUBMITTED]", the student has drawn an image. If you are a vision-capable model, grade the provided image against the mark scheme. If you cannot see the image, award 0 marks and explicitly tell the student: "I am currently running as a text-only AI model and cannot see your drawing. Please self-assess using this Mark Scheme: [insert mark scheme here]".
+3. MANDATORY: If the student's answer is blank, nonsensical, or irrelevant (and not a help request), award 0 marks.
+4. CALCULATION HANDLING: 
    - The student's answer is structured with `[WORKING_START]`, `[WORKING_END]`, `[FINAL_ANSWER_START]`, and `[FINAL_ANSWER_END]`.
    - IMPORTANT: If the `[FINAL_ANSWER_START]` matches the mark scheme exactly (including units), award FULL MARKS ({max_marks}) even if the working contains a minor typo or is incomplete. This is the "Correct Answer Scores 2" rule.
    - If the `[FINAL_ANSWER_START]` is wrong or missing, award partial marks (e.g. 1/2) ONLY if the `[WORKING_START]` section shows valid intermediate steps (like a correct subtraction or division) from the mark scheme.
-4. BE PRECISE: Check every line within `[WORKING_START]`. Do not ignore lines.
-5. If the student did not receive full marks, you MUST provide a "MODEL ANSWER" based on the mark scheme.
-6. Return a valid JSON response.
-7. Be an expert, but fair examiner. Award marks if the knowledge is clearly shown despite minor typos.
+5. BE PRECISE: Check every line within `[WORKING_START]`. Do not ignore lines.
+6. If the student did not receive full marks, you MUST provide a "MODEL ANSWER" based on the mark scheme.
+7. Return a valid JSON response.
+8. Be an expert, but fair examiner. Award marks if the knowledge is clearly shown despite minor typos.
 RESPONSE FORMAT (JSON ONLY):
 {{
   "marks_awarded": 0,
   "max_marks": {max_marks},
-  "feedback": "Evaluation. \n\nMODEL ANSWER: [Correct steps]",
+  "feedback": "Evaluation. \\n\\nMODEL ANSWER: [Correct steps]",
   "marking_points_met": []
 }}
 """
 
         # Call local Ollama
-        response = requests.post('http://localhost:11434/api/generate', json={
+        payload = {
             'model': 'llama3',
             'prompt': prompt,
             'stream': False,
             'format': 'json',
             'temperature': 0.0
-        })
+        }
+        
+        # If image_data is provided (base64 from canvas), pass it in 'images' array.
+        # Ensure we strip the 'data:image/png;base64,' prefix.
+        if image_data and image_data.startswith('data:image'):
+            base64_str = image_data.split(',')[1]
+            payload['images'] = [base64_str]
+
+        response = requests.post('http://localhost:11434/api/generate', json=payload)
 
         if response.status_code == 200:
-            result = response.json().get('response', '{}')
-            return jsonify(json.loads(result)), 200
+            raw_ai_text = response.json().get('response', '{}').strip()
+            
+            # Robust JSON extraction (find first { and last })
+            import re
+            try:
+                json_match = re.search(r'\{.*\}', raw_ai_text, re.DOTALL)
+                if json_match:
+                    clean_json = json_match.group(0)
+                    result_data = json.loads(clean_json)
+                else:
+                    raise ValueError("No JSON found in AI response")
+            except:
+                # If extraction fails, construct a fallback JSON from the text
+                result_data = {
+                    "marks_awarded": 0,
+                    "feedback": f"AI Parsing Error. Raw Response: {raw_ai_text[:500]}...",
+                    "marking_points_met": []
+                }
+            
+            return jsonify(result_data), 200
         else:
             return jsonify({'error': 'Failed to connect to LLaMA'}), 500
 
