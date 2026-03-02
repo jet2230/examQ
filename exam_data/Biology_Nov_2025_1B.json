@@ -1,57 +1,8 @@
 {
   "paper_id": "Biology_Nov_2025_1B",
-  "title": "Pearson Edexcel International GCSE (9\u20131) - Biology Unit: 4BI1 Science (Double Award) Paper: 1B",
+  "title": "Pearson Edexcel International GCSE (9-1) Biology Paper 1B - Nov 2025",
   "subject": "Biology",
   "qp_img_dir": "/static/exams/Biology_Nov_2025_1B/qp/",
-  "er_text": "",
-  "questions": [
-    {
-      "id": 1,
-      "choice_group": "Section Name or null",
-      "sub_questions": [
-        {
-          "sub_id": "1(a)",
-          "type": "text/mcq/calculation/list",
-          "options": [
-            "A",
-            "B",
-            "C",
-            "D"
-          ],
-          "qp_pages": [
-            1
-          ],
-          "ms_text": "mark scheme text",
-          "max_marks": 1
-        }
-      ]
-    },
-    {
-      "id": 2,
-      "choice_group": null,
-      "sub_questions": [
-        {
-          "sub_id": "2(a)",
-          "type": "text",
-          "options": [
-            "The plant roots",
-            "The leaves",
-            "Both the roots and the leaves",
-            "Neither the roots nor the leaves"
-          ],
-          "qp_pages": [
-            1
-          ],
-          "ms_text": "Mark scheme text",
-          "max_marks": 1
-        }
-      ]
-    }
-  ],
-  "extract_pages": {
-    "page_numbers": [
-      "27",
-      "28"
-    ]
-  }
+  "extract_pages": [],
+  "questions": []
 }

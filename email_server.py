@@ -229,11 +229,10 @@ def extract_pdf_text(filepath):
     try:
         with open(filepath, 'rb') as file:
             reader = PyPDF2.PdfReader(file)
-            text = ""
+            text = []
             for i, page in enumerate(reader.pages):
-                text += f"--- PAGE {i+1} ---\n"
-                text += page.extract_text() + "\n"
-            return text
+                text.append(page.extract_text())
+            return "\n---PAGE BREAK---\n".join(text)
     except Exception as e:
         return f"Error: {str(e)}"
 
@@ -340,84 +339,67 @@ JSON FORMAT:
                 'skipped': True
             }), 200
 
-        # 3. Use LLaMA to generate Question Mapping (Iterative for reliability)
-        # Step A: Identify all question numbers
-        scan_prompt = f"""Analyze this IGCSE exam paper. List only the main question numbers present (e.g., 1, 2, 3... 11).
-TEXT:
-{qp_text[:20000]}
-"""
-        scan_resp = requests.post('http://localhost:11434/api/generate', json={
-            'model': 'llama3', 'prompt': scan_prompt, 'stream': False, 'temperature': 0
-        })
-        q_list_raw = scan_resp.json().get('response', '')
-        # Simple extraction of numbers from the AI response
-        import re
-        q_numbers = sorted(list(set(re.findall(r'\b\d+\b', q_list_raw))), key=int)
-        
-        all_questions = []
-        
-        # Step B: Map each question individually
-        for q_num in q_numbers:
-            print(f"  Mapping Question {q_num}...")
-            q_prompt = f"""Analyze Question {q_num} in this IGCSE paper and its mark scheme.
-            
-QP TEXT:
+        # 3. Use LLaMA to generate Question Mapping
+        map_prompt = f"""Analyze this IGCSE exam paper and its mark scheme. 
+You MUST generate a mapping of ALL main questions (from Question 1 up to the very last question, usually 10-12) to their page numbers and the relevant mark scheme text.
+
+CRITICAL: Do not stop early. Every single question in the paper must be represented in the JSON.
+
+QP TEXT (TARGETED):
 {qp_text[:50000]}
 
-MS TEXT:
+MS TEXT (TARGETED):
 {ms_text[:50000]}
 
-Return JSON for ONLY Question {q_num}:
+JSON FORMAT (STRICT):
 {{
-  "id": {q_num},
-  "choice_group": "Section Name or null",
-  "sub_questions": [
+  "questions": [
     {{
-      "sub_id": "{q_num}(a)",
-      "type": "text/mcq/calculation/list",
-      "options": ["A", "B", "C", "D"],
-      "qp_pages": [page_number],
-      "ms_text": "mark scheme text",
-      "max_marks": 1
+      "id": 1,
+      "choice_group": "Section Name or null",
+      "sub_questions": [
+        {{
+          "sub_id": "1(a)",
+          "type": "mcq", 
+          "options": ["A", "B", "C", "D"],
+          "qp_pages": [2],
+          "ms_text": "Correct Answer: [Letter] ([Explanation])",
+          "max_marks": 1
+        }},
+        ...
+      ]
     }}
-  ]
+  ],
+  "extract_pages": []
 }}
-"""
-            q_resp = requests.post('http://localhost:11434/api/generate', json={
-                'model': 'llama3', 'prompt': q_prompt, 'stream': False, 'format': 'json', 'temperature': 0
-            })
-            try:
-                q_data = json.loads(q_resp.json().get('response', '{}'))
-                if q_data and 'sub_questions' in q_data:
-                    all_questions.append(q_data)
-            except:
-                print(f"  Warning: Failed to map Question {q_num}")
 
-        # Step C: Check for extracts
-        extract_prompt = f"""Identify page numbers for "Extracts Booklet" or "Source Booklet" in this text. 
-Return only a JSON array of page numbers or an empty array [].
-TEXT:
-{qp_text[-10000:]}
+TYPE RULES:
+- Identify every main question number sequentially.
+- For each question, extract all sub-questions (e.g. 1(a), 1(b)(i)).
+- If the exam paper contains an \"Extracts Booklet\", \"Source Booklet\", or \"Reading Texts\" section (very common in English papers), identify the page numbers for these texts and include them in the \"extract_pages\" array in the root of the JSON.
+- If the exam paper explicitly states \"Answer ONE question from this section\" or \"Answer either Question X or Question Y\", set a matching \"choice_group\" string for those questions (e.g., \"Section B Choice\"). This is CRITICAL for papers like English where students select 1 of 3 long-form tasks.
+- Use \"mcq\" ONLY if the question has A,B,C,D options.
+- Use \"calculation\" for multi-mark math/science questions.
+- Use \"list\" for questions that ask to \"State two ways...\", \"Give three reasons...\", etc. You MUST include a \"count\" integer property (e.g., \"count\": 2).
+- Use \"text\" for all other standard or long-form written answers.
+- Ensure \"qp_pages\" are the page numbers in the Question Paper where the question is visible.
 """
-        ex_resp = requests.post('http://localhost:11434/api/generate', json={
-            'model': 'llama3', 'prompt': extract_prompt, 'stream': False, 'format': 'json', 'temperature': 0
+        map_resp = requests.post('http://localhost:11434/api/generate', json={
+            'model': 'llama3', 'prompt': map_prompt, 'stream': False, 'format': 'json', 'temperature': 0
         })
-        try:
-            extract_pages = json.loads(ex_resp.json().get('response', '[]'))
-        except:
-            extract_pages = []
+        ai_raw = map_resp.json().get('response', '{"questions": []}')
+        mapping_data = json.loads(ai_raw)
 
-        mapping_data = {
-            "questions": all_questions,
-            "extract_pages": extract_pages
-        }
-
-        # 4. Convert PDF to Images
+        # 4. Convert PDF to Images (if they don't exist)
         qp_img_dir = f"static/exams/{paper_id}/qp"
-        os.makedirs(qp_img_dir, exist_ok=True)
-        images = convert_from_path(qp_path, dpi=150)
-        for i, image in enumerate(images):
-            image.save(os.path.join(qp_img_dir, f"page_{i+1:02d}.png"), 'PNG')
+        if not os.path.exists(qp_img_dir) or not os.listdir(qp_img_dir):
+            os.makedirs(qp_img_dir, exist_ok=True)
+            print("  Converting PDF to images...")
+            images = convert_from_path(qp_path, dpi=150)
+            for i, image in enumerate(images):
+                image.save(os.path.join(qp_img_dir, f"page_{i+1:02d}.png"), 'PNG')
+        else:
+            print("  Images already exist. Skipping conversion.")
 
         # 5. Save Final JSON
         final_data = {
