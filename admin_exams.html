@@ -168,7 +168,7 @@
         <div class="content">
             <div class="upload-section">
                 <h2>Add New Exam Paper (Intelligent AI Processing)</h2>
-                <p style="margin-bottom: 20px; color: #666;">Select the **Question Paper** PDF from the server. The AI will automatically find the matching Mark Scheme and Examiner Report.</p>
+                <p style="margin-bottom: 20px; color: #666;">Select the **Question Paper** PDF from the server. The AI will automatically find the matching Mark Scheme and Examiner Report in the same folder or sub-folders.</p>
                 
                 <div class="form-group">
                     <label>Exam Resources Path</label>
@@ -189,7 +189,7 @@
                 <input type="hidden" id="erPath">
 
                 <button id="processBtn" class="btn-process" onclick="processExam()" disabled>Start AI Analysis & Import</button>
-                <button id="bulkBtn" class="btn-process" style="background: #667eea; margin-top: 10px;" onclick="bulkProcess()">🚀 Bulk Process All in Folder</button>
+                <button id="bulkBtn" class="btn-process" style="background: #667eea; margin-top: 10px;" onclick="bulkProcess()">🚀 Bulk Process All in Folder (Recursive)</button>
                 
                 <div id="loadingMsg" class="loading-overlay">
                     🧠 AI is currently reading the PDF, categorizing the subject, and mapping mark schemes... This may take up to 60 seconds.
@@ -307,24 +307,45 @@
             document.getElementById('browserModal').style.display = 'none';
         }
 
+        // --- ROBUST PAIRING LOGIC ---
+        
+        function getCleanBase(filename) {
+            return filename.toLowerCase()
+                .replace(/questionpaper-|markscheme-|examinerreport-|msc-|qp|ms|er|report/g, '')
+                .replace('.pdf', '')
+                .replace(/[\s\-_]+/g, '')
+                .trim();
+        }
+
+        function isQuestionPaper(filename) {
+            const n = filename.toLowerCase();
+            if (n.includes('markscheme') || n.includes('msc') || n.includes('report') || n.includes('examinerreport')) return false;
+            // Also exclude common tags for MS/ER in Biology
+            if (n.includes('ms.pdf') || n.includes('er.pdf')) return false;
+            return true;
+        }
+
         function selectFile(file, allFiles) {
             const qpName = file.name;
             const qpPath = file.path;
+            const qpBase = getCleanBase(qpName);
+            
             let msPath = "";
             let msName = "Not found";
             let erPath = "";
             let erName = "Not found";
 
-            const baseName = qpName.replace('Questionpaper-', '').replace('Question-paper/', '').replace('.pdf', '').toLowerCase();
-            
-            // Look for MS and ER
             allFiles.forEach(f => {
                 const n = f.name.toLowerCase();
-                if (n.includes('markscheme') && (n.includes(baseName) || baseName.includes(n.split('-')[1]))) {
-                    msPath = f.path; msName = f.name;
-                }
-                if (n.includes('examinerreport') && (n.includes(baseName) || baseName.includes(n.split('-')[1]))) {
-                    erPath = f.path; erName = f.name;
+                const fBase = getCleanBase(f.name);
+                
+                // If it shares the same base name and isn't the same file
+                if (fBase === qpBase && f.path !== qpPath) {
+                    if (n.includes('markscheme') || n.includes('ms') || n.includes('msc')) {
+                        msPath = f.path; msName = f.name;
+                    } else if (n.includes('examinerreport') || n.includes('er') || n.includes('report')) {
+                        erPath = f.path; erName = f.name;
+                    }
                 }
             });
 
@@ -370,7 +391,7 @@
             const admin_username = localStorage.getItem('quiz_admin_username') || localStorage.getItem('quiz_username');
             const dir_path = document.getElementById('resourcePath').value.trim();
             
-            if (!confirm(`Bulk process in: ${dir_path}?`)) return;
+            if (!confirm(`Bulk process all papers in: ${dir_path}?`)) return;
 
             const bulkBtn = document.getElementById('bulkBtn');
             const bulkProgress = document.getElementById('bulkProgress');
@@ -389,22 +410,43 @@
                 const data = await res.json();
                 if (!data.success) throw new Error(data.message);
 
-                const qpFiles = data.files.filter(f => f.name.toLowerCase().includes('questionpaper'));
+                // 1. Identify QPs
+                const qpFiles = data.files.filter(f => isQuestionPaper(f.name));
                 const pairs = [];
 
+                // 2. Match each QP to its buddies
                 qpFiles.forEach(qp => {
-                    const base = qp.name.replace('Questionpaper-', '').replace('.pdf', '').toLowerCase();
-                    const ms = data.files.find(f => f.name.toLowerCase().includes('markscheme') && f.name.toLowerCase().includes(base));
-                    const er = data.files.find(f => f.name.toLowerCase().includes('examinerreport') && f.name.toLowerCase().includes(base));
-                    if (ms) pairs.push({ qp: qp.path, ms: ms.path, er: er ? er.path : "", name: qp.name });
+                    const qpBase = getCleanBase(qp.name);
+                    let ms = null;
+                    let er = null;
+
+                    data.files.forEach(f => {
+                        if (f.path === qp.path) return;
+                        const n = f.name.toLowerCase();
+                        const fBase = getCleanBase(f.name);
+
+                        if (fBase === qpBase) {
+                            if (n.includes('markscheme') || n.includes('ms') || n.includes('msc')) ms = f;
+                            else if (n.includes('examinerreport') || n.includes('er') || n.includes('report')) er = f;
+                        }
+                    });
+
+                    if (ms) {
+                        pairs.push({ qp: qp.path, ms: ms.path, er: er ? er.path : "", name: qp.name });
+                    }
                 });
+
+                if (pairs.length === 0) {
+                    alert("No valid QP/MS pairs found. Check your filenames.");
+                    return;
+                }
 
                 bulkStatus.textContent = `Processing ${pairs.length} Papers...`;
 
                 for (let i = 0; i < pairs.length; i++) {
                     const pair = pairs[i];
                     progressBar.style.width = `${Math.round((i / pairs.length) * 100)}%`;
-                    bulkDetail.textContent = `Processing: ${pair.name}`;
+                    bulkDetail.textContent = `Current: ${pair.name}`;
 
                     try {
                         const pRes = await fetch('/api/admin/process-exam', {
@@ -413,7 +455,7 @@
                             body: JSON.stringify({ admin_username, qp_path: pair.qp, ms_path: pair.ms, er_path: pair.er })
                         });
                         const pData = await pRes.json();
-                        if (pData.success) bulkDetail.textContent = (pData.skipped ? "Skipped: " : "Done: ") + pair.name;
+                        if (pData.success) bulkDetail.textContent = (pData.skipped ? "Skipped: " : "Imported: ") + pair.name;
                     } catch (e) {}
                     loadExams();
                 }

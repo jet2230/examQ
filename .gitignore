@@ -9,3 +9,7 @@ ENV/
 .claude/
 results/
 users.json
+resources/
+static/
+exam_data/
+quizzes.db

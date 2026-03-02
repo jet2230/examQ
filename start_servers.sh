@@ -51,7 +51,7 @@ fi
 
 # Start the quiz server
 echo "  Starting Quiz Server..."
-nohup python3 email_server.py > /tmp/quiz_server.log 2>&1 < /dev/null &
+nohup python3 -u email_server.py > /tmp/quiz_server.log 2>&1 < /dev/null &
 sleep 2
 
 # Verify server is running
