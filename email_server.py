@@ -89,18 +89,6 @@ def init_db():
         )
     ''')
 
-    # Insert default exam if table is empty
-    cursor.execute("SELECT COUNT(*) FROM official_exams")
-    if cursor.fetchone()[0] == 0:
-        cursor.execute('''
-            INSERT INTO official_exams (id, title, subject, paper, date, data_json_path)
-            VALUES (?, ?, ?, ?, ?, ?)
-        ''', (
-            'biology_2B_nov_2025', 
-            'Pearson Edexcel International GCSE (9–1) Friday 14 November 2025 Biology Paper 2B',
-            'Biology', '2B', 'Nov 2025', 'exam_data/biology_2B_nov_2025.json'
-        ))
-
     conn.commit()
     conn.close()
 
@@ -328,7 +316,14 @@ JSON FORMAT:
             'model': 'llama3', 'prompt': meta_prompt, 'stream': False, 'format': 'json', 'temperature': 0
         })
         metadata = json.loads(meta_resp.json().get('response', '{}'))
+        
+        # Override metadata if provided
+        if data.get('subject'): metadata['subject'] = data.get('subject')
+        if data.get('id'): metadata['id'] = data.get('id')
+        
         paper_id = metadata.get('id', str(uuid.uuid4())[:8])
+        # Sanitize paper_id
+        paper_id = paper_id.replace('/', '_').replace('\\', '_').replace(' ', '_')
 
         # CHECK FOR DUPLICATE
         conn = get_db()
@@ -347,50 +342,51 @@ JSON FORMAT:
 
         # 3. Use LLaMA to generate Question Mapping
         map_prompt = f"""Analyze this IGCSE exam paper and its mark scheme. 
-Generate a mapping of each main question to its page numbers and the relevant mark scheme text.
+Generate a mapping of ALL main questions (usually 1 to 12) to their page numbers and the relevant mark scheme text.
 
-QP TEXT SNIPPET:
-{qp_text[:5000]}
+QP TEXT (TARGETED):
+{qp_text[:40000]}
 
-MS TEXT SNIPPET:
-{ms_text[:5000]}
+MS TEXT (TARGETED):
+{ms_text[:40000]}
 
 JSON FORMAT (STRICT):
 {{
   "questions": [
     {{
       "id": 1,
+      "choice_group": "Section Name or null",
       "sub_questions": [
         {{
           "sub_id": "1(a)",
           "type": "mcq", 
           "options": ["A", "B", "C", "D"],
           "qp_pages": [2],
-          "ms_text": "Exact mark scheme answer",
+          "ms_text": "Correct Answer: [Letter] ([Explanation])",
           "max_marks": 1
         }},
-        {{
-          "sub_id": "1(b)",
-          "type": "text",
-          "qp_pages": [2],
-          "ms_text": "Detailed mark scheme points",
-          "max_marks": 2
-        }}
+        ...
       ]
     }}
-  ]
+  ],
+  "extract_pages": []
 }}
 
 TYPE RULES:
-- Use "mcq" ONLY if the question has A,B,C,D options. ALWAYS include "options": ["A", "B", "C", "D"] for these.
-- Use "calculation" for multi-mark math questions.
-- Use "list" for "Name two..." type questions.
-- Use "text" for all others (especially long English answers).
+- If the exam paper contains an "Extracts Booklet", "Source Booklet", or "Reading Texts" section (very common in English papers), identify the page numbers for these texts and include them in the "extract_pages" array in the root of the JSON.
+- If the exam paper explicitly states "Answer ONE question from this section" or "Answer either Question X or Question Y", set a matching "choice_group" string for those questions (e.g., "Section B Choice"). This is CRITICAL for papers like English where students select 1 of 3 long-form tasks.
+- Use "mcq" ONLY if the question has A,B,C,D options.
+- Use "calculation" for multi-mark math/science questions.
+- Use "list" for questions that ask to "State two ways...", "Give three reasons...", etc. You MUST include a "count" integer property (e.g., "count": 2). This will generate multiple input boxes automatically.
+- If a single question number has multiple distinct sections on the exam (like Question 5 having two separate '1.' and '2.' answer lines), you can alternatively split them into separate sub_questions (e.g., "5(1)" and "5(2)").
+- Use "text" for all other standard or long-form written answers.
+- Ensure "qp_pages" are the page numbers in the Question Paper where the question is visible.
 """
         map_resp = requests.post('http://localhost:11434/api/generate', json={
             'model': 'llama3', 'prompt': map_prompt, 'stream': False, 'format': 'json', 'temperature': 0
         })
-        mapping_data = json.loads(map_resp.json().get('response', '{"questions": []}'))
+        ai_raw = map_resp.json().get('response', '{"questions": []}')
+        mapping_data = json.loads(ai_raw)
 
         # 4. Convert PDF to Images
         qp_img_dir = f"static/exams/{paper_id}/qp"
@@ -406,7 +402,8 @@ TYPE RULES:
             "subject": metadata.get('subject'),
             "qp_img_dir": f"/{qp_img_dir}/",
             "er_text": er_text,
-            "questions": mapping_data.get('questions', [])
+            "questions": mapping_data.get('questions', []),
+            "extract_pages": mapping_data.get('extract_pages', [])
         }
         json_path = f"exam_data/{paper_id}.json"
         os.makedirs('exam_data', exist_ok=True)
@@ -459,6 +456,29 @@ def delete_official_exam():
         return jsonify({'success': False, 'message': str(e)}), 500
 
 
+@app.route('/api/official-exams/<paper_id>/page-count')
+def get_exam_page_count(paper_id):
+    """Get the number of images in the exam's qp directory"""
+    try:
+        data_path = f'exam_data/{paper_id}.json'
+        if not os.path.exists(data_path):
+            return jsonify({'error': 'Exam not found'}), 404
+            
+        with open(data_path, 'r') as f:
+            exam_data = json.load(f)
+            
+        # qp_img_dir is usually like "/static/exams/English_June_2019_Paper_1/qp/"
+        rel_path = exam_data['qp_img_dir'].lstrip('/')
+        full_path = os.path.join(os.getcwd(), rel_path)
+        
+        if not os.path.exists(full_path):
+            return jsonify({'count': 0})
+            
+        files = [f for f in os.listdir(full_path) if f.endswith('.png')]
+        return jsonify({'count': len(files)})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/official-exams/grade', methods=['POST'])
 def grade_official_question():
     """Grade a user's answer using LLaMA and the official mark scheme"""
@@ -497,11 +517,15 @@ STUDENT'S ANSWER:
 {user_answer}
 
 MARKING INSTRUCTIONS:
-1. MANDATORY: If the student's answer is blank, award 0 marks.
-2. Award marks (0 to {max_marks}) based on the "OFFICIAL MARK SCHEME".
-3. Use the "EXAMINER REPORT" to provide high-quality feedback on what examiners are actually looking for.
+1. MANDATORY: If the student's answer is blank, nonsensical, or irrelevant, award 0 marks.
+2. CALCULATION HANDLING: 
+   - The student's answer is structured with `[WORKING_START]`, `[WORKING_END]`, `[FINAL_ANSWER_START]`, and `[FINAL_ANSWER_END]`.
+   - IMPORTANT: If the `[FINAL_ANSWER_START]` matches the mark scheme exactly (including units), award FULL MARKS ({max_marks}) even if the working contains a minor typo or is incomplete. This is the "Correct Answer Scores 2" rule.
+   - If the `[FINAL_ANSWER_START]` is wrong or missing, award partial marks (e.g. 1/2) ONLY if the `[WORKING_START]` section shows valid intermediate steps (like a correct subtraction or division) from the mark scheme.
+3. BE PRECISE: Check every line within `[WORKING_START]`. Do not ignore lines.
 4. If the student did not receive full marks, you MUST provide a "MODEL ANSWER" based on the mark scheme.
-
+5. Return a valid JSON response.
+6. Be an expert, but fair examiner. Award marks if the knowledge is clearly shown despite minor typos.
 RESPONSE FORMAT (JSON ONLY):
 {{
   "marks_awarded": 0,

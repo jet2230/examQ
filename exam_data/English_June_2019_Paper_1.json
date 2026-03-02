@@ -1,0 +1,148 @@
+{
+  "paper_id": "English_June_2019_Paper_1",
+  "title": "Pearson Edexcel International GCSE English Language B Paper 1 - June 2019",
+  "subject": "English",
+  "qp_img_dir": "/static/exams/English_June_2019_Paper_1/qp/",
+  "extract_pages": [30, 32, 33],
+  "questions": [
+    {
+      "id": 1,
+      "sub_questions": [
+        {
+          "sub_id": "1",
+          "type": "text",
+          "qp_pages": [2],
+          "ms_text": "One mark for any one of the following: he did every talk for fundraising (over 50), he took every sailing opportunity, he is only 17, he charmed sponsors, he persuaded big sailing companies to support the project, he sailed over 3000 miles, he did masses behind the scenes at school, his commitment/effort, he did a lot (of work for the project).",
+          "max_marks": 1
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "sub_questions": [
+        {
+          "sub_id": "2",
+          "type": "text",
+          "qp_pages": [2],
+          "ms_text": "One mark for any one of the following: coping skills/coping with difficult weather, understanding that you have to work hard (to get what you want), interpersonal skills/working as a team/working together, to manage themselves, resilience.",
+          "max_marks": 1
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "sub_questions": [
+        {
+          "sub_id": "3",
+          "type": "text",
+          "qp_pages": [3, 4, 5],
+          "ms_text": "Explain how the writer presents the achievements of the students taking part in the Greig City Academy sailing programme. Reward responses that demonstrate understanding of positive language, contrast, sponsorship, statistics, and positive attitude/support.",
+          "max_marks": 10
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "sub_questions": [
+        {
+          "sub_id": "4",
+          "type": "text",
+          "qp_pages": [6],
+          "ms_text": "One mark for any one of the following: looks good on college/job applications, shows employers/university admissions officers you are well-rounded, shows employers/university admissions officers you are responsible, specific activities help with specific goals, shows the depth of your commitment.",
+          "max_marks": 1
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "sub_questions": [
+        {
+          "sub_id": "5(1)",
+          "type": "text",
+          "qp_pages": [6],
+          "ms_text": "Identify two points the writer makes. One mark for each valid point. (Point 1)",
+          "max_marks": 1
+        },
+        {
+          "sub_id": "5(2)",
+          "type": "text",
+          "qp_pages": [6],
+          "ms_text": "Identify two points the writer makes. One mark for each valid point. (Point 2)",
+          "max_marks": 1
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "sub_questions": [
+        {
+          "sub_id": "6",
+          "type": "text",
+          "qp_pages": [7, 8, 9],
+          "ms_text": "Explain how the writer persuades the reader to consider trying after-study activities. Reward responses that demonstrate understanding of opening questions, list of activities, sub-headings, listing of benefits, informal tone, direct address, imperatives, and advisory tone.",
+          "max_marks": 10
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "sub_questions": [
+        {
+          "sub_id": "7",
+          "type": "text",
+          "qp_pages": [10, 11, 12, 13, 14],
+          "ms_text": "Compare how the writers of Text One and Text Two present ideas and perspectives about after-study activities. Support your answer with examples from both texts.",
+          "max_marks": 15
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "sub_questions": [
+        {
+          "sub_id": "8",
+          "type": "text",
+          "qp_pages": [15, 16, 17, 18, 19, 20],
+          "ms_text": "Write a letter to your local newspaper explaining why you think there should be more opportunities for after-study activities in your local community. You should include: the reasons why there are not enough activities, the types of activities that could be offered, the benefits of after-study activities.",
+          "max_marks": 30
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "sub_questions": [
+        {
+          "sub_id": "9",
+          "type": "text",
+          "qp_pages": [21],
+          "ms_text": "'You have to work hard to get what you want.' To what extent do you agree with this?",
+          "max_marks": 30
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "sub_questions": [
+        {
+          "sub_id": "10",
+          "type": "text",
+          "qp_pages": [21],
+          "ms_text": "Write a story (true or imaginary) entitled ‘The Prize’.",
+          "max_marks": 30
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "sub_questions": [
+        {
+          "sub_id": "11",
+          "type": "text",
+          "qp_pages": [21],
+          "ms_text": "Describe a time when you learnt something new.",
+          "max_marks": 30
+        }
+      ]
+    }
+  ]
+}

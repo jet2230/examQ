@@ -1,0 +1,151 @@
+{
+  "paper_id": "Biology_Nov_2025_1B",
+  "title": "Pearson Edexcel International GCSE (9–1) Biology Paper 1B - Nov 2025",
+  "subject": "Biology",
+  "qp_img_dir": "/static/exams/Biology_Nov_2025_1B/qp/",
+  "questions": [
+    {
+      "id": 1,
+      "sub_questions": [
+        {
+          "sub_id": "1(a)(i)",
+          "type": "mcq",
+          "options": ["A", "B", "C", "D"],
+          "qp_pages": [2],
+          "ms_text": "Correct Answer: D (S) - The nucleus is labelled S.",
+          "max_marks": 1
+        },
+        {
+          "sub_id": "1(a)(ii)",
+          "type": "mcq",
+          "options": ["A", "B", "C", "D"],
+          "qp_pages": [2],
+          "ms_text": "Correct Answer: B (Q) - The cytoplasm is labelled Q.",
+          "max_marks": 1
+        },
+        {
+          "sub_id": "1(a)(iii)",
+          "type": "mcq",
+          "options": ["A", "B", "C", "D"],
+          "qp_pages": [2],
+          "ms_text": "Correct Answer: D (S) - The nucleus contains chromosomes.",
+          "max_marks": 1
+        },
+        {
+          "sub_id": "1(a)(iv)",
+          "type": "calculation",
+          "qp_pages": [3],
+          "ms_text": "1 mark for correct measurement (43-44mm or 4.3-4.4cm). 1 mark for correct calculation (e.g. 43000 / 65 = 660um). Allow range 660-677um.",
+          "max_marks": 2
+        },
+        {
+          "sub_id": "1(b)",
+          "type": "list",
+          "count": 3,
+          "qp_pages": [3],
+          "ms_text": "Any three from: Amoeba has nucleus, Amoeba has cytoplasm, Amoeba has organelles (e.g. mitochondrion), Amoeba has cell membrane, Virus has protein coat/capsid/envelope, Amoeba has chromosomes/DNA/RNA while virus has only DNA or RNA.",
+          "max_marks": 3
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "sub_questions": [
+        {
+          "sub_id": "2(a)",
+          "type": "text",
+          "qp_pages": [4],
+          "ms_text": "The net movement of particles from an area of high concentration to an area of low concentration (down a concentration gradient).",
+          "max_marks": 1
+        },
+        {
+          "sub_id": "2(b)(i)",
+          "type": "text",
+          "qp_pages": [5],
+          "ms_text": "Time taken for the litmus paper to change colour.",
+          "max_marks": 1
+        },
+        {
+          "sub_id": "2(b)(ii)",
+          "type": "text",
+          "qp_pages": [5],
+          "ms_text": "Line graph: Axes correctly labelled with units, linear scale, points correctly plotted, separate lines for 1 and 3 drops, lines joined with straight ruler lines.",
+          "max_marks": 6
+        },
+        {
+          "sub_id": "2(b)(iii)",
+          "type": "text",
+          "qp_pages": [6],
+          "ms_text": "Increasing concentration (more drops) increases the rate of diffusion, so the time taken for colour change decreases.",
+          "max_marks": 2
+        },
+        {
+          "sub_id": "2(b)(iv)",
+          "type": "calculation",
+          "qp_pages": [6],
+          "ms_text": "Rate = Distance / Time. (24-4) / (38-8) = 20 / 30 = 0.67 cm/s approx.",
+          "max_marks": 2
+        },
+        {
+          "sub_id": "2(b)(v)",
+          "type": "text",
+          "qp_pages": [6],
+          "ms_text": "Repeat the investigation and calculate a mean.",
+          "max_marks": 1
+        },
+        {
+          "sub_id": "2(c)",
+          "type": "text",
+          "qp_pages": [7],
+          "ms_text": "Use a water bath to maintain different temperatures, keep concentration (drops) the same, measure time at each temp.",
+          "max_marks": 3
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "sub_questions": [
+        {
+          "sub_id": "3(a)(i)",
+          "type": "text",
+          "qp_pages": [8],
+          "ms_text": "To show that starch was initially present / to compare results after destarching / reference to control.",
+          "max_marks": 2
+        },
+        {
+          "sub_id": "3(a)(ii)",
+          "type": "text",
+          "qp_pages": [8],
+          "ms_text": "The leaf in the flask remains brown/orange (no starch) because the soda lime removed CO2, preventing photosynthesis.",
+          "max_marks": 2
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "sub_questions": [
+        {
+          "sub_id": "4(a)",
+          "type": "text",
+          "qp_pages": [12],
+          "ms_text": "Glucose -> Ethanol + Carbon Dioxide (+ Energy)",
+          "max_marks": 2
+        },
+        {
+          "sub_id": "4(b)(i)",
+          "type": "text",
+          "qp_pages": [12],
+          "ms_text": "Species of seeds / age of seeds / mass of seeds.",
+          "max_marks": 1
+        },
+        {
+          "sub_id": "4(b)(ii)",
+          "type": "calculation",
+          "qp_pages": [12],
+          "ms_text": "Change = 1108 - 564 = 544. Rate = 544 / 180 = 3.02 ppm/s.",
+          "max_marks": 2
+        }
+      ]
+    }
+  ]
+}

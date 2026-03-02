@@ -19,6 +19,7 @@
             justify-content: space-between;
             align-items: center;
         }
+        #paperTitle { font-size: 0.9em; }
         .header-buttons { display: flex; gap: 10px; }
         .header-btn {
             background: white;
@@ -39,7 +40,7 @@
             background-color: #525659;
             overflow-y: auto;
             padding: 20px;
-            position: relative; /* Essential for offsetTop */
+            position: relative;
         }
         .paper-page {
             width: 100%;
@@ -82,7 +83,6 @@
             border-radius: 12px;
             font-size: 0.8em;
         }
-        /* Inputs */
         .short-input, textarea {
             width: 100%;
             padding: 12px;
@@ -91,12 +91,6 @@
             font-size: 1em;
             margin-top: 5px;
         }
-        .short-input:focus, textarea:focus {
-            border-color: #1e3c72;
-            outline: none;
-            background: #fff;
-        }
-        /* MCQ */
         .mcq-container { display: flex; gap: 10px; margin: 10px 0; }
         .mcq-option {
             flex: 1;
@@ -113,7 +107,6 @@
             color: white;
             border-color: #1e3c72;
         }
-        /* Calculation */
         .calculation-container {
             border: 1px dashed #ccc;
             padding: 15px;
@@ -121,7 +114,6 @@
             background: #fff;
         }
         .working-label { font-size: 0.8em; color: #666; font-weight: 600; }
-        /* Grading */
         .grade-btn {
             background: #28a745;
             color: white;
@@ -143,7 +135,6 @@
         .feedback-good { background: #d4edda; color: #155724; }
         .feedback-partial { background: #fff3cd; color: #856404; }
         .feedback-bad { background: #f8d7da; color: #721c24; }
-        
         .error-msg {
             color: #dc3545;
             font-size: 0.9em;
@@ -151,7 +142,6 @@
             font-weight: 600;
             display: none;
         }
-        
         .paper-controls {
             display: flex;
             gap: 10px;
@@ -168,6 +158,17 @@
             cursor: pointer;
         }
         .control-btn:disabled { opacity: 0.3; }
+        .control-btn:hover:not(:disabled) {
+            background: #2a5298;
+            transform: translateY(-2px);
+        }
+        .control-btn.highlight {
+            background: #28a745;
+            box-shadow: 0 0 15px rgba(40, 167, 69, 0.4);
+        }
+        .control-btn.highlight:hover:not(:disabled) {
+            background: #218838;
+        }
     </style>
 </head>
 <body>
@@ -177,12 +178,24 @@
             <select id="questionSelector" onchange="jumpToQuestion(this.value)" style="padding: 10px 15px; border-radius: 8px; font-weight: 700; color: #1e3c72; border: none; cursor: pointer; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); font-size: 0.9em; min-width: 160px;">
                 <option value="">Jump to Question...</option>
             </select>
+            <button id="extractsBtn" onclick="toggleExtracts()" style="display: none; padding: 10px 15px; border-radius: 8px; font-weight: 700; background: #ffc107; color: #000; border: none; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); font-size: 0.9em;">📖 Extracts Booklet</button>
         </div>
         <div class="header-buttons">
             <span id="welcomeUser" style="margin-right: 15px; font-weight: 600; color: white;"></span>
             <a href="/results" class="header-btn">🏠 Home</a>
             <a href="/exam_questions.html" class="header-btn">📝 Papers</a>
             <a href="#" onclick="logout()" class="header-btn" style="background: #dc3545; color: white;">🚪 Logout</a>
+        </div>
+    </div>
+
+    <!-- Draggable/Resizable Extracts Popup -->
+    <div id="extractsPopup" style="display: none; position: fixed; top: 100px; right: 50px; width: 500px; height: 600px; background: white; border: 2px solid #1e3c72; border-radius: 12px; z-index: 2000; box-shadow: 0 10px 30px rgba(0,0,0,0.5); flex-direction: column; overflow: hidden; resize: both;">
+        <div id="extractsHeader" style="background: #1e3c72; color: white; padding: 10px 15px; cursor: move; display: flex; justify-content: space-between; align-items: center; user-select: none;">
+            <span style="font-weight: bold;">Extracts Booklet</span>
+            <button onclick="toggleExtracts()" style="background: none; border: none; color: white; font-size: 1.5em; cursor: pointer; line-height: 1;">&times;</button>
+        </div>
+        <div id="extractsContent" style="flex: 1; overflow-y: auto; background: #525659; padding: 10px;">
+            <!-- Extract pages will be injected here -->
         </div>
     </div>
 
@@ -199,16 +212,19 @@
     </div>
 
     <script>
+        console.log("Exam Player v1.4 - Question Grouping Logic");
         let examData = null;
-        let currentQuestionIdx = 0;
+        let pageGroups = [];
+        let currentGroupIdx = 0;
         let savedAnswers = {};
         let isCompleted = false;
+        let selectedQuestionInGroup = {}; // groupIdx -> questionId
+        let totalPages = 0;
         
         const urlParams = new URLSearchParams(window.location.search);
         const paperId = urlParams.get('paper_id') || 'biology_2B_nov_2025';
         const username = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
 
-        // THE SIMPLE SCROLL FUNCTION
         function jump(pageNum) {
             const img = document.getElementById('page_' + pageNum);
             if (img) {
@@ -218,40 +234,182 @@
 
         function jumpToQuestion(idx) {
             if (idx === "") return;
-            currentQuestionIdx = parseInt(idx);
+            currentGroupIdx = parseInt(idx);
             render();
             saveProgress();
         }
 
+        function toggleExtracts() {
+            const popup = document.getElementById('extractsPopup');
+            if (popup.style.display === 'none') {
+                popup.style.display = 'flex';
+            } else {
+                popup.style.display = 'none';
+            }
+            savePopupState();
+        }
+
+        function savePopupState() {
+            const popup = document.getElementById('extractsPopup');
+            const state = {
+                top: popup.style.top,
+                left: popup.style.left,
+                width: popup.style.width,
+                height: popup.style.height,
+                isOpen: popup.style.display !== 'none'
+            };
+            localStorage.setItem('extracts_popup_state', JSON.stringify(state));
+        }
+
+        function loadPopupState() {
+            const popup = document.getElementById('extractsPopup');
+            const saved = localStorage.getItem('extracts_popup_state');
+            if (saved) {
+                const state = JSON.parse(saved);
+                if (state.top) popup.style.top = state.top;
+                if (state.left) popup.style.left = state.left;
+                if (state.width) popup.style.width = state.width;
+                if (state.height) popup.style.height = state.height;
+                if (state.isOpen) popup.style.display = 'flex';
+                popup.style.right = 'auto'; 
+            }
+        }
+
+        function makeDraggable(element, header) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            header.onmousedown = dragMouseDown;
+
+            function dragMouseDown(e) {
+                e = e || window.event;
+                e.preventDefault();
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+            }
+
+            function elementDrag(e) {
+                e = e || window.event;
+                e.preventDefault();
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                element.style.top = (element.offsetTop - pos2) + "px";
+                element.style.left = (element.offsetLeft - pos1) + "px";
+                element.style.right = 'auto';
+            }
+
+            function closeDragElement() {
+                document.onmouseup = null;
+                document.onmousemove = null;
+                savePopupState();
+            }
+
+            // Also track resizing
+            const resizeObserver = new ResizeObserver(() => {
+                if (element.style.display !== 'none') {
+                    savePopupState();
+                }
+            });
+            resizeObserver.observe(element);
+        }
+
         async function init() {
-            // Set welcome user
             if (username) {
                 const welcomeEl = document.getElementById('welcomeUser');
                 if (welcomeEl) welcomeEl.textContent = '👤 ' + username;
             }
 
-            // 1. Fetch Data
             const resp = await fetch(`/api/official-exams/${paperId}`);
             examData = await resp.json();
             document.getElementById('paperTitle').textContent = examData.title;
+
+            // Handle Extracts Booklet
+            if (examData.extract_pages && examData.extract_pages.length > 0) {
+                const btn = document.getElementById('extractsBtn');
+                btn.style.display = 'block';
+                const content = document.getElementById('extractsContent');
+                content.innerHTML = '';
+                examData.extract_pages.forEach(p => {
+                    const img = document.createElement('img');
+                    img.src = `${examData.qp_img_dir}page_${String(p).padStart(2, '0')}.png`;
+                    img.style.width = '100%';
+                    img.style.marginBottom = '10px';
+                    img.style.boxShadow = '0 2px 10px rgba(0,0,0,0.5)';
+                    content.appendChild(img);
+                });
+                makeDraggable(document.getElementById('extractsPopup'), document.getElementById('extractsHeader'));
+                loadPopupState();
+            }
+
+            const pageResp = await fetch(`/api/official-exams/${paperId}/page-count`);
+            const pageData = await pageResp.json();
+            totalPages = pageData.count || 0;
             
-            // 2. Load Progress
+            // Group questions by starting page
+            pageGroups = [];
+            if (examData.questions && examData.questions.length > 0) {
+                let currentGroup = {
+                    questions: [examData.questions[0]],
+                    startPage: examData.questions[0].sub_questions[0].qp_pages[0]
+                };
+                
+                for (let i = 1; i < examData.questions.length; i++) {
+                    const q = examData.questions[i];
+                    const qStartPage = q.sub_questions[0].qp_pages[0];
+                    
+                    if (qStartPage === currentGroup.startPage) {
+                        currentGroup.questions.push(q);
+                    } else {
+                        pageGroups.push(currentGroup);
+                        currentGroup = {
+                            questions: [q],
+                            startPage: qStartPage
+                        };
+                    }
+                }
+                pageGroups.push(currentGroup);
+            }
+
             try {
                 const pResp = await fetch(`/api/student/exam-progress/get?username=${username}&paper_id=${paperId}`);
                 const pData = await pResp.json();
                 if (pData.success) {
-                    currentQuestionIdx = pData.current_question_idx || 0;
+                    // Try to find which group the saved index belongs to
+                    const savedIdx = pData.current_question_idx || 0;
+                    currentGroupIdx = pageGroups.findIndex(g => 
+                        g.questions.some(q => examData.questions.indexOf(q) === savedIdx)
+                    );
+                    if (currentGroupIdx === -1) currentGroupIdx = 0;
+                    
                     savedAnswers = pData.answers || {};
+                    if (savedAnswers._selections) {
+                        selectedQuestionInGroup = savedAnswers._selections;
+                    }
                     isCompleted = pData.status === 'completed';
+
+                    // Populate selectedQuestionInGroup from answered questions if not already set
+                    pageGroups.forEach((group, idx) => {
+                        if (selectedQuestionInGroup[idx] === undefined) {
+                            const answeredQ = group.questions.find(q => 
+                                q.sub_questions.some(sq => savedAnswers[sq.sub_id] && savedAnswers[sq.sub_id].value)
+                            );
+                            if (answeredQ) {
+                                selectedQuestionInGroup[idx] = answeredQ.id;
+                            }
+                        }
+                    });
                 }
             } catch (e) {}
 
-            // 3. Setup Selector
             const selector = document.getElementById('questionSelector');
-            examData.questions.forEach((q, index) => {
+            selector.innerHTML = '<option value="">Jump to Question...</option>';
+            pageGroups.forEach((group, index) => {
                 const opt = document.createElement('option');
                 opt.value = index;
-                opt.textContent = "Question " + q.id;
+                const qLabels = group.questions.map(q => q.id).join('/');
+                opt.textContent = "Question " + qLabels;
                 selector.appendChild(opt);
             });
             
@@ -267,16 +425,50 @@
         let scrollObserver = null;
         let lastJumpedPage = null;
 
-        function render() {
-            const q = examData.questions[currentQuestionIdx];
-            document.getElementById('currentQuestionId').textContent = "Question " + q.id;
-            document.getElementById('questionSelector').value = currentQuestionIdx;
+        function checkAllGraded() {
+            if (!pageGroups || pageGroups.length === 0) return;
+            const group = pageGroups[currentGroupIdx];
             
-            // 1. Images
+            let questionsToCheck = group.questions;
+            const hasExplicitChoice = group.questions.some(q => q.choice_group);
+            const isChoiceGroup = hasExplicitChoice || (group.questions.length > 1 && 
+                                 group.questions.every(q => q.sub_questions.length === 1 && q.sub_questions[0].max_marks >= 20));
+            
+            if (isChoiceGroup) {
+                if (selectedQuestionInGroup[currentGroupIdx] !== undefined) {
+                    questionsToCheck = group.questions.filter(q => q.id === selectedQuestionInGroup[currentGroupIdx]);
+                } else {
+                    document.getElementById('nextBtn').classList.remove('highlight');
+                    return;
+                }
+            }
+
+            const allGraded = questionsToCheck.every(q => 
+                q.sub_questions.every(sq => savedAnswers[sq.sub_id] && savedAnswers[sq.sub_id].marks !== undefined)
+            );
+            const nextBtn = document.getElementById('nextBtn');
+            if (allGraded && currentGroupIdx < pageGroups.length - 1) {
+                nextBtn.classList.add('highlight');
+            } else {
+                nextBtn.classList.remove('highlight');
+            }
+        }
+
+        function render() {
+            if (!pageGroups || pageGroups.length === 0) return;
+            const group = pageGroups[currentGroupIdx];
+            const qLabels = group.questions.map(q => q.id).join('/');
+            document.getElementById('currentQuestionId').textContent = "Question " + qLabels;
+            document.getElementById('questionSelector').value = currentGroupIdx;
+            
             const viewer = document.getElementById('paperViewer');
             viewer.innerHTML = '';
-            const pages = [...new Set(q.sub_questions.flatMap(sq => sq.qp_pages))].sort((a,b) => a-b);
-            pages.forEach(p => {
+            
+            const allPages = [...new Set(group.questions.flatMap(q => 
+                q.sub_questions.flatMap(sq => sq.qp_pages)
+            ))].sort((a,b) => a-b);
+
+            allPages.forEach(p => {
                 const img = document.createElement('img');
                 img.src = `${examData.qp_img_dir}page_${String(p).padStart(2, '0')}.png`;
                 img.className = 'paper-page';
@@ -284,7 +476,6 @@
                 viewer.appendChild(img);
             });
 
-            // 2. Answers
             const list = document.getElementById('subQuestionsList');
             list.innerHTML = '';
             
@@ -306,72 +497,134 @@
                 threshold: 0
             });
 
-            q.sub_questions.forEach(sq => {
-                const pNum = sq.qp_pages[0];
-                const div = document.createElement('div');
-                div.className = 'sub-question-item';
-                div.setAttribute('data-page', pNum);
+            let questionsToRender = group.questions;
+            
+            // Priority 1: Explicit choice_group from JSON. Priority 2: Heuristic.
+            const hasExplicitChoice = group.questions.some(q => q.choice_group);
+            const choiceGroupName = hasExplicitChoice ? (group.questions.find(q => q.choice_group).choice_group || "Selection Required") : "Selection Required";
+            
+            const isChoiceGroup = hasExplicitChoice || (group.questions.length > 1 && 
+                                 group.questions.every(q => q.sub_questions.length === 1 && q.sub_questions[0].max_marks >= 20));
+            
+            if (isChoiceGroup) {
+                const choiceDiv = document.createElement('div');
+                choiceDiv.className = 'sub-question-item';
+                choiceDiv.style.background = '#e9ecef';
+                choiceDiv.innerHTML = `
+                    <div class="sub-header">
+                        <span style="font-size: 1.1em; color: #1e3c72; font-weight: 700;">${choiceGroupName}</span>
+                    </div>
+                    <p style="margin-bottom: 15px; color: #555;">Please select <b>one</b> question to answer from this section:</p>
+                    <div id="choiceButtons" style="display: flex; gap: 10px; flex-wrap: wrap;"></div>
+                `;
                 
-                const saved = savedAnswers[sq.sub_id] || {};
-
-                let inputHtml = `
-                    <div class="sub-header"><span>(${sq.sub_id})</span><span class="mark-badge">[${sq.max_marks}]</span></div>`;
-                
-                if (sq.type === 'mcq') {
-                    inputHtml += `<div class="mcq-container">`;
-                    sq.options.forEach(opt => {
-                        const isSel = saved.value === opt ? 'selected' : '';
-                        inputHtml += `<div class="mcq-option ${isSel}" onclick="jump(${pNum}); setMcq('${sq.sub_id}', '${opt}', this)">${opt}</div>`;
-                    });
-                    inputHtml += `</div><input type="hidden" id="ans_${sq.sub_id}" value="${saved.value || ''}">`;
-                } else if (sq.type === 'calculation') {
-                    inputHtml += `<div class="calculation-container">
-                        <div class="working-label">Working:</div>
-                        <textarea id="work_${sq.sub_id}" onfocus="jump(${pNum})" placeholder="Show steps...">${saved.work || ''}</textarea>
-                        <div style="text-align:right; margin-top:10px;">
-                            <b>Final:</b> <input type="text" id="ans_${sq.sub_id}" onfocus="jump(${pNum})" style="width:100px;" value="${saved.value || ''}"> ${sq.suffix || ''}
-                        </div>
-                    </div>`;
-                } else if (sq.type === 'list') {
-                    const listVals = saved.value ? saved.value.split('; ') : [];
-                    for(let i=1; i<=sq.count; i++) {
-                        const v = listVals[i-1] ? listVals[i-1].replace(/^\d+\.\s*/, '') : '';
-                        inputHtml += `<div style="margin-bottom:5px;">${i}. <input type="text" class="list-in-${sq.sub_id}" onfocus="jump(${pNum})" style="width:80%;" value="${v}"></div>`;
+                const btnContainer = choiceDiv.querySelector('#choiceButtons');
+                group.questions.forEach(q => {
+                    const btn = document.createElement('div');
+                    btn.className = 'mcq-option';
+                    if (selectedQuestionInGroup[currentGroupIdx] === q.id) {
+                        btn.classList.add('selected');
                     }
-                } else {
-                    inputHtml += `<textarea id="ans_${sq.sub_id}" onfocus="jump(${pNum})" placeholder="Type answer here...">${saved.value || ''}</textarea>`;
-                }
-
-                const fbShow = saved.marks !== undefined ? 'show' : '';
-                const fbClass = saved.marks == sq.max_marks ? 'feedback-good' : (saved.marks > 0 ? 'feedback-partial' : 'feedback-bad');
-
-                inputHtml += `<button class="grade-btn" onclick="grade('${sq.sub_id}', ${sq.max_marks}, \`${sq.ms_text}\`, '${sq.type}')">Submit & Grade</button>
-                    <div id="err_${sq.sub_id}" class="error-msg">⚠️ Please provide an answer or show some working.</div>
-                    <div id="fb_${sq.sub_id}" class="feedback-box ${fbShow} ${fbClass}">
-                        <b>Marks: <span id="m_${sq.sub_id}">${saved.marks || 0}</span> / ${sq.max_marks}</b>
-                        <p id="t_${sq.sub_id}" style="margin-top:10px;">${saved.feedback || ''}</p>
-                        <div style="margin-top:10px; font-size:0.8em; background:#eee; padding:5px;"><b>Mark Scheme:</b><br>${sq.ms_text}</div>
-                    </div></div>`;
+                    btn.textContent = 'Question ' + q.id;
+                    btn.onclick = () => {
+                        selectedQuestionInGroup[currentGroupIdx] = q.id;
+                        render();
+                        saveProgress();
+                    };
+                    btnContainer.appendChild(btn);
+                });
                 
-                div.innerHTML = inputHtml;
-                list.appendChild(div);
-                scrollObserver.observe(div);
-            });
-
-            if (currentQuestionIdx === examData.questions.length - 1) {
-                const finishBtn = document.createElement('button');
-                finishBtn.className = 'control-btn';
-                finishBtn.style.background = isCompleted ? '#28a745' : '#dc3545';
-                finishBtn.style.marginTop = '40px';
-                finishBtn.textContent = isCompleted ? '✅ Exam Completed' : '🏁 Finish Exam';
-                finishBtn.onclick = finishExam;
-                list.appendChild(finishBtn);
+                list.appendChild(choiceDiv);
+                
+                if (selectedQuestionInGroup[currentGroupIdx] !== undefined) {
+                    questionsToRender = group.questions.filter(q => q.id === selectedQuestionInGroup[currentGroupIdx]);
+                } else {
+                    questionsToRender = []; // Wait for selection
+                }
             }
 
-            document.getElementById('prevBtn').disabled = (currentQuestionIdx === 0);
-            document.getElementById('nextBtn').disabled = (currentQuestionIdx === examData.questions.length - 1);
+            questionsToRender.forEach(q => {
+                q.sub_questions.forEach(sq => {
+                    const pNum = sq.qp_pages[0];
+                    const div = document.createElement('div');
+                    div.className = 'sub-question-item';
+                    div.setAttribute('data-page', pNum);
+                    
+                    const saved = savedAnswers[sq.sub_id] || {};
+
+                    let inputHtml = `
+                        <div class="sub-header"><span>(${sq.sub_id})</span><span class="mark-badge">[${sq.max_marks}]</span></div>`;
+                    
+                    if (sq.type === 'mcq') {
+                        inputHtml += `<div class="mcq-container">`;
+                        sq.options.forEach(opt => {
+                            const isSel = saved.value === opt ? 'selected' : '';
+                            inputHtml += `<div class="mcq-option ${isSel}" onclick="jump(${pNum}); setMcq('${sq.sub_id}', '${opt}', this)">${opt}</div>`;
+                        });
+                        inputHtml += `</div><input type="hidden" id="ans_${sq.sub_id}" value="${saved.value || ''}">`;
+                    } else if (sq.type === 'calculation') {
+                        inputHtml += `<div class="calculation-container">
+                            <div class="working-label">Working:</div>
+                            <textarea id="work_${sq.sub_id}" onfocus="jump(${pNum})" placeholder="Show steps...">${saved.work || ''}</textarea>
+                            <div style="text-align:right; margin-top:10px;">
+                                <b>Final:</b> <input type="text" id="ans_${sq.sub_id}" onfocus="jump(${pNum})" style="width:100px;" value="${saved.value || ''}"> ${sq.suffix || ''}
+                            </div>
+                        </div>`;
+                    } else if (sq.type === 'list') {
+                        const listVals = saved.value ? saved.value.split('; ') : [];
+                        for(let i=1; i<=sq.count; i++) {
+                            const v = listVals[i-1] ? listVals[i-1].replace(/^\d+\.\s*/, '') : '';
+                            inputHtml += `<div style="margin-bottom:5px;">${i}. <input type="text" class="list-in-${sq.sub_id}" onfocus="jump(${pNum})" style="width:80%;" value="${v}"></div>`;
+                        }
+                    } else {
+                        const height = Math.max(120, Math.min(600, sq.max_marks * 40));
+                        inputHtml += `<textarea id="ans_${sq.sub_id}" onfocus="jump(${pNum})" style="height: ${height}px;" placeholder="Type answer here...">${saved.value || ''}</textarea>`;
+                    }
+
+                    const fbShow = saved.marks !== undefined ? 'show' : '';
+                    const fbClass = saved.marks == sq.max_marks ? 'feedback-good' : (saved.marks > 0 ? 'feedback-partial' : 'feedback-bad');
+
+                    inputHtml += `<button class="grade-btn" onclick="grade('${sq.sub_id}', ${sq.max_marks}, \`${sq.ms_text}\`, '${sq.type}')">Submit & Grade</button>
+                        <div id="err_${sq.sub_id}" class="error-msg">⚠️ Please provide an answer or show some working.</div>
+                        <div id="fb_${sq.sub_id}" class="feedback-box ${fbShow} ${fbClass}">
+                            <b>Marks: <span id="m_${sq.sub_id}">${saved.marks || 0}</span> / ${sq.max_marks}</b>
+                            <p id="t_${sq.sub_id}" style="margin-top:10px;">${saved.feedback || ''}</p>
+                            <div style="margin-top:10px; font-size:0.8em; background:#eee; padding:5px;"><b>Mark Scheme:</b><br>${sq.ms_text}</div>
+                        </div></div>`;
+                    
+                    div.innerHTML = inputHtml;
+                    list.appendChild(div);
+                    scrollObserver.observe(div);
+                });
+            });
+
+            const lastIdx = pageGroups.length - 1;
+            const actionBtn = document.createElement('button');
+            actionBtn.className = 'control-btn';
+            actionBtn.style.marginTop = '40px';
+
+            if (currentGroupIdx === lastIdx) {
+                actionBtn.style.background = isCompleted ? '#28a745' : '#dc3545';
+                actionBtn.textContent = isCompleted ? '✅ Exam Completed' : '🏁 Finish Exam';
+                actionBtn.onclick = finishExam;
+            } else {
+                actionBtn.style.background = '#6c757d';
+                actionBtn.textContent = '💾 Save Progress';
+                actionBtn.onclick = resumeLater;
+            }
+            list.appendChild(actionBtn);
+
+            document.getElementById('prevBtn').disabled = (currentGroupIdx === 0);
+            document.getElementById('nextBtn').disabled = (currentGroupIdx === lastIdx);
+            checkAllGraded();
             
-            setTimeout(() => jump(pages[0]), 100);
+            setTimeout(() => {
+                if (allPages && allPages.length > 0) {
+                    jump(allPages[0]);
+                } else {
+                    document.getElementById('paperViewer').scrollTop = 0;
+                }
+            }, 300);
         }
 
         function setMcq(id, val, el) {
@@ -401,8 +654,13 @@
                 if (!val) isBlank = true;
             }
 
-            if (isBlank) {
+            const nonsenseKeywords = ['tell me', 'show me', 'what is the answer', 'i don\'t know', 'give me', 'lalai', 'abc', '123'];
+            const lowerAnswer = type === 'calculation' ? (work + ' ' + val).toLowerCase() : val.toLowerCase();
+            const rawLength = type === 'calculation' ? (work.length + val.length) : val.length;
+            
+            if (isBlank || nonsenseKeywords.some(k => lowerAnswer.includes(k)) || (rawLength < 3 && type !== 'mcq')) {
                 errDiv.style.display = 'block';
+                errDiv.textContent = isBlank ? "⚠️ Please provide an answer or show some working." : "⚠️ Please provide a meaningful answer.";
                 fbDiv.classList.remove('show');
                 return;
             }
@@ -411,7 +669,7 @@
             const btn = event.target;
             btn.disabled = true; btn.textContent = "Grading...";
 
-            const answerStr = type === 'calculation' ? `WORKING: ${work} | FINAL: ${val}` : val;
+            const answerStr = type === 'calculation' ? `[WORKING_START]\n${work}\n[WORKING_END]\n[FINAL_ANSWER_START]\n${val}\n[FINAL_ANSWER_END]` : val;
 
             const res = await fetch('/api/official-exams/grade', {
                 method: 'POST',
@@ -433,19 +691,34 @@
             document.getElementById('t_' + subId).innerText = data.feedback;
             
             btn.disabled = false; btn.textContent = "Re-submit & Grade";
-            saveProgress();
+            await saveProgress();
+            checkAllGraded();
         }
 
         async function saveProgress() {
+            // Save the first question index of the current group
+            const firstQ = pageGroups[currentGroupIdx].questions[0];
+            const qIdx = examData.questions.indexOf(firstQ);
+            
+            // Include selections in the saved answers
+            const answersToSave = { ...savedAnswers };
+            answersToSave._selections = selectedQuestionInGroup;
+
             await fetch('/api/student/exam-progress/save', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
                     username: username,
                     paper_id: paperId,
-                    current_question_idx: currentQuestionIdx,
-                    answers: savedAnswers
+                    current_question_idx: qIdx,
+                    answers: answersToSave
                 })
+            });
+        }
+
+        function resumeLater() {
+            saveProgress().then(() => {
+                window.location.href = '/exam_questions.html';
             });
         }
 
@@ -465,7 +738,7 @@
         }
 
         function changeQuestion(n) {
-            currentQuestionIdx += n;
+            currentGroupIdx += n;
             render();
             saveProgress();
         }
