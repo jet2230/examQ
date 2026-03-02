@@ -208,12 +208,12 @@
             <table class="exam-list-table">
                 <thead>
                     <tr>
-                        <th style="word-wrap: break-word; max-width: 150px; white-space: normal;">ID</th>
-                        <th>Title</th>
-                        <th>Subject</th>
-                        <th>Paper</th>
-                        <th>Date</th>
-                        <th>Questions</th>
+                        <th id="th_id" data-label="ID" style="word-wrap: break-word; max-width: 150px; white-space: normal; cursor: pointer;" onclick="toggleSort('id')">ID ↕</th>
+                        <th id="th_title" data-label="Title" style="cursor: pointer;" onclick="toggleSort('title')">Title ↕</th>
+                        <th id="th_subject" data-label="Subject" style="cursor: pointer;" onclick="toggleSort('subject')">Subject ↕</th>
+                        <th id="th_paper" data-label="Paper" style="cursor: pointer;" onclick="toggleSort('paper')">Paper ↕</th>
+                        <th id="th_date" data-label="Date" style="cursor: pointer;" onclick="toggleSort('date')">Date ↕</th>
+                        <th id="th_total_questions" data-label="Questions" style="cursor: pointer;" onclick="toggleSort('total_questions')">Questions ↕</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -241,13 +241,64 @@
     </div>
 
     <script>
+        let allExams = [];
+        let sortCol = null;
+        let sortAsc = true;
+
         async function loadExams() {
             const resp = await fetch('/api/official-exams/list');
             const data = await resp.json();
+            allExams = data.exams || [];
+            renderTable();
+        }
+
+        function renderTable() {
             const tbody = document.getElementById('examTableBody');
             tbody.innerHTML = '';
 
-            data.exams.forEach(exam => {
+            let examsToRender = [...allExams];
+
+            if (sortCol) {
+                examsToRender.sort((a, b) => {
+                    let valA = a[sortCol];
+                    let valB = b[sortCol];
+                    
+                    if (valA === undefined || valA === null) valA = '';
+                    if (valB === undefined || valB === null) valB = '';
+
+                    // For numbers (like total_questions)
+                    if (typeof valA === 'number' && typeof valB === 'number') {
+                        return sortAsc ? valA - valB : valB - valA;
+                    }
+                    
+                    // For dates
+                    if (sortCol === 'date') {
+                        const dateA = new Date(valA);
+                        const dateB = new Date(valB);
+                        if (!isNaN(dateA) && !isNaN(dateB)) {
+                            return sortAsc ? dateA - dateB : dateB - dateA;
+                        }
+                    }
+
+                    // Fallback string compare
+                    valA = valA.toString().toLowerCase();
+                    valB = valB.toString().toLowerCase();
+                    if (valA < valB) return sortAsc ? -1 : 1;
+                    if (valA > valB) return sortAsc ? 1 : -1;
+                    return 0;
+                });
+            }
+
+            // Update headers
+            const headers = ['id', 'title', 'subject', 'paper', 'date', 'total_questions'];
+            headers.forEach(col => {
+                const el = document.getElementById('th_' + col);
+                if (el) {
+                    el.innerHTML = el.dataset.label + (sortCol === col ? (sortAsc ? ' ▲' : ' ▼') : ' ↕');
+                }
+            });
+
+            examsToRender.forEach(exam => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td style="word-wrap: break-word; word-break: break-all; max-width: 150px; white-space: normal;"><code>${exam.id}</code></td>
@@ -260,6 +311,16 @@
                 `;
                 tbody.appendChild(tr);
             });
+        }
+
+        function toggleSort(col) {
+            if (sortCol === col) {
+                sortAsc = !sortAsc;
+            } else {
+                sortCol = col;
+                sortAsc = true;
+            }
+            renderTable();
         }
 
         async function browseServer() {

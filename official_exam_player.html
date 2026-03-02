@@ -551,9 +551,17 @@
                     div.setAttribute('data-page', pNum);
                     
                     const saved = savedAnswers[sq.sub_id] || {};
+                    
+                    // Format question ID from "1(a)(i)" to "1 a) i)"
+                    let formattedId = sq.sub_id.replace(/\(/g, ' ').replace(/\)/g, ') ').trim();
+                    // Fix potential double spaces
+                    formattedId = formattedId.replace(/\s+/g, ' ');
 
                     let inputHtml = `
-                        <div class="sub-header"><span>(${sq.sub_id})</span><span class="mark-badge">[${sq.max_marks}]</span></div>`;
+                        <div class="sub-header">
+                            <span style="font-size: 1.1em; font-weight: 800; color: #1e3c72; background: #e1e7ff; padding: 4px 12px; border-radius: 6px; border: 1px solid #c8d4ff; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">${formattedId}</span>
+                            <span class="mark-badge">[${sq.max_marks} marks]</span>
+                        </div>`;
                     
                     if (sq.type === 'mcq') {
                         inputHtml += `<div class="mcq-container">`;
@@ -642,7 +650,7 @@
             const fbDiv = document.getElementById('fb_' + subId);
 
             if (type === 'list') {
-                const inputs = Array.from(document.querySelectorAll('.list-in-' + subId));
+                const inputs = Array.from(document.querySelectorAll('.list-in-' + CSS.escape(subId)));
                 if (inputs.every(i => !i.value.trim())) isBlank = true;
                 val = inputs.map((i, idx) => `${idx+1}. ${i.value}`).join("; ");
             } else if (type === 'calculation') {
