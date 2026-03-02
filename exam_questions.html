@@ -361,7 +361,8 @@
                                     btnText = 'Review';
                                 } else {
                                     statusClass = 'status-started';
-                                    statusText = 'Resume';
+                                    let left = Math.max(0, (exam.total_questions || 0) - (prog.current_question_idx || 0));
+                                    statusText = left > 0 ? `Resume (${left} left)` : 'Resume';
                                     btnText = 'Continue';
                                 }
                             }
@@ -370,7 +371,10 @@
                                 <div class="paper-card" onclick="window.location.href='/official_exam_player.html?paper_id=${exam.id}'">
                                     <div class="paper-title">${exam.title}</div>
                                     <div class="paper-meta">
-                                        <span style="font-weight: 700; color: #1e3c72;">${exam.date}</span>
+                                        <div>
+                                            <span style="font-weight: 700; color: #1e3c72;">${exam.date}</span>
+                                            <span style="color: #666; font-size: 0.9em; margin-left: 10px;">${exam.total_questions || 0} Questions</span>
+                                        </div>
                                         <div class="status-badge ${statusClass}" style="margin-top:0;">${statusText}</div>
                                     </div>
                                     <a href="/official_exam_player.html?paper_id=${exam.id}" class="btn-start">${btnText}</a>

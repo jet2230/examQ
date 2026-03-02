@@ -208,11 +208,12 @@
             <table class="exam-list-table">
                 <thead>
                     <tr>
-                        <th>ID</th>
+                        <th style="word-wrap: break-word; max-width: 150px; white-space: normal;">ID</th>
                         <th>Title</th>
                         <th>Subject</th>
                         <th>Paper</th>
                         <th>Date</th>
+                        <th>Questions</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -249,11 +250,12 @@
             data.exams.forEach(exam => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td><code>${exam.id}</code></td>
+                    <td style="word-wrap: break-word; word-break: break-all; max-width: 150px; white-space: normal;"><code>${exam.id}</code></td>
                     <td><strong>${exam.title}</strong></td>
                     <td>${exam.subject}</td>
                     <td>${exam.paper}</td>
                     <td>${exam.date}</td>
+                    <td><span style="background: #e1e7ff; color: #1e3c72; padding: 4px 8px; border-radius: 12px; font-size: 0.9em; font-weight: bold;">${exam.total_questions || 0}</span></td>
                     <td><button class="btn-delete" onclick="deleteExam('${exam.id}')">Delete</button></td>
                 `;
                 tbody.appendChild(tr);

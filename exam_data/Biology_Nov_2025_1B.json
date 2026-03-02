@@ -1,8 +1,197 @@
 {
   "paper_id": "Biology_Nov_2025_1B",
-  "title": "Pearson Edexcel International GCSE (9-1) Biology Paper 1B - Nov 2025",
+  "title": "Pearson Edexcel IGCSE Biology Paper 1B (First 3 Questions)",
   "subject": "Biology",
   "qp_img_dir": "/static/exams/Biology_Nov_2025_1B/qp/",
   "extract_pages": [],
-  "questions": []
+  "questions": [
+    {
+      "id": 1,
+      "sub_questions": [
+        {
+          "sub_id": "1(a)(i)",
+          "type": "mcq",
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "qp_pages": [
+            2
+          ],
+          "max_marks": 1,
+          "ms_text": "Correct Answer: D (nucleus) - The structure labelled S is the nucleus."
+        },
+        {
+          "sub_id": "1(a)(ii)",
+          "type": "mcq",
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "qp_pages": [
+            2
+          ],
+          "max_marks": 1,
+          "ms_text": "Correct Answer: B (cytoplasm) - The structure labelled Q is the cytoplasm."
+        },
+        {
+          "sub_id": "1(a)(iii)",
+          "type": "mcq",
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "qp_pages": [
+            2
+          ],
+          "max_marks": 1,
+          "ms_text": "Correct Answer: D (nucleus) - Chromosomes are contained in the nucleus."
+        },
+        {
+          "sub_id": "1(a)(iv)",
+          "type": "calculation",
+          "qp_pages": [
+            3
+          ],
+          "max_marks": 2,
+          "ms_text": "1 mark for correct measurement (43-44mm). 1 mark for correct calculation (e.g. 43000 / 65 = 660-677um)."
+        },
+        {
+          "sub_id": "1(b)",
+          "type": "list",
+          "count": 3,
+          "qp_pages": [
+            3
+          ],
+          "max_marks": 3,
+          "ms_text": "Any three from: Amoeba has nucleus, Amoeba has organelles, Amoeba has cell membrane, Virus has protein coat, Virus only DNA/RNA."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "sub_questions": [
+        {
+          "sub_id": "2(a)",
+          "type": "text",
+          "qp_pages": [
+            4
+          ],
+          "max_marks": 1,
+          "ms_text": "Definition of diffusion: Net movement of particles from high to low concentration."
+        },
+        {
+          "sub_id": "2(b)(i)",
+          "type": "text",
+          "qp_pages": [
+            5
+          ],
+          "max_marks": 1,
+          "ms_text": "Dependent variable: Time taken for colour change."
+        },
+        {
+          "sub_id": "2(b)(ii)",
+          "type": "text",
+          "qp_pages": [
+            5
+          ],
+          "max_marks": 6,
+          "ms_text": "Graph: Axes (1), Scale (1), Plotting (2), Labels (1), Ruler lines (1)."
+        },
+        {
+          "sub_id": "2(b)(iii)",
+          "type": "text",
+          "qp_pages": [
+            6
+          ],
+          "max_marks": 2,
+          "ms_text": "Higher concentration increases rate, so time decreases."
+        },
+        {
+          "sub_id": "2(b)(iv)",
+          "type": "calculation",
+          "final_label": "Rate",
+          "qp_pages": [
+            6
+          ],
+          "max_marks": 2,
+          "ms_text": "Rate = 20 / 30 = 0.67 cm/s."
+        },
+        {
+          "sub_id": "2(b)(v)",
+          "type": "text",
+          "qp_pages": [
+            6
+          ],
+          "max_marks": 1,
+          "ms_text": "Reliability: Repeat and calculate mean."
+        },
+        {
+          "sub_id": "2(c)",
+          "type": "text",
+          "qp_pages": [
+            7
+          ],
+          "max_marks": 3,
+          "ms_text": "Method: Use water bath, keep drops same, measure time."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "sub_questions": [
+        {
+          "sub_id": "3(a)(i)",
+          "type": "text",
+          "qp_pages": [
+            8
+          ],
+          "max_marks": 2,
+          "ms_text": "Step 2 purpose: To show starch initially present / compare results."
+        },
+        {
+          "sub_id": "3(a)(ii)",
+          "type": "text",
+          "qp_pages": [
+            8
+          ],
+          "max_marks": 2,
+          "ms_text": "Flask leaf results: Remains brown/orange, no starch as soda lime removed CO2."
+        },
+        {
+          "sub_id": "3(b)(i)",
+          "type": "text",
+          "qp_pages": [
+            9
+          ],
+          "max_marks": 1,
+          "ms_text": "Starch test: Iodine solution."
+        },
+        {
+          "sub_id": "3(b)(ii)",
+          "type": "text",
+          "qp_pages": [
+            9
+          ],
+          "max_marks": 3,
+          "ms_text": "Reason for results: Part covered by foil didn't receive light (1), so no photosynthesis (1), no starch made (1)."
+        },
+        {
+          "sub_id": "3(c)",
+          "type": "text",
+          "qp_pages": [
+            10
+          ],
+          "max_marks": 4,
+          "ms_text": "Experiment control: Light intensity, Temperature, Water availability, Mineral availability."
+        }
+      ]
+    }
+  ]
 }

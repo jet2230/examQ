@@ -567,7 +567,7 @@
                             <div class="working-label">Working:</div>
                             <textarea id="work_${sq.sub_id}" onfocus="jump(${pNum})" placeholder="Show steps...">${saved.work || ''}</textarea>
                             <div style="text-align:right; margin-top:10px;">
-                                <b>Final:</b> <input type="text" id="ans_${sq.sub_id}" onfocus="jump(${pNum})" style="width:100px;" value="${saved.value || ''}"> ${sq.suffix || ''}
+                                <b>${sq.final_label || 'Final Answer'}:</b> <input type="text" id="ans_${sq.sub_id}" onfocus="jump(${pNum})" style="width:100px;" value="${saved.value || ''}"> ${sq.suffix || ''}
                             </div>
                         </div>`;
                     } else if (sq.type === 'list') {
@@ -654,17 +654,19 @@
                 if (!val) isBlank = true;
             }
 
-            const nonsenseKeywords = ['tell me', 'show me', 'what is the answer', 'i don\'t know', 'give me', 'lalai', 'abc', '123'];
+            const nonsenseKeywords = ['lalai', 'abc', '123'];
+            const helpKeywords = ['tell me', 'show me', 'what is the answer', 'i don\'t know', 'give me', 'help'];
             const lowerAnswer = type === 'calculation' ? (work + ' ' + val).toLowerCase() : val.toLowerCase();
             const rawLength = type === 'calculation' ? (work.length + val.length) : val.length;
-            
-            if (isBlank || nonsenseKeywords.some(k => lowerAnswer.includes(k)) || (rawLength < 3 && type !== 'mcq')) {
+
+            const isHelpRequest = helpKeywords.some(k => lowerAnswer.includes(k));
+
+            if (isBlank || nonsenseKeywords.some(k => lowerAnswer.includes(k)) || (!isHelpRequest && rawLength < 3 && type !== 'mcq')) {
                 errDiv.style.display = 'block';
                 errDiv.textContent = isBlank ? "⚠️ Please provide an answer or show some working." : "⚠️ Please provide a meaningful answer.";
                 fbDiv.classList.remove('show');
                 return;
-            }
-            
+            }            
             errDiv.style.display = 'none';
             const btn = event.target;
             btn.disabled = true; btn.textContent = "Grading...";

@@ -204,13 +204,29 @@ def list_official_exams():
     try:
         conn = get_db()
         cursor = conn.cursor()
-        cursor.execute("SELECT id, title, subject, paper, date FROM official_exams ORDER BY created_at DESC")
+        cursor.execute("SELECT id, title, subject, paper, date, data_json_path FROM official_exams ORDER BY created_at DESC")
         exams = cursor.fetchall()
         conn.close()
         
+        exam_list = []
+        for e in exams:
+            exam_dict = dict(e)
+            total_questions = 0
+            json_path = exam_dict.get('data_json_path')
+            if json_path and os.path.exists(json_path):
+                try:
+                    with open(json_path, 'r') as f:
+                        data = json.load(f)
+                        total_questions = len(data.get('questions', []))
+                except:
+                    pass
+            exam_dict['total_questions'] = total_questions
+            exam_dict.pop('data_json_path', None)
+            exam_list.append(exam_dict)
+        
         return jsonify({
             'success': True,
-            'exams': [dict(e) for e in exams]
+            'exams': exam_list
         }), 200
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
@@ -339,56 +355,74 @@ JSON FORMAT:
                 'skipped': True
             }), 200
 
-        # 3. Use LLaMA to generate Question Mapping
-        map_prompt = f"""Analyze this IGCSE exam paper and its mark scheme. 
-You MUST generate a mapping of ALL main questions (from Question 1 up to the very last question, usually 10-12) to their page numbers and the relevant mark scheme text.
+        # 3. Use LLaMA to generate Question Mapping (Page-by-Page for reliability)
+        qp_pages_text = extract_pdf_text(qp_path).split('\n---PAGE BREAK---\n')
+        
+        all_questions_map = {} # Use dict to merge sub-questions
+        
+        for i, page_content in enumerate(qp_pages_text):
+            page_num = i + 1
+            if not page_content.strip(): continue
 
-CRITICAL: Do not stop early. Every single question in the paper must be represented in the JSON.
+            print(f"  Scanning Page {page_num}/{len(qp_pages_text)}...")
+            
+            page_prompt = f"""Analyze the text from Page {page_num} of an IGCSE exam paper.
+The full Mark Scheme is also provided for context.
 
-QP TEXT (TARGETED):
-{qp_text[:50000]}
+PAGE {page_num} TEXT:
+{page_content}
 
-MS TEXT (TARGETED):
-{ms_text[:50000]}
+FULL MARK SCHEME TEXT:
+{ms_text[:40000]} 
 
-JSON FORMAT (STRICT):
-{{
-  "questions": [
-    {{
-      "id": 1,
-      "choice_group": "Section Name or null",
-      "sub_questions": [
-        {{
-          "sub_id": "1(a)",
-          "type": "mcq", 
-          "options": ["A", "B", "C", "D"],
-          "qp_pages": [2],
-          "ms_text": "Correct Answer: [Letter] ([Explanation])",
-          "max_marks": 1
-        }},
-        ...
-      ]
-    }}
-  ],
-  "extract_pages": []
-}}
+CRITICAL: Find any questions or sub-questions that START on this page.
+Return a JSON list of question objects found on this page, or an empty list [].
+
+JSON FORMAT:
+[{{
+  "id": 1,
+  "sub_questions": [
+    {{ "sub_id": "1(a)(i)", "type": "calculation", "qp_pages": [{page_num}], "ms_text": "...", "max_marks": 1, "final_label": "Rate" }}
+  ]
+}}]
 
 TYPE RULES:
-- Identify every main question number sequentially.
-- For each question, extract all sub-questions (e.g. 1(a), 1(b)(i)).
-- If the exam paper contains an \"Extracts Booklet\", \"Source Booklet\", or \"Reading Texts\" section (very common in English papers), identify the page numbers for these texts and include them in the \"extract_pages\" array in the root of the JSON.
-- If the exam paper explicitly states \"Answer ONE question from this section\" or \"Answer either Question X or Question Y\", set a matching \"choice_group\" string for those questions (e.g., \"Section B Choice\"). This is CRITICAL for papers like English where students select 1 of 3 long-form tasks.
-- Use \"mcq\" ONLY if the question has A,B,C,D options.
-- Use \"calculation\" for multi-mark math/science questions.
-- Use \"list\" for questions that ask to \"State two ways...\", \"Give three reasons...\", etc. You MUST include a \"count\" integer property (e.g., \"count\": 2).
-- Use \"text\" for all other standard or long-form written answers.
-- Ensure \"qp_pages\" are the page numbers in the Question Paper where the question is visible.
+- Include "final_label" for calculation questions if the question asks for a specific value like "Rate", "Volume", "Percentage", otherwise omit or set to "Final Answer".
 """
-        map_resp = requests.post('http://localhost:11434/api/generate', json={
-            'model': 'llama3', 'prompt': map_prompt, 'stream': False, 'format': 'json', 'temperature': 0
+            page_resp = requests.post('http://localhost:11434/api/generate', json={
+                'model': 'llama3', 'prompt': page_prompt, 'stream': False, 'format': 'json', 'temperature': 0
+            })
+            
+            try:
+                page_q_list = json.loads(page_resp.json().get('response', '[]'))
+                for q_data in page_q_list:
+                    if 'id' not in q_data or 'sub_questions' not in q_data: continue
+                    q_id = q_data['id']
+                    if q_id not in all_questions_map:
+                        all_questions_map[q_id] = q_data
+                    else:
+                        all_questions_map[q_id]['sub_questions'].extend(q_data['sub_questions'])
+            except Exception as e:
+                print(f"  Warning: Failed to process page {page_num}. Error: {e}")
+                
+        final_questions = sorted(all_questions_map.values(), key=lambda q: q['id'])
+        mapping_data = {"questions": final_questions}
+
+        # Step C: Check for extracts
+        extract_prompt = f"""Identify page numbers for "Extracts Booklet" or "Source Booklet" in this text. 
+Return only a JSON array of page numbers or an empty array [].
+TEXT:
+{qp_text[-10000:]}
+"""
+        ex_resp = requests.post('http://localhost:11434/api/generate', json={
+            'model': 'llama3', 'prompt': extract_prompt, 'stream': False, 'format': 'json', 'temperature': 0
         })
-        ai_raw = map_resp.json().get('response', '{"questions": []}')
-        mapping_data = json.loads(ai_raw)
+        try:
+            extract_pages = json.loads(ex_resp.json().get('response', '[]'))
+        except:
+            extract_pages = []
+        
+        mapping_data["extract_pages"] = extract_pages
 
         # 4. Convert PDF to Images (if they don't exist)
         qp_img_dir = f"static/exams/{paper_id}/qp"
@@ -523,15 +557,16 @@ STUDENT'S ANSWER:
 {user_answer}
 
 MARKING INSTRUCTIONS:
-1. MANDATORY: If the student's answer is blank, nonsensical, or irrelevant, award 0 marks.
-2. CALCULATION HANDLING: 
+1. HELP REQUESTS: If the student explicitly asks for help (e.g., "show me", "tell me", "I don't know", "what is the answer"), you must award 0 marks. However, your feedback MUST warmly explain the concept and provide a clear step-by-step breakdown of how to reach the correct answer based on the mark scheme. DO NOT just say "irrelevant answer". Be a helpful tutor.
+2. MANDATORY: If the student's answer is blank, nonsensical, or irrelevant (and not a help request), award 0 marks.
+3. CALCULATION HANDLING: 
    - The student's answer is structured with `[WORKING_START]`, `[WORKING_END]`, `[FINAL_ANSWER_START]`, and `[FINAL_ANSWER_END]`.
    - IMPORTANT: If the `[FINAL_ANSWER_START]` matches the mark scheme exactly (including units), award FULL MARKS ({max_marks}) even if the working contains a minor typo or is incomplete. This is the "Correct Answer Scores 2" rule.
    - If the `[FINAL_ANSWER_START]` is wrong or missing, award partial marks (e.g. 1/2) ONLY if the `[WORKING_START]` section shows valid intermediate steps (like a correct subtraction or division) from the mark scheme.
-3. BE PRECISE: Check every line within `[WORKING_START]`. Do not ignore lines.
-4. If the student did not receive full marks, you MUST provide a "MODEL ANSWER" based on the mark scheme.
-5. Return a valid JSON response.
-6. Be an expert, but fair examiner. Award marks if the knowledge is clearly shown despite minor typos.
+4. BE PRECISE: Check every line within `[WORKING_START]`. Do not ignore lines.
+5. If the student did not receive full marks, you MUST provide a "MODEL ANSWER" based on the mark scheme.
+6. Return a valid JSON response.
+7. Be an expert, but fair examiner. Award marks if the knowledge is clearly shown despite minor typos.
 RESPONSE FORMAT (JSON ONLY):
 {{
   "marks_awarded": 0,
