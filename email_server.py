@@ -340,53 +340,77 @@ JSON FORMAT:
                 'skipped': True
             }), 200
 
-        # 3. Use LLaMA to generate Question Mapping
-        map_prompt = f"""Analyze this IGCSE exam paper and its mark scheme. 
-Generate a mapping of ALL main questions (usually 1 to 12) to their page numbers and the relevant mark scheme text.
-
-QP TEXT (TARGETED):
-{qp_text[:40000]}
-
-MS TEXT (TARGETED):
-{ms_text[:40000]}
-
-JSON FORMAT (STRICT):
-{{
-  "questions": [
-    {{
-      "id": 1,
-      "choice_group": "Section Name or null",
-      "sub_questions": [
-        {{
-          "sub_id": "1(a)",
-          "type": "mcq", 
-          "options": ["A", "B", "C", "D"],
-          "qp_pages": [2],
-          "ms_text": "Correct Answer: [Letter] ([Explanation])",
-          "max_marks": 1
-        }},
-        ...
-      ]
-    }}
-  ],
-  "extract_pages": []
-}}
-
-TYPE RULES:
-- If the exam paper contains an "Extracts Booklet", "Source Booklet", or "Reading Texts" section (very common in English papers), identify the page numbers for these texts and include them in the "extract_pages" array in the root of the JSON.
-- If the exam paper explicitly states "Answer ONE question from this section" or "Answer either Question X or Question Y", set a matching "choice_group" string for those questions (e.g., "Section B Choice"). This is CRITICAL for papers like English where students select 1 of 3 long-form tasks.
-- Use "mcq" ONLY if the question has A,B,C,D options.
-- Use "calculation" for multi-mark math/science questions.
-- Use "list" for questions that ask to "State two ways...", "Give three reasons...", etc. You MUST include a "count" integer property (e.g., "count": 2). This will generate multiple input boxes automatically.
-- If a single question number has multiple distinct sections on the exam (like Question 5 having two separate '1.' and '2.' answer lines), you can alternatively split them into separate sub_questions (e.g., "5(1)" and "5(2)").
-- Use "text" for all other standard or long-form written answers.
-- Ensure "qp_pages" are the page numbers in the Question Paper where the question is visible.
+        # 3. Use LLaMA to generate Question Mapping (Iterative for reliability)
+        # Step A: Identify all question numbers
+        scan_prompt = f"""Analyze this IGCSE exam paper. List only the main question numbers present (e.g., 1, 2, 3... 11).
+TEXT:
+{qp_text[:20000]}
 """
-        map_resp = requests.post('http://localhost:11434/api/generate', json={
-            'model': 'llama3', 'prompt': map_prompt, 'stream': False, 'format': 'json', 'temperature': 0
+        scan_resp = requests.post('http://localhost:11434/api/generate', json={
+            'model': 'llama3', 'prompt': scan_prompt, 'stream': False, 'temperature': 0
         })
-        ai_raw = map_resp.json().get('response', '{"questions": []}')
-        mapping_data = json.loads(ai_raw)
+        q_list_raw = scan_resp.json().get('response', '')
+        # Simple extraction of numbers from the AI response
+        import re
+        q_numbers = sorted(list(set(re.findall(r'\b\d+\b', q_list_raw))), key=int)
+        
+        all_questions = []
+        
+        # Step B: Map each question individually
+        for q_num in q_numbers:
+            print(f"  Mapping Question {q_num}...")
+            q_prompt = f"""Analyze Question {q_num} in this IGCSE paper and its mark scheme.
+            
+QP TEXT:
+{qp_text[:50000]}
+
+MS TEXT:
+{ms_text[:50000]}
+
+Return JSON for ONLY Question {q_num}:
+{{
+  "id": {q_num},
+  "choice_group": "Section Name or null",
+  "sub_questions": [
+    {{
+      "sub_id": "{q_num}(a)",
+      "type": "text/mcq/calculation/list",
+      "options": ["A", "B", "C", "D"],
+      "qp_pages": [page_number],
+      "ms_text": "mark scheme text",
+      "max_marks": 1
+    }}
+  ]
+}}
+"""
+            q_resp = requests.post('http://localhost:11434/api/generate', json={
+                'model': 'llama3', 'prompt': q_prompt, 'stream': False, 'format': 'json', 'temperature': 0
+            })
+            try:
+                q_data = json.loads(q_resp.json().get('response', '{}'))
+                if q_data and 'sub_questions' in q_data:
+                    all_questions.append(q_data)
+            except:
+                print(f"  Warning: Failed to map Question {q_num}")
+
+        # Step C: Check for extracts
+        extract_prompt = f"""Identify page numbers for "Extracts Booklet" or "Source Booklet" in this text. 
+Return only a JSON array of page numbers or an empty array [].
+TEXT:
+{qp_text[-10000:]}
+"""
+        ex_resp = requests.post('http://localhost:11434/api/generate', json={
+            'model': 'llama3', 'prompt': extract_prompt, 'stream': False, 'format': 'json', 'temperature': 0
+        })
+        try:
+            extract_pages = json.loads(ex_resp.json().get('response', '[]'))
+        except:
+            extract_pages = []
+
+        mapping_data = {
+            "questions": all_questions,
+            "extract_pages": extract_pages
+        }
 
         # 4. Convert PDF to Images
         qp_img_dir = f"static/exams/{paper_id}/qp"
