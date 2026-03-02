@@ -54,6 +54,7 @@
             background: white;
             border-left: 2px solid #ddd;
             padding: 25px;
+            padding-bottom: 600px; /* Even more space at bottom to ensure centering */
             overflow-y: auto;
         }
         .question-title {
@@ -69,6 +70,7 @@
             border: 1px solid #e0e0e0;
             border-radius: 12px;
             background: #fafafa;
+            scroll-margin-top: 20px;
         }
         .sub-header {
             font-weight: 700;
@@ -148,18 +150,20 @@
             margin-top: 20px;
         }
         .control-btn {
-            flex: 1;
-            padding: 15px;
+            padding: 12px 25px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 700;
+            transition: all 0.2s;
             background: #1e3c72;
             color: white;
-            border: none;
-            border-radius: 8px;
-            font-weight: 700;
-            cursor: pointer;
         }
-        .control-btn:disabled { opacity: 0.3; }
+        .control-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
         .control-btn:hover:not(:disabled) {
-            background: #2a5298;
             transform: translateY(-2px);
         }
         .control-btn.highlight {
@@ -204,6 +208,7 @@
         <div class="answer-panel">
             <h1 class="question-title" id="currentQuestionId"></h1>
             <div id="subQuestionsList"></div>
+            
             <div class="paper-controls">
                 <button id="prevBtn" class="control-btn" onclick="changeQuestion(-1)">← Previous</button>
                 <button id="nextBtn" class="control-btn" onclick="changeQuestion(1)">Next →</button>
@@ -225,10 +230,27 @@
         const paperId = urlParams.get('paper_id') || 'biology_2B_nov_2025';
         const username = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
 
-        function jump(pageNum) {
+        let lastJumpedPage = null;
+        let isManualJumping = false;
+
+        function jump(pageNum, elementToFocus) {
             const img = document.getElementById('page_' + pageNum);
-            if (img) {
-                img.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            if (!img) return;
+
+            let alignment = 'start';
+            if (elementToFocus) {
+                const item = elementToFocus.closest('.sub-question-item');
+                if (item && item.getAttribute('data-align') === 'end') {
+                    alignment = 'end';
+                }
+            }
+
+            img.scrollIntoView({ behavior: 'smooth', block: alignment });
+            lastJumpedPage = pageNum;
+            
+            if (elementToFocus) {
+                isManualJumping = true;
+                setTimeout(() => { isManualJumping = false; }, 1000);
             }
         }
 
@@ -306,7 +328,6 @@
                 savePopupState();
             }
 
-            // Also track resizing
             const resizeObserver = new ResizeObserver(() => {
                 if (element.style.display !== 'none') {
                     savePopupState();
@@ -325,7 +346,6 @@
             examData = await resp.json();
             document.getElementById('paperTitle').textContent = examData.title;
 
-            // Handle Extracts Booklet
             if (examData.extract_pages && examData.extract_pages.length > 0) {
                 const btn = document.getElementById('extractsBtn');
                 btn.style.display = 'block';
@@ -347,28 +367,24 @@
             const pageData = await pageResp.json();
             totalPages = pageData.count || 0;
             
-            // Group questions by starting page
             pageGroups = [];
             if (examData.questions && examData.questions.length > 0) {
                 let currentGroup = {
-                    questions: [examData.questions[0]],
-                    startPage: examData.questions[0].sub_questions[0].qp_pages[0]
+                    startPage: examData.questions[0].sub_questions[0].qp_pages[0],
+                    questions: []
                 };
-                
-                for (let i = 1; i < examData.questions.length; i++) {
-                    const q = examData.questions[i];
+                examData.questions.forEach(q => {
                     const qStartPage = q.sub_questions[0].qp_pages[0];
-                    
                     if (qStartPage === currentGroup.startPage) {
                         currentGroup.questions.push(q);
                     } else {
                         pageGroups.push(currentGroup);
                         currentGroup = {
-                            questions: [q],
-                            startPage: qStartPage
+                            startPage: qStartPage,
+                            questions: [q]
                         };
                     }
-                }
+                });
                 pageGroups.push(currentGroup);
             }
 
@@ -376,7 +392,6 @@
                 const pResp = await fetch(`/api/student/exam-progress/get?username=${username}&paper_id=${paperId}`);
                 const pData = await pResp.json();
                 if (pData.success) {
-                    // Try to find which group the saved index belongs to
                     const savedIdx = pData.current_question_idx || 0;
                     currentGroupIdx = pageGroups.findIndex(g => 
                         g.questions.some(q => examData.questions.indexOf(q) === savedIdx)
@@ -389,7 +404,6 @@
                     }
                     isCompleted = pData.status === 'completed';
 
-                    // Populate selectedQuestionInGroup from answered questions if not already set
                     pageGroups.forEach((group, idx) => {
                         if (selectedQuestionInGroup[idx] === undefined) {
                             const answeredQ = group.questions.find(q => 
@@ -405,14 +419,14 @@
 
             const selector = document.getElementById('questionSelector');
             selector.innerHTML = '<option value="">Jump to Question...</option>';
-            pageGroups.forEach((group, index) => {
+            pageGroups.forEach((group, idx) => {
                 const opt = document.createElement('option');
-                opt.value = index;
+                opt.value = idx;
                 const qLabels = group.questions.map(q => q.id).join('/');
                 opt.textContent = "Question " + qLabels;
                 selector.appendChild(opt);
             });
-            
+
             render();
         }
 
@@ -423,17 +437,16 @@
         }
 
         let scrollObserver = null;
-        let lastJumpedPage = null;
 
         function checkAllGraded() {
             if (!pageGroups || pageGroups.length === 0) return;
             const group = pageGroups[currentGroupIdx];
-            
+
             let questionsToCheck = group.questions;
             const hasExplicitChoice = group.questions.some(q => q.choice_group);
             const isChoiceGroup = hasExplicitChoice || (group.questions.length > 1 && 
                                  group.questions.every(q => q.sub_questions.length === 1 && q.sub_questions[0].max_marks >= 20));
-            
+
             if (isChoiceGroup) {
                 if (selectedQuestionInGroup[currentGroupIdx] !== undefined) {
                     questionsToCheck = group.questions.filter(q => q.id === selectedQuestionInGroup[currentGroupIdx]);
@@ -479,27 +492,44 @@
             const list = document.getElementById('subQuestionsList');
             list.innerHTML = '';
             
-            if (scrollObserver) scrollObserver.disconnect();
-            
-            scrollObserver = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        const pNum = entry.target.getAttribute('data-page');
-                        if (pNum && pNum !== lastJumpedPage) {
-                            lastJumpedPage = pNum;
-                            jump(pNum);
-                        }
+            const panel = document.querySelector('.answer-panel');
+            panel.onscroll = () => {
+                if (isManualJumping) return;
+
+                // 1. If actively typing, keep focus
+                const active = document.activeElement;
+                if (active && (active.tagName === 'TEXTAREA' || active.tagName === 'INPUT' || active.tagName === 'CANVAS')) {
+                    const activeItem = active.closest('.sub-question-item');
+                    if (activeItem) {
+                        const pNum = activeItem.getAttribute('data-page');
+                        if (pNum) jump(pNum, active);
+                        return;
                     }
-                });
-            }, {
-                root: document.querySelector('.answer-panel'),
-                rootMargin: '-20% 0px -70% 0px',
-                threshold: 0
-            });
+                }
+
+                // 2. Scan items to find which one is currently at the top of the viewport
+                const items = Array.from(panel.querySelectorAll('.sub-question-item'));
+                const panelTop = panel.getBoundingClientRect().top;
+                
+                let bestItem = null;
+                for (let item of items) {
+                    const rect = item.getBoundingClientRect();
+                    // Threshold: If the top of the question is above the top 25% of the panel
+                    if (rect.top <= panelTop + 150) {
+                        bestItem = item;
+                    } else {
+                        break; // Items are ordered
+                    }
+                }
+
+                if (bestItem) {
+                    const pNum = bestItem.getAttribute('data-page');
+                    if (pNum) jump(pNum);
+                }
+            };
 
             let questionsToRender = group.questions;
             
-            // Priority 1: Explicit choice_group from JSON. Priority 2: Heuristic.
             const hasExplicitChoice = group.questions.some(q => q.choice_group);
             const choiceGroupName = hasExplicitChoice ? (group.questions.find(q => q.choice_group).choice_group || "Selection Required") : "Selection Required";
             
@@ -539,9 +569,16 @@
                 if (selectedQuestionInGroup[currentGroupIdx] !== undefined) {
                     questionsToRender = group.questions.filter(q => q.id === selectedQuestionInGroup[currentGroupIdx]);
                 } else {
-                    questionsToRender = []; // Wait for selection
+                    questionsToRender = [];
                 }
             }
+
+            // Flatten all sub-questions to identify the last one on each page
+            const allSubQs = questionsToRender.flatMap(q => q.sub_questions);
+            allSubQs.forEach((sq, idx) => {
+                const nextSq = allSubQs[idx + 1];
+                sq._isLastOnPage = !nextSq || nextSq.qp_pages[0] !== sq.qp_pages[0];
+            });
 
             questionsToRender.forEach(q => {
                 q.sub_questions.forEach(sq => {
@@ -549,12 +586,11 @@
                     const div = document.createElement('div');
                     div.className = 'sub-question-item';
                     div.setAttribute('data-page', pNum);
+                    if (sq._isLastOnPage) div.setAttribute('data-align', 'end');
                     
                     const saved = savedAnswers[sq.sub_id] || {};
                     
-                    // Format question ID from "1(a)(i)" to "1 a) i)"
                     let formattedId = sq.sub_id.replace(/\(/g, ' ').replace(/\)/g, ') ').trim();
-                    // Fix potential double spaces
                     formattedId = formattedId.replace(/\s+/g, ' ');
 
                     let inputHtml = `
@@ -567,26 +603,58 @@
                         inputHtml += `<div class="mcq-container">`;
                         sq.options.forEach(opt => {
                             const isSel = saved.value === opt ? 'selected' : '';
-                            inputHtml += `<div class="mcq-option ${isSel}" onclick="jump(${pNum}); setMcq('${sq.sub_id}', '${opt}', this)">${opt}</div>`;
+                            inputHtml += `<div class="mcq-option ${isSel}" onclick="jump(${pNum}, this); setMcq('${sq.sub_id}', '${opt}', this)">${opt}</div>`;
                         });
                         inputHtml += `</div><input type="hidden" id="ans_${sq.sub_id}" value="${saved.value || ''}">`;
                     } else if (sq.type === 'calculation') {
                         inputHtml += `<div class="calculation-container">
                             <div class="working-label">Working:</div>
-                            <textarea id="work_${sq.sub_id}" onfocus="jump(${pNum})" placeholder="Show steps...">${saved.work || ''}</textarea>
+                            <textarea id="work_${sq.sub_id}" onfocus="jump(${pNum}, this)" placeholder="Show steps...">${saved.work || ''}</textarea>
                             <div style="text-align:right; margin-top:10px;">
-                                <b>${sq.final_label || 'Final Answer'}:</b> <input type="text" id="ans_${sq.sub_id}" onfocus="jump(${pNum})" style="width:100px;" value="${saved.value || ''}"> ${sq.suffix || ''}
+                                <b>${sq.final_label || 'Final Answer'}:</b> <input type="text" id="ans_${sq.sub_id}" onfocus="jump(${pNum}, this)" style="width:100px;" value="${saved.value || ''}"> ${sq.suffix || ''}
                             </div>
                         </div>`;
                     } else if (sq.type === 'list') {
                         const listVals = saved.value ? saved.value.split('; ') : [];
                         for(let i=1; i<=sq.count; i++) {
                             const v = listVals[i-1] ? listVals[i-1].replace(/^\d+\.\s*/, '') : '';
-                            inputHtml += `<div style="margin-bottom:5px;">${i}. <input type="text" class="list-in-${sq.sub_id}" onfocus="jump(${pNum})" style="width:80%;" value="${v}"></div>`;
+                            inputHtml += `<div style="margin-bottom:5px;">${i}. <input type="text" class="list-in-${sq.sub_id}" onfocus="jump(${pNum}, this)" style="width:80%;" value="${v}"></div>`;
+                        }
+                    } else if (sq.type === 'draw') {
+                        inputHtml += `
+                        <div class="canvas-container" style="border: 2px dashed #1e3c72; border-radius: 8px; overflow: hidden; position: relative; margin-bottom: 10px;">
+                            <div class="canvas-toolbar" style="background: #f8f9fa; padding: 10px; display: flex; gap: 10px; align-items: center; border-bottom: 1px solid #dee2e6; flex-wrap: wrap;">
+                                <button class="tool-btn active" data-tool="pen" onclick="setTool('${sq.sub_id}', 'pen', this)" title="Pen">✏️</button>
+                                <button class="tool-btn" data-tool="line" onclick="setTool('${sq.sub_id}', 'line', this)" title="Line">📏</button>
+                                <button class="tool-btn" data-tool="rect" onclick="setTool('${sq.sub_id}', 'rect', this)" title="Rectangle">⬜</button>
+                                <button class="tool-btn" data-tool="circle" onclick="setTool('${sq.sub_id}', 'circle', this)" title="Circle">⭕</button>
+                                <button class="tool-btn" data-tool="text" onclick="setTool('${sq.sub_id}', 'text', this)" title="Text">🔤</button>
+                                <div style="height: 24px; width: 1px; background: #ccc; margin: 0 5px;"></div>
+                                <input type="color" id="color_${sq.sub_id}" value="#000000" title="Color" style="padding:0; border:none; width:30px; height:30px; cursor:pointer;">
+                                <select id="size_${sq.sub_id}" title="Stroke Size" style="padding: 5px; border-radius: 4px; border: 1px solid #ccc;">
+                                    <option value="2">Thin</option>
+                                    <option value="4" selected>Medium</option>
+                                    <option value="8">Thick</option>
+                                </select>
+                                <button onclick="clearCanvas('${sq.sub_id}')" style="margin-left: auto; padding: 6px 12px; font-size: 0.85em; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Clear</button>
+                            </div>
+                            <canvas id="canvas_${sq.sub_id}" width="800" height="400" onmousedown="jump(${pNum}, this)" ontouchstart="jump(${pNum}, this)" style="background: white; cursor: crosshair; display: block; width: 100%; touch-action: none;"></canvas>
+                            <input type="hidden" id="ans_${sq.sub_id}" value="${saved.value || ''}">
+                        </div>`;
+                        
+                        if (!document.getElementById('canvasStyles')) {
+                            const style = document.createElement('style');
+                            style.id = 'canvasStyles';
+                            style.textContent = `
+                                .tool-btn { background: white; border: 1px solid #ccc; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-size: 1.2em; transition: all 0.2s; }
+                                .tool-btn:hover { background: #e9ecef; }
+                                .tool-btn.active { background: #1e3c72; color: white; border-color: #1e3c72; }
+                            `;
+                            document.head.appendChild(style);
                         }
                     } else {
                         const height = Math.max(120, Math.min(600, sq.max_marks * 40));
-                        inputHtml += `<textarea id="ans_${sq.sub_id}" onfocus="jump(${pNum})" style="height: ${height}px;" placeholder="Type answer here...">${saved.value || ''}</textarea>`;
+                        inputHtml += `<textarea id="ans_${sq.sub_id}" onfocus="jump(${pNum}, this)" style="height: ${height}px;" placeholder="Type answer here...">${saved.value || ''}</textarea>`;
                     }
 
                     const fbShow = saved.marks !== undefined ? 'show' : '';
@@ -598,11 +666,14 @@
                             <b>Marks: <span id="m_${sq.sub_id}">${saved.marks || 0}</span> / ${sq.max_marks}</b>
                             <p id="t_${sq.sub_id}" style="margin-top:10px;">${saved.feedback || ''}</p>
                             <div style="margin-top:10px; font-size:0.8em; background:#eee; padding:5px;"><b>Mark Scheme:</b><br>${sq.ms_text}</div>
-                        </div></div>`;
+                        </div>`;
                     
                     div.innerHTML = inputHtml;
                     list.appendChild(div);
-                    scrollObserver.observe(div);
+                    
+                    if (sq.type === 'draw') {
+                        setTimeout(() => initCanvas(sq.sub_id, saved.value), 0);
+                    }
                 });
             });
 
@@ -642,6 +713,126 @@
             document.getElementById('ans_' + id).value = val;
         }
 
+        let canvasTools = {}; // subId -> toolName
+
+        function setTool(subId, tool, el) {
+            canvasTools[subId] = tool;
+            const parent = el.parentElement;
+            parent.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+        }
+
+        function initCanvas(subId, savedDataUrl) {
+            const canvas = document.getElementById('canvas_' + subId);
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            let isDrawing = false;
+            let startPos = {x: 0, y: 0};
+            let snapshot = null;
+            
+            canvasTools[subId] = 'pen'; // Default tool
+
+            if (savedDataUrl && savedDataUrl.startsWith('data:image')) {
+                const img = new Image();
+                img.onload = () => ctx.drawImage(img, 0, 0);
+                img.src = savedDataUrl;
+            } else {
+                ctx.fillStyle = "white";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+
+            function getMousePos(e) {
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                const clientX = (e.clientX !== undefined) ? e.clientX : (e.touches ? e.touches[0].clientX : 0);
+                const clientY = (e.clientY !== undefined) ? e.clientY : (e.touches ? e.touches[0].clientY : 0);
+                return {
+                    x: (clientX - rect.left) * scaleX,
+                    y: (clientY - rect.top) * scaleY
+                };
+            }
+
+            function startDraw(e) {
+                if (e.type === 'touchstart') e.preventDefault();
+                const pos = getMousePos(e);
+                startPos = pos;
+                
+                const tool = canvasTools[subId];
+                if (tool === 'text') {
+                    const text = prompt("Enter text:");
+                    if (text) {
+                        ctx.fillStyle = document.getElementById('color_' + subId).value;
+                        ctx.font = (parseInt(document.getElementById('size_' + subId).value) * 5) + "px Arial";
+                        ctx.fillText(text, pos.x, pos.y);
+                        saveToInput();
+                    }
+                    return;
+                }
+
+                isDrawing = true;
+                snapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                
+                ctx.strokeStyle = document.getElementById('color_' + subId).value;
+                ctx.lineWidth = document.getElementById('size_' + subId).value;
+                ctx.lineCap = "round";
+                ctx.lineJoin = "round";
+            }
+            
+            function draw(e) {
+                if (!isDrawing) return;
+                if (e.type === 'touchmove') e.preventDefault();
+                const pos = getMousePos(e);
+                const tool = canvasTools[subId];
+
+                if (tool === 'pen') {
+                    ctx.lineTo(pos.x, pos.y);
+                    ctx.stroke();
+                } else {
+                    ctx.putImageData(snapshot, 0, 0);
+                    ctx.beginPath();
+                    if (tool === 'line') {
+                        ctx.moveTo(startPos.x, startPos.y);
+                        ctx.lineTo(pos.x, pos.y);
+                    } else if (tool === 'rect') {
+                        ctx.strokeRect(startPos.x, startPos.y, pos.x - startPos.x, pos.y - startPos.y);
+                    } else if (tool === 'circle') {
+                        const radius = Math.sqrt(Math.pow(pos.x - startPos.x, 2) + Math.pow(pos.y - startPos.y, 2));
+                        ctx.arc(startPos.x, startPos.y, radius, 0, 2 * Math.PI);
+                    }
+                    ctx.stroke();
+                }
+            }
+            
+            function endDraw(e) {
+                if (isDrawing) {
+                    isDrawing = false;
+                    saveToInput();
+                }
+            }
+
+            function saveToInput() {
+                document.getElementById('ans_' + subId).value = canvas.toDataURL();
+            }
+
+            canvas.addEventListener('mousedown', startDraw);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', endDraw);
+            canvas.addEventListener('mouseout', endDraw);
+            canvas.addEventListener('touchstart', startDraw, {passive: false});
+            canvas.addEventListener('touchmove', draw, {passive: false});
+            canvas.addEventListener('touchend', endDraw);
+        }
+
+        function clearCanvas(subId) {
+            const canvas = document.getElementById('canvas_' + subId);
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = "white";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            document.getElementById('ans_' + subId).value = '';
+        }
+
         async function grade(subId, max, ms, type) {
             let val = "";
             let work = "";
@@ -668,8 +859,10 @@
             const rawLength = type === 'calculation' ? (work.length + val.length) : val.length;
 
             const isHelpRequest = helpKeywords.some(k => lowerAnswer.includes(k));
+            const isNonsense = type !== 'draw' && nonsenseKeywords.some(k => lowerAnswer.includes(k));
+            const isTooShort = !isHelpRequest && rawLength < 3 && type !== 'mcq' && type !== 'draw';
 
-            if (isBlank || nonsenseKeywords.some(k => lowerAnswer.includes(k)) || (!isHelpRequest && rawLength < 3 && type !== 'mcq')) {
+            if (isBlank || isNonsense || isTooShort) {
                 errDiv.style.display = 'block';
                 errDiv.textContent = isBlank ? "⚠️ Please provide an answer or show some working." : "⚠️ Please provide a meaningful answer.";
                 fbDiv.classList.remove('show');
@@ -679,38 +872,70 @@
             const btn = event.target;
             btn.disabled = true; btn.textContent = "Grading...";
 
-            const answerStr = type === 'calculation' ? `[WORKING_START]\n${work}\n[WORKING_END]\n[FINAL_ANSWER_START]\n${val}\n[FINAL_ANSWER_END]` : val;
+            let answerStr = val;
+            let imageData = null;
+
+            if (type === 'calculation') {
+                answerStr = `[WORKING_START]\n${work}\n[WORKING_END]\n[FINAL_ANSWER_START]\n${val}\n[FINAL_ANSWER_END]`;
+            } else if (type === 'draw') {
+                answerStr = "[DRAWING_SUBMITTED]";
+                imageData = val;
+            }
 
             const res = await fetch('/api/official-exams/grade', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({paper_id: paperId, sub_id: subId, user_answer: answerStr, mark_scheme: ms, max_marks: max})
+                body: JSON.stringify({paper_id: paperId, sub_id: subId, user_answer: answerStr, image_data: imageData, mark_scheme: ms, max_marks: max})
             });
             
             const data = await res.json();
             
+            const marksAwarded = (data.marks_awarded !== undefined) ? data.marks_awarded : 0;
+            const feedbackText = data.feedback || "No feedback provided by AI.";
+
             savedAnswers[subId] = {
                 value: val,
                 work: work,
-                marks: data.marks_awarded,
-                feedback: data.feedback
+                marks: marksAwarded,
+                feedback: feedbackText
             };
 
-            fbDiv.className = 'feedback-box show ' + (data.marks_awarded == max ? 'feedback-good' : (data.marks_awarded > 0 ? 'feedback-partial' : 'feedback-bad'));
-            document.getElementById('m_' + subId).textContent = data.marks_awarded;
-            document.getElementById('t_' + subId).innerText = data.feedback;
+            fbDiv.className = 'feedback-box show ' + (marksAwarded == max ? 'feedback-good' : (marksAwarded > 0 ? 'feedback-partial' : 'feedback-bad'));
+            document.getElementById('m_' + subId).textContent = marksAwarded;
+            document.getElementById('t_' + subId).innerText = feedbackText;
             
+            if (type === 'draw' && marksAwarded < max) {
+                const selfMarkHtml = `
+                    <div style="margin-top:15px; border-top:1px solid #ccc; padding-top:10px;">
+                        <p style="font-weight:bold; color:#1e3c72;">Based on the tutorial above, how many marks do you give yourself?</p>
+                        <select id="self_mark_${subId}" onchange="updateSelfMark('${subId}', this.value)" style="padding:5px; border-radius:4px;">
+                            ${Array.from({length: max + 1}, (_, i) => `<option value="${i}" ${i == marksAwarded ? 'selected' : ''}>${i} / ${max}</option>`).join('')}
+                        </select>
+                    </div>
+                `;
+                document.getElementById('t_' + subId).innerHTML += selfMarkHtml;
+            }
+
             btn.disabled = false; btn.textContent = "Re-submit & Grade";
             await saveProgress();
             checkAllGraded();
         }
 
+        function updateSelfMark(subId, val) {
+            const marks = parseInt(val);
+            savedAnswers[subId].marks = marks;
+            document.getElementById('m_' + subId).textContent = marks;
+            const max = pageGroups[currentGroupIdx].questions.flatMap(q => q.sub_questions).find(sq => sq.sub_id === subId).max_marks;
+            const fbDiv = document.getElementById('fb_' + subId);
+            fbDiv.className = 'feedback-box show ' + (marks == max ? 'feedback-good' : (marks > 0 ? 'feedback-partial' : 'feedback-bad'));
+            saveProgress();
+            checkAllGraded();
+        }
+
         async function saveProgress() {
-            // Save the first question index of the current group
             const firstQ = pageGroups[currentGroupIdx].questions[0];
             const qIdx = examData.questions.indexOf(firstQ);
             
-            // Include selections in the saved answers
             const answersToSave = { ...savedAnswers };
             answersToSave._selections = selectedQuestionInGroup;
 
@@ -724,27 +949,6 @@
                     answers: answersToSave
                 })
             });
-        }
-
-        function resumeLater() {
-            saveProgress().then(() => {
-                window.location.href = '/exam_questions.html';
-            });
-        }
-
-        async function finishExam() {
-            if (!confirm("Are you sure you want to finish the exam? This will lock your current progress.")) return;
-            const res = await fetch('/api/student/exam-progress/complete', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ username, paper_id: paperId })
-            });
-            const data = await res.json();
-            if (data.success) {
-                isCompleted = true;
-                render();
-                alert("Exam marked as completed!");
-            }
         }
 
         function changeQuestion(n) {
