@@ -1,0 +1,150 @@
+{
+  "paper_id": "f6c2d14e",
+  "title": "Pearson Edexcel International GCSE English Language B Paper 1R - June 2024",
+  "subject": "English",
+  "date": "May 2024",
+  "paper": "1R",
+  "qp_img_dir": "/static/exams/f6c2d14e/qp/",
+  "extract_pages": [10, 11, 12, 13],
+  "questions": [
+    {
+      "id": 1,
+      "sub_questions": [
+        {
+          "sub_id": "1",
+          "type": "text",
+          "max_marks": 1,
+          "ms_text": "One mark for any one of the following: climb/splash/diving into the water trough, beating his wings, grooming himself, dried himself in the sun, pecking his feathers, combing his feathers (smooth), lingered (near the studio door), squawked (in recognition), working his beak, sniffing, lowering his head/lengthening his neck, was possessive.",
+          "qp_pages": [2]
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "sub_questions": [
+        {
+          "sub_id": "2",
+          "type": "text",
+          "max_marks": 1,
+          "ms_text": "One mark for any one of the following: humans are poor creatures, people spend all their time worrying (about things that haven't happened), animals only worry about what is happening now, animals are more sensible.",
+          "qp_pages": [2]
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "sub_questions": [
+        {
+          "sub_id": "3",
+          "type": "text",
+          "max_marks": 10,
+          "ms_text": "How does the writer present his experiences of looking after Willy, the goose? Reward responses that demonstrate understanding of: use of first person, descriptive language (wings, feathers), use of contrast (Willy vs other geese), use of humor/anecdotes, use of list of behaviors, presentation of relationship/bond.",
+          "qp_pages": [3]
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "sub_questions": [
+        {
+          "sub_id": "4",
+          "type": "text",
+          "max_marks": 1,
+          "ms_text": "One mark for any one of the following: 24-hour search and rescue (service), fly to the rescue / use a helicopter, ground teams / use of vehicles, provide specialist medical care, transport orphans to Nairobi (Nursery).",
+          "qp_pages": [4]
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "sub_questions": [
+        {
+          "sub_id": "5(1)",
+          "type": "text",
+          "max_marks": 1,
+          "ms_text": "Identify two details about how the trust reintegrates orphans into the wild. One mark for each valid point. (Point 1)",
+          "qp_pages": [4]
+        },
+        {
+          "sub_id": "5(2)",
+          "type": "text",
+          "max_marks": 1,
+          "ms_text": "Identify two details about how the trust reintegrates orphans into the wild. One mark for each valid point. (Point 2)",
+          "qp_pages": [4]
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "sub_questions": [
+        {
+          "sub_id": "6",
+          "type": "text",
+          "max_marks": 10,
+          "ms_text": "How does the writer present the experiences of looking after orphaned elephants? Reward responses that demonstrate understanding of: technical language (weaned), use of positive/emotional language (bond, family), use of statistics/timeframes (8 to 12 years), use of descriptive verbs, presentation of the role of the Keepers.",
+          "qp_pages": [5]
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "sub_questions": [
+        {
+          "sub_id": "7",
+          "type": "text",
+          "max_marks": 15,
+          "ms_text": "Compare how the writers present their ideas and experiences of looking after animals and birds. Support your answer with examples from both texts.",
+          "qp_pages": [6]
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "sub_questions": [
+        {
+          "sub_id": "8",
+          "type": "text",
+          "max_marks": 30,
+          "ms_text": "Give a talk to your peers about looking after orphaned young animals and birds. You should include: the reasons why they need looking after, the challenges of looking after them, the rewards of looking after them.",
+          "qp_pages": [7]
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "sub_questions": [
+        {
+          "sub_id": "9",
+          "type": "text",
+          "max_marks": 30,
+          "ms_text": "'People spend too much time and money looking after animals.' To what extent do you agree with this statement?",
+          "qp_pages": [8]
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "sub_questions": [
+        {
+          "sub_id": "10",
+          "type": "text",
+          "max_marks": 30,
+          "ms_text": "Write a story (true or imaginary) entitled ‘Freedom’.",
+          "qp_pages": [8]
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "sub_questions": [
+        {
+          "sub_id": "11",
+          "type": "text",
+          "max_marks": 30,
+          "ms_text": "Describe a person who is kind to others.",
+          "qp_pages": [8]
+        }
+      ]
+    }
+  ]
+}

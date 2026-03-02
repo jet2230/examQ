@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - Exam Management</title>
+    <title>ExamQ Admin - Library Manager</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -13,33 +13,37 @@
             padding: 20px;
         }
         .container {
-            max-width: 1100px;
+            max-width: 1200px;
             margin: 0 auto;
             background: white;
             border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
             overflow: hidden;
         }
         .header {
             background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             color: white;
-            padding: 30px;
+            padding: 40px;
+            text-align: center;
+        }
+        .header h1 { font-size: 2.5em; margin-bottom: 10px; }
+        .header p { opacity: 0.9; font-size: 1.1em; }
+        
+        .navbar {
+            padding: 15px 40px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border-bottom: 1px solid #eee;
         }
-        .header h1 { font-size: 2em; }
-        .header-buttons a {
-            background: white;
-            color: #1e3c72;
-            padding: 10px 20px;
-            border-radius: 8px;
+        .nav-links a {
             text-decoration: none;
+            color: #1e3c72;
             font-weight: 600;
-            margin-left: 10px;
+            margin-left: 20px;
         }
         .content { padding: 40px; }
-        
+
         .upload-section {
             background: #f8f9fa;
             padding: 30px;
@@ -47,29 +51,29 @@
             margin-bottom: 40px;
             border: 2px dashed #1e3c72;
         }
-        .upload-section h2 { margin-bottom: 20px; color: #1e3c72; }
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #555; }
-        .path-input-group {
-            display: flex;
-            gap: 10px;
-        }
-        .form-group input {
-            flex: 1;
+        .form-group select {
+            width: 100%;
             padding: 12px;
             border: 2px solid #ddd;
             border-radius: 8px;
-            font-size: 1em;
+            font-size: 1.1em;
+            background: white;
         }
-        .btn-browse {
+
+        .btn-action {
             background: #1e3c72;
             color: white;
             border: none;
-            padding: 0 20px;
+            padding: 12px 25px;
             border-radius: 8px;
+            font-weight: bold;
             cursor: pointer;
-            font-weight: 600;
+            transition: background 0.2s;
         }
+        .btn-action:hover { background: #2a5298; }
+        
         .btn-process {
             background: linear-gradient(135deg, #28a745 0%, #218838 100%);
             color: white;
@@ -80,32 +84,20 @@
             font-weight: 700;
             cursor: pointer;
             width: 100%;
-            transition: transform 0.2s;
             margin-top: 10px;
         }
         .btn-process:disabled { opacity: 0.6; cursor: not-allowed; }
-        
-        .exam-list-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        .exam-list-table th, .exam-list-table td {
-            padding: 15px;
-            text-align: left;
-            border-bottom: 1px solid #eee;
-        }
-        .exam-list-table th { background: #f1f3f5; color: #1e3c72; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f1f3f5; color: #1e3c72; }
         .btn-delete { background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
-        
+
         .modal {
             display: none;
             position: fixed;
             z-index: 2000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
+            left: 0; top: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.8);
         }
         .modal-content {
@@ -118,70 +110,64 @@
             flex-direction: column;
             overflow: hidden;
         }
-        .modal-header {
-            padding: 20px;
-            background: #f1f3f5;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #ddd;
-        }
-        .file-list {
-            overflow-y: auto;
-            padding: 10px;
-        }
+        .modal-header { padding: 20px; background: #f1f3f5; display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; }
+        .file-list { overflow-y: auto; padding: 10px; }
         .file-item {
             padding: 12px 20px;
             border-bottom: 1px solid #eee;
             display: flex;
             justify-content: space-between;
             cursor: pointer;
-            transition: background 0.2s;
         }
         .file-item:hover { background: #f0f4f8; }
-        .file-info { display: flex; flex-direction: column; }
-        .file-name { font-weight: 600; color: #333; }
-        .file-meta { font-size: 0.8em; color: #888; }
-        
+        .file-item.imported { background: #d4edda; opacity: 0.8; cursor: not-allowed; }
+
         .loading-overlay {
             display: none;
             text-align: center;
             padding: 20px;
-            background: #fff3cd;
+            background: white;
+            border: 1px solid #ccc;
             border-radius: 8px;
             margin-top: 20px;
-            color: #856404;
-            font-weight: 600;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>📚 Exam Library Manager</h1>
-            <div class="header-buttons">
-                <a href="/admin_users.html">Manage Users</a>
-                <a href="/results">Dashboard</a>
+        <div class="navbar">
+            <div style="font-weight: 800; color: #1e3c72; font-size: 1.2em;">🎓 ExamQ Admin</div>
+            <div class="nav-links">
+                <span id="welcomeUser" style="margin-right: 15px; font-weight: 600; color: #1e3c72;"></span>
+                <a href="/admin_users.html" style="color:#d63384;">⚙️ Users</a>
+                <a href="/exam_questions.html">📖 Library</a>
+                <a href="/results">📊 Results</a>
+                <a href="#" onclick="logout()">🚪 Logout</a>
             </div>
+        </div>
+
+        <div class="header">
+            <h1>Exam Library Manager</h1>
+            <p>Import and manage official IGCSE exam papers.</p>
         </div>
 
         <div class="content">
             <div class="upload-section">
-                <h2>Add New Exam Paper (Intelligent AI Processing)</h2>
-                <p style="margin-bottom: 20px; color: #666;">Select the **Question Paper** PDF from the server. The AI will automatically find the matching Mark Scheme and Examiner Report in the same folder or sub-folders.</p>
-                
-                <div class="form-group">
-                    <label>Exam Resources Path</label>
-                    <div class="path-input-group">
-                        <input type="text" id="resourcePath" value="/home/obo/playground/examQ/resources/igcse_edxcel_exampapers/english/2019 Jun/">
-                        <button class="btn-browse" onclick="browseServer()">📂 Browse Server</button>
+                <h2 style="margin-bottom: 15px; color: #1e3c72;">Add New Exam Paper</h2>
+                <div class="form-group" style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
+                    <div style="flex-grow: 1; min-width: 250px;">
+                        <label>Select Subject Folder</label>
+                        <select id="subjectFolder">
+                            <option value="">-- Choose Subject --</option>
+                        </select>
                     </div>
+                    <button onclick="browseServer()" class="btn-action">🔍 Browse Files</button>
                 </div>
 
-                <div id="selectionStatus" style="margin-bottom: 20px; padding: 15px; background: #e1e7ff; border-radius: 8px; display: none; color: #1e3c72;">
-                    <strong>Selected QP:</strong> <span id="selectedQPName">None</span><br>
-                    <strong>Selected MS:</strong> <span id="selectedMSName">None</span><br>
-                    <strong>Selected ER:</strong> <span id="selectedERName">None</span>
+                <div id="selectionStatus" style="margin-bottom: 20px; padding: 15px; background: #e1e7ff; border-radius: 8px; display: none; color: #1e3c72; line-height: 1.6;">
+                    <strong>Selected Question Paper:</strong> <span id="selectedQPName">None</span><br>
+                    <strong>Selected Mark Scheme:</strong> <span id="selectedMSName">None</span><br>
+                    <strong>Selected Examiner's Report:</strong> <span id="selectedERName">None</span>
                 </div>
                 
                 <input type="hidden" id="qpPath">
@@ -189,358 +175,210 @@
                 <input type="hidden" id="erPath">
 
                 <button id="processBtn" class="btn-process" onclick="processExam()" disabled>Start AI Analysis & Import</button>
-                <button id="bulkBtn" class="btn-process" style="background: #667eea; margin-top: 10px;" onclick="bulkProcess()">🚀 Bulk Process All in Folder (Recursive)</button>
                 
                 <div id="loadingMsg" class="loading-overlay">
-                    🧠 AI is currently reading the PDF, categorizing the subject, and mapping mark schemes... This may take up to 60 seconds.
-                </div>
-
-                <div id="bulkProgress" style="display:none; margin-top: 20px; padding: 20px; background: #eee; border-radius: 10px;">
-                    <h3 id="bulkStatus">Processing Papers...</h3>
-                    <div style="width: 100%; background: #ccc; height: 20px; border-radius: 10px; margin-top: 10px; overflow: hidden;">
-                        <div id="progressBar" style="width: 0%; background: #28a745; height: 100%; transition: width 0.3s;"></div>
+                    <div style="margin-bottom: 10px; font-weight: bold; color: #1e3c72;" id="importStatusText">Initializing...</div>
+                    <div style="width: 100%; background: #eee; height: 20px; border-radius: 10px; overflow: hidden; margin-bottom: 10px;">
+                        <div id="importProgressBar" style="width: 0%; background: #28a745; height: 100%; transition: width 0.3s;"></div>
                     </div>
-                    <p id="bulkDetail" style="margin-top: 10px; font-size: 0.9em;"></p>
+                    <div id="importDetailText" style="font-size: 0.85em; color: #666;">Talking to server...</div>
                 </div>
             </div>
 
-            <h2>Existing Official Papers</h2>
-            <table class="exam-list-table">
+            <h2 style="color: #1e3c72;">Existing Official Papers</h2>
+            <table>
                 <thead>
                     <tr>
-                        <th id="th_id" data-label="ID" style="word-wrap: break-word; max-width: 150px; white-space: normal; cursor: pointer;" onclick="toggleSort('id')">ID ↕</th>
-                        <th id="th_title" data-label="Title" style="cursor: pointer;" onclick="toggleSort('title')">Title ↕</th>
-                        <th id="th_subject" data-label="Subject" style="cursor: pointer;" onclick="toggleSort('subject')">Subject ↕</th>
-                        <th id="th_paper" data-label="Paper" style="cursor: pointer;" onclick="toggleSort('paper')">Paper ↕</th>
-                        <th id="th_date" data-label="Date" style="cursor: pointer;" onclick="toggleSort('date')">Date ↕</th>
-                        <th id="th_total_questions" data-label="Questions" style="cursor: pointer;" onclick="toggleSort('total_questions')">Questions ↕</th>
+                        <th>Title</th>
+                        <th>Subject</th>
+                        <th>Date</th>
+                        <th>Questions</th>
                         <th>Action</th>
                     </tr>
                 </thead>
-                <tbody id="examTableBody">
-                    <!-- Rows will be injected here -->
-                </tbody>
+                <tbody id="examTableBody"></tbody>
             </table>
         </div>
     </div>
 
-    <!-- File Browser Modal -->
     <div class="modal" id="browserModal">
         <div class="modal-content">
             <div class="modal-header">
                 <h2 id="modalTitle">Select Question Paper</h2>
                 <span style="cursor:pointer; font-size: 24px;" onclick="closeBrowser()">&times;</span>
             </div>
-            <div id="fileList" class="file-list">
-                <!-- Files will be injected here -->
-            </div>
+            <div id="fileList" class="file-list"></div>
             <div style="padding: 20px; border-top: 1px solid #ddd; text-align: right;">
-                <button class="btn-browse" style="padding: 10px 25px;" onclick="closeBrowser()">Cancel</button>
+                <button class="btn-delete" style="background:#6c757d; padding: 10px 25px;" onclick="closeBrowser()">Cancel</button>
             </div>
         </div>
     </div>
 
     <script>
-        let allExams = [];
-        let sortCol = null;
-        let sortAsc = true;
+        function logout() {
+            localStorage.removeItem('quiz_username');
+            localStorage.removeItem('quiz_admin_username');
+            window.location.href = 'login.html';
+        }
 
         async function loadExams() {
             const resp = await fetch('/api/official-exams/list');
             const data = await resp.json();
-            allExams = data.exams || [];
-            renderTable();
-        }
-
-        function renderTable() {
             const tbody = document.getElementById('examTableBody');
             tbody.innerHTML = '';
-
-            let examsToRender = [...allExams];
-
-            if (sortCol) {
-                examsToRender.sort((a, b) => {
-                    let valA = a[sortCol];
-                    let valB = b[sortCol];
-                    
-                    if (valA === undefined || valA === null) valA = '';
-                    if (valB === undefined || valB === null) valB = '';
-
-                    // For numbers (like total_questions)
-                    if (typeof valA === 'number' && typeof valB === 'number') {
-                        return sortAsc ? valA - valB : valB - valA;
-                    }
-                    
-                    // For dates
-                    if (sortCol === 'date') {
-                        const dateA = new Date(valA);
-                        const dateB = new Date(valB);
-                        if (!isNaN(dateA) && !isNaN(dateB)) {
-                            return sortAsc ? dateA - dateB : dateB - dateA;
-                        }
-                    }
-
-                    // Fallback string compare
-                    valA = valA.toString().toLowerCase();
-                    valB = valB.toString().toLowerCase();
-                    if (valA < valB) return sortAsc ? -1 : 1;
-                    if (valA > valB) return sortAsc ? 1 : -1;
-                    return 0;
-                });
-            }
-
-            // Update headers
-            const headers = ['id', 'title', 'subject', 'paper', 'date', 'total_questions'];
-            headers.forEach(col => {
-                const el = document.getElementById('th_' + col);
-                if (el) {
-                    el.innerHTML = el.dataset.label + (sortCol === col ? (sortAsc ? ' ▲' : ' ▼') : ' ↕');
-                }
-            });
-
-            examsToRender.forEach(exam => {
+            
+            (data.exams || []).forEach(exam => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td style="word-wrap: break-word; word-break: break-all; max-width: 150px; white-space: normal;"><code>${exam.id}</code></td>
                     <td><strong>${exam.title}</strong></td>
                     <td>${exam.subject}</td>
-                    <td>${exam.paper}</td>
                     <td>${exam.date}</td>
-                    <td><span style="background: #e1e7ff; color: #1e3c72; padding: 4px 8px; border-radius: 12px; font-size: 0.9em; font-weight: bold;">${exam.total_questions || 0}</span></td>
+                    <td><span style="background: #e1e7ff; color: #1e3c72; padding: 4px 8px; border-radius: 12px; font-weight: bold;">${exam.total_questions || 0}</span></td>
                     <td><button class="btn-delete" onclick="deleteExam('${exam.id}')">Delete</button></td>
                 `;
                 tbody.appendChild(tr);
             });
         }
 
-        function toggleSort(col) {
-            if (sortCol === col) {
-                sortAsc = !sortAsc;
-            } else {
-                sortCol = col;
-                sortAsc = true;
+        async function loadFolders() {
+            const res = await fetch('/api/admin/list-folders');
+            const data = await res.json();
+            if (data.success) {
+                const sel = document.getElementById('subjectFolder');
+                data.folders.forEach(f => {
+                    const opt = document.createElement('option');
+                    opt.value = f; opt.textContent = f.toUpperCase();
+                    sel.appendChild(opt);
+                });
             }
-            renderTable();
         }
 
         async function browseServer() {
+            const folder_name = document.getElementById('subjectFolder').value;
+            if (!folder_name) { alert("Please select a subject folder first."); return; }
             const admin_username = localStorage.getItem('quiz_admin_username') || localStorage.getItem('quiz_username');
-            const dir_path = document.getElementById('resourcePath').value.trim();
-            
-            try {
-                const res = await fetch('/api/admin/list-files', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ admin_username, dir_path })
+            const res = await fetch('/api/admin/list-files', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ admin_username, folder_name })
+            });
+            const data = await res.json();
+            if (data.success) {
+                const list = document.getElementById('fileList');
+                list.innerHTML = '';
+                data.files.filter(f => isQuestionPaper(f.name)).forEach(file => {
+                    const div = document.createElement('div');
+                    div.className = 'file-item' + (file.is_imported ? ' imported' : '');
+                    if (!file.is_imported) div.onclick = () => selectFile(file, data.files);
+                    div.innerHTML = `<span>${file.name}</span><span style="color:#888;font-size:0.8em">${file.size}</span>`;
+                    list.appendChild(div);
                 });
-                
-                const data = await res.json();
-                if (data.success) {
-                    const list = document.getElementById('fileList');
-                    list.innerHTML = '';
-                    
-                    if (data.files.length === 0) {
-                        list.innerHTML = '<div style="padding: 20px; text-align: center; color: #666;">No PDF files found.</div>';
-                    }
-
-                    data.files.forEach(file => {
-                        const div = document.createElement('div');
-                        div.className = 'file-item';
-                        div.onclick = () => selectFile(file, data.files);
-                        div.innerHTML = `
-                            <div class="file-info">
-                                <span class="file-name">${file.name}</span>
-                                <span class="file-meta">Path: ${file.path}</span>
-                            </div>
-                            <span class="file-meta">${file.size}</span>
-                        `;
-                        list.appendChild(div);
-                    });
-                    
-                    document.getElementById('browserModal').style.display = 'block';
-                } else {
-                    alert("Error: " + data.message);
-                }
-            } catch (e) {
-                alert("Failed to connect to server.");
+                document.getElementById('modalTitle').textContent = `Select Paper: ${folder_name.toUpperCase()}`;
+                document.getElementById('browserModal').style.display = 'block';
             }
         }
 
-        function closeBrowser() {
-            document.getElementById('browserModal').style.display = 'none';
-        }
+        function closeBrowser() { document.getElementById('browserModal').style.display = 'none'; }
 
-        // --- ROBUST PAIRING LOGIC ---
-        
         function getCleanBase(filename) {
-            return filename.toLowerCase()
-                .replace(/questionpaper-|markscheme-|examinerreport-|msc-|qp|ms|er|report/g, '')
-                .replace('.pdf', '')
-                .replace(/[\s\-_]+/g, '')
-                .trim();
+            const yearMatch = filename.match(/20\d{2}|19\d{2}/);
+            const monthMatch = filename.match(/jan|jun|nov|oct|may|june/i);
+            const codes = filename.match(/(4[A-Z]{2}\d)|([12][BFH])|(\d{2}R)|(Paper\s+\d)/gi) || [];
+            if (yearMatch && monthMatch) {
+                let identifier = monthMatch[0].toLowerCase().replace('june', 'jun') + " " + yearMatch[0];
+                if (codes.length > 0) {
+                    const uniqueCodes = [...new Set(codes.map(c => c.toLowerCase().replace(/\s+/g, '')))].sort();
+                    identifier += " [" + uniqueCodes.join("-") + "]";
+                }
+                return identifier;
+            }
+            return filename.toLowerCase().replace('.pdf', '').trim();
         }
 
         function isQuestionPaper(filename) {
             const n = filename.toLowerCase();
-            if (n.includes('markscheme') || n.includes('msc') || n.includes('report') || n.includes('examinerreport')) return false;
-            // Also exclude common tags for MS/ER in Biology
-            if (n.includes('ms.pdf') || n.includes('er.pdf')) return false;
-            return true;
+            const notQP = ['markscheme', 'ms.pdf', 'msc', 'report', 'examinerreport', 'er.pdf', 'rms', 'ms-'];
+            return !notQP.some(k => n.includes(k));
         }
 
         function selectFile(file, allFiles) {
             const qpName = file.name;
             const qpPath = file.path;
             const qpBase = getCleanBase(qpName);
+            let msPath = "", msName = "Not found", erPath = "", erName = "Not found";
             
-            let msPath = "";
-            let msName = "Not found";
-            let erPath = "";
-            let erName = "Not found";
-
             allFiles.forEach(f => {
+                if (f.path === qpPath) return;
                 const n = f.name.toLowerCase();
-                const fBase = getCleanBase(f.name);
-                
-                // If it shares the same base name and isn't the same file
-                if (fBase === qpBase && f.path !== qpPath) {
-                    if (n.includes('markscheme') || n.includes('ms') || n.includes('msc')) {
-                        msPath = f.path; msName = f.name;
-                    } else if (n.includes('examinerreport') || n.includes('er') || n.includes('report')) {
-                        erPath = f.path; erName = f.name;
-                    }
+                if (getCleanBase(f.name) === qpBase) {
+                    if (n.includes('ms') || n.includes('msc') || n.includes('rms')) { msPath = f.path; msName = f.name; }
+                    else if (n.includes('er') || n.includes('report')) { erPath = f.path; erName = f.name; }
                 }
             });
-
             document.getElementById('qpPath').value = qpPath;
             document.getElementById('msPath').value = msPath;
             document.getElementById('erPath').value = erPath;
-            
             document.getElementById('selectedQPName').textContent = qpName;
             document.getElementById('selectedMSName').textContent = msName;
-            document.getElementById('selectedERName').innerHTML = erPath ? erName : '<span style="color:orange;">Not found (Optional)</span>';
+            document.getElementById('selectedERName').innerHTML = erPath ? erName : '<span style="color:orange;">Not found</span>';
             document.getElementById('selectionStatus').style.display = 'block';
-            
             document.getElementById('processBtn').disabled = !msPath;
             closeBrowser();
         }
 
         async function processExam() {
-            const admin_username = localStorage.getItem('quiz_admin_username') || localStorage.getItem('quiz_username');
-            const qp_path = document.getElementById('qpPath').value;
-            const ms_path = document.getElementById('msPath').value;
-            const er_path = document.getElementById('erPath').value;
-            
-            const btn = document.getElementById('processBtn');
+            const payload = { 
+                admin_username: localStorage.getItem('quiz_admin_username'), 
+                qp_path: document.getElementById('qpPath').value,
+                ms_path: document.getElementById('msPath').value,
+                er_path: document.getElementById('erPath').value
+            };
             const loading = document.getElementById('loadingMsg');
+            const statusText = document.getElementById('importStatusText');
+            const progressBar = document.getElementById('importProgressBar');
             
-            btn.disabled = true; btn.textContent = "Processing...";
+            document.getElementById('processBtn').disabled = true;
             loading.style.display = 'block';
 
-            try {
-                const res = await fetch('/api/admin/process-exam', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ admin_username, qp_path, ms_path, er_path })
-                });
-                const data = await res.json();
-                if (data.success) { alert(data.message); loadExams(); }
-                else { alert("Error: " + data.message); }
-            } catch (e) { alert("Network error."); }
-            finally { btn.disabled = false; btn.textContent = "Start AI Analysis & Import"; loading.style.display = 'none'; }
-        }
-
-        async function bulkProcess() {
-            const admin_username = localStorage.getItem('quiz_admin_username') || localStorage.getItem('quiz_username');
-            const dir_path = document.getElementById('resourcePath').value.trim();
-            
-            if (!confirm(`Bulk process all papers in: ${dir_path}?`)) return;
-
-            const bulkBtn = document.getElementById('bulkBtn');
-            const bulkProgress = document.getElementById('bulkProgress');
-            const progressBar = document.getElementById('progressBar');
-            const bulkStatus = document.getElementById('bulkStatus');
-            const bulkDetail = document.getElementById('bulkDetail');
-
-            bulkBtn.disabled = true; bulkProgress.style.display = 'block';
-
-            try {
-                const res = await fetch('/api/admin/list-files', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ admin_username, dir_path })
-                });
-                const data = await res.json();
-                if (!data.success) throw new Error(data.message);
-
-                // 1. Identify QPs
-                const qpFiles = data.files.filter(f => isQuestionPaper(f.name));
-                const pairs = [];
-
-                // 2. Match each QP to its buddies
-                qpFiles.forEach(qp => {
-                    const qpBase = getCleanBase(qp.name);
-                    let ms = null;
-                    let er = null;
-
-                    data.files.forEach(f => {
-                        if (f.path === qp.path) return;
-                        const n = f.name.toLowerCase();
-                        const fBase = getCleanBase(f.name);
-
-                        if (fBase === qpBase) {
-                            if (n.includes('markscheme') || n.includes('ms') || n.includes('msc')) ms = f;
-                            else if (n.includes('examinerreport') || n.includes('er') || n.includes('report')) er = f;
-                        }
-                    });
-
-                    if (ms) {
-                        pairs.push({ qp: qp.path, ms: ms.path, er: er ? er.path : "", name: qp.name });
+            const res = await fetch('/api/admin/process-exam', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (data.success) {
+                const poll = setInterval(async () => {
+                    const pRes = await fetch(`/api/admin/import-progress?job_id=${data.job_id}`);
+                    const pData = await pRes.json();
+                    if (pData.status === 'mapping') {
+                        const pct = 10 + Math.round((pData.current_page / pData.total_pages) * 70);
+                        statusText.textContent = `AI Mapping: Page ${pData.current_page}/${pData.total_pages}`;
+                        progressBar.style.width = pct + '%';
                     }
-                });
-
-                if (pairs.length === 0) {
-                    alert("No valid QP/MS pairs found. Check your filenames.");
-                    return;
-                }
-
-                bulkStatus.textContent = `Processing ${pairs.length} Papers...`;
-
-                for (let i = 0; i < pairs.length; i++) {
-                    const pair = pairs[i];
-                    progressBar.style.width = `${Math.round((i / pairs.length) * 100)}%`;
-                    bulkDetail.textContent = `Current: ${pair.name}`;
-
-                    try {
-                        const pRes = await fetch('/api/admin/process-exam', {
-                            method: 'POST',
-                            headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify({ admin_username, qp_path: pair.qp, ms_path: pair.ms, er_path: pair.er })
-                        });
-                        const pData = await pRes.json();
-                        if (pData.success) bulkDetail.textContent = (pData.skipped ? "Skipped: " : "Imported: ") + pair.name;
-                    } catch (e) {}
-                    loadExams();
-                }
-                progressBar.style.width = '100%';
-                bulkStatus.textContent = "✅ Complete!";
-            } catch (e) { alert("Error: " + e.message); }
-            finally { bulkBtn.disabled = false; }
+                    else if (pData.status === 'completed') {
+                        clearInterval(poll); statusText.textContent = "✅ Done!"; progressBar.style.width = '100%';
+                        setTimeout(() => { loading.style.display = 'none'; loadExams(); }, 2000);
+                    }
+                    else if (pData.status === 'failed') { clearInterval(poll); alert("Failed: " + pData.error); loading.style.display = 'none'; }
+                }, 2000);
+            }
         }
 
         async function deleteExam(paper_id) {
-            if (!confirm("Delete?")) return;
-            const admin_username = localStorage.getItem('quiz_admin_username') || localStorage.getItem('quiz_username');
-            const res = await fetch('/api/admin/delete-exam', {
+            if (!confirm("Delete this exam?")) return;
+            await fetch('/api/admin/delete-exam', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ admin_username, paper_id })
+                body: JSON.stringify({ admin_username: localStorage.getItem('quiz_admin_username'), paper_id })
             });
-            const data = await res.json();
-            if (data.success) loadExams();
+            loadExams();
         }
 
+        const username = localStorage.getItem('quiz_admin_username');
+        if (!username) window.location.href = 'login.html';
+        document.getElementById('welcomeUser').textContent = '👤 ' + username;
         loadExams();
+        loadFolders();
     </script>
 </body>
 </html>

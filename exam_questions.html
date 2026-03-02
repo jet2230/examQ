@@ -187,6 +187,26 @@
             font-weight: 700;
             cursor: pointer;
         }
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .status-not-started { background: #e9ecef; color: #6c757d; }
+        .status-started { background: #fff3cd; color: #856404; }
+        .status-completed { background: #d4edda; color: #155724; }
+
+        .last-accessed {
+            font-size: 0.75em;
+            color: #888;
+            margin-top: 5px;
+            font-style: italic;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
     </style>
 </head>
 <body>
@@ -195,6 +215,8 @@
             <div style="font-weight: 800; color: #1e3c72; font-size: 1.2em;">🎓 ExamQ Papers</div>
             <div class="nav-links">
                 <span id="welcomeUser" style="margin-right: 15px; font-weight: 600; color: #1e3c72;"></span>
+                <a href="/admin_users.html" id="usersLink" class="admin-only" style="display:none; color:#d63384;">⚙️ Users</a>
+                <a href="/admin_exams.html" id="adminLink" class="admin-only" style="display:none; color:#d63384;">⚙️ Exams</a>
                 <a href="/">🏠 Generator</a>
                 <a href="/results">📊 Results</a>
                 <a href="#" onclick="logout()">🚪 Logout</a>
@@ -234,25 +256,37 @@
         }
 
         function parseExamDate(dateStr) {
-            if (!dateStr) return new Date(0);
+            if (!dateStr || dateStr === 'Unknown') return new Date(0);
             const months = {
                 'jan': 0, 'feb': 1, 'mar': 2, 'apr': 3, 'may': 4, 'jun': 5,
-                'jul': 6, 'aug': 7, 'sep': 8, 'oct': 9, 'nov': 10, 'dec': 11
+                'jul': 6, 'aug': 7, 'sep': 8, 'oct': 9, 'nov': 10, 'dec': 11,
+                'january': 0, 'february': 1, 'march': 2, 'april': 3, 'may': 4, 'june': 5,
+                'july': 6, 'august': 7, 'september': 8, 'october': 9, 'november': 10, 'december': 11
             };
-            const parts = dateStr.toLowerCase().split(' ');
-            if (parts.length === 2) {
-                const month = months[parts[0]] || 0;
-                const year = parseInt(parts[1]);
-                return new Date(year, month, 1);
+            const parts = dateStr.toLowerCase().split(/[\s,]+/);
+
+            const year = parseInt(parts.find(p => p.match(/^\d{4}$/)));
+            const monthName = parts.find(p => months[p] !== undefined);
+            const day = parseInt(parts.find(p => p.match(/^\d{1,2}$/))) || 1;
+
+            if (year && monthName) {
+                return new Date(year, months[monthName], day);
             }
             return new Date(0);
         }
 
+
         async function loadExams() {
             const username = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
+            const isAdmin = !!localStorage.getItem('quiz_admin_username');
+            
             if (username) {
                 const welcomeEl = document.getElementById('welcomeUser');
                 if (welcomeEl) welcomeEl.textContent = '👤 ' + username;
+                if (isAdmin) {
+                    document.getElementById('adminLink').style.display = 'inline';
+                    document.getElementById('usersLink').style.display = 'inline';
+                }
             }
 
             try {
@@ -329,6 +363,57 @@
             renderExams(filtered);
         }
 
+        function formatLongDate(dateStr) {
+            if (!dateStr || dateStr === 'Unknown') return dateStr;
+            const months = {
+                'jan': 0, 'feb': 1, 'mar': 2, 'apr': 3, 'may': 4, 'jun': 5,
+                'jul': 6, 'aug': 7, 'sep': 8, 'oct': 9, 'nov': 10, 'dec': 11,
+                'january': 0, 'february': 1, 'march': 2, 'april': 3, 'may': 4, 'june': 5,
+                'july': 6, 'august': 7, 'september': 8, 'october': 9, 'november': 10, 'december': 11
+            };
+            const parts = dateStr.toLowerCase().split(/[\s,]+/);
+            let date = null;
+            
+            if (parts.length >= 2) {
+                const year = parseInt(parts.find(p => p.match(/^\d{4}$/)));
+                const monthName = parts.find(p => months[p] !== undefined);
+                const day = parseInt(parts.find(p => p.match(/^\d{1,2}$/))) || 1;
+                
+                if (year && monthName) {
+                    date = new Date(year, months[monthName], day);
+                }
+            }
+
+            if (date && !isNaN(date.getTime())) {
+                return new Intl.DateTimeFormat('en-GB', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                }).format(date);
+            }
+            return dateStr;
+        }
+
+        function formatLastAccessed(isoStr) {
+            if (!isoStr) return '';
+            // SQLite timestamp is UTC
+            const date = new Date(isoStr.replace(' ', 'T') + (isoStr.includes('Z') ? '' : 'Z'));
+            if (isNaN(date.getTime())) return '';
+
+            const now = new Date();
+            const isToday = date.toDateString() === now.toDateString();
+            
+            const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            if (isToday) {
+                return `Last accessed: Today, ${timeStr}`;
+            } else {
+                const dateStr = date.toLocaleDateString([], { day: 'numeric', month: 'short' });
+                return `Last accessed: ${dateStr}, ${timeStr}`;
+            }
+        }
+
         function renderExams(exams) {
             const content = document.getElementById('examContent');
             content.innerHTML = '';
@@ -338,53 +423,54 @@
                 return;
             }
 
-            const paperTypes = [...new Set(exams.map(e => e.paper))].sort();
+            // Sort all exams by date descending (Newest first)
+            exams.sort((a, b) => {
+                const dateA = parseExamDate(a.date);
+                const dateB = parseExamDate(b.date);
+                return dateB - dateA;
+            });
 
-            for (const paperType of paperTypes) {
-                const paperList = exams.filter(e => e.paper === paperType);
-                paperList.sort((a, b) => parseExamDate(b.date) - parseExamDate(a.date));
+            const grid = document.createElement('div');
+            grid.className = 'paper-grid';
+            grid.style.marginTop = '20px';
+            
+            grid.innerHTML = exams.map(exam => {
+                const prog = allProgress[exam.id];
+                let statusClass = 'status-not-started';
+                let statusText = 'Not Started';
+                let btnText = 'Start';
+                let lastAccessedHtml = '';
 
-                const typeGroup = document.createElement('div');
-                typeGroup.innerHTML = `
-                    <h3 class="sub-group-title">Paper ${paperType}</h3>
-                    <div class="paper-grid">
-                        ${paperList.map(exam => {
-                            const prog = allProgress[exam.id];
-                            let statusClass = 'status-not-started';
-                            let statusText = 'Not Started';
-                            let btnText = 'Start';
+                if (prog) {
+                    lastAccessedHtml = `<div class="last-accessed">🕒 ${formatLastAccessed(prog.last_updated)}</div>`;
+                    if (prog.status === 'completed') {
+                        statusClass = 'status-completed';
+                        statusText = 'Finished';
+                        btnText = 'Review';
+                    } else {
+                        statusClass = 'status-started';
+                        let left = Math.max(0, (exam.total_questions || 0) - (prog.current_question_idx || 0));
+                        statusText = left > 0 ? `Resume (${left} questions left)` : 'Resume';                        btnText = 'Continue';
+                    }
+                }
 
-                            if (prog) {
-                                if (prog.status === 'completed') {
-                                    statusClass = 'status-completed';
-                                    statusText = 'Finished';
-                                    btnText = 'Review';
-                                } else {
-                                    statusClass = 'status-started';
-                                    let left = Math.max(0, (exam.total_questions || 0) - (prog.current_question_idx || 0));
-                                    statusText = left > 0 ? `Resume (${left} left)` : 'Resume';
-                                    btnText = 'Continue';
-                                }
-                            }
-
-                            return `
-                                <div class="paper-card" onclick="window.location.href='/official_exam_player.html?paper_id=${exam.id}'">
-                                    <div class="paper-title">${exam.title}</div>
-                                    <div class="paper-meta">
-                                        <div>
-                                            <span style="font-weight: 700; color: #1e3c72;">${exam.date}</span>
-                                            <span style="color: #666; font-size: 0.9em; margin-left: 10px;">${exam.total_questions || 0} Questions</span>
-                                        </div>
-                                        <div class="status-badge ${statusClass}" style="margin-top:0;">${statusText}</div>
-                                    </div>
-                                    <a href="/official_exam_player.html?paper_id=${exam.id}" class="btn-start">${btnText}</a>
-                                </div>
-                            `;
-                        }).join('')}
+                return `
+                    <div class="paper-card" onclick="window.location.href='/official_exam_player.html?paper_id=${exam.id}'">
+                        <div class="paper-title">${exam.title}</div>
+                        <div class="paper-meta" style="flex-direction: column; align-items: flex-start; gap: 5px;">
+                            <div style="font-weight: 700; color: #1e3c72; font-size: 0.95em;">${formatLongDate(exam.date)}</div>
+                            <div style="display: flex; justify-content: space-between; width: 100%; align-items: center; margin-top: 5px;">
+                                <span style="color: #666; font-size: 0.9em;">${exam.total_questions || 0} Questions</span>
+                                <div class="status-badge ${statusClass}" style="margin-top:0;">${statusText}</div>
+                            </div>
+                            ${lastAccessedHtml}
+                        </div>
+                        <a href="/official_exam_player.html?paper_id=${exam.id}" class="btn-start">${btnText}</a>
                     </div>
                 `;
-                content.appendChild(typeGroup);
-            }
+            }).join('');
+            
+            content.appendChild(grid);
         }
 
         loadExams();

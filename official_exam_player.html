@@ -8,934 +8,381 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f2f5;
-            min-height: 100vh;
+            background: #f0f2f5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
-        .header {
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        
+        /* Unifying Navbar Style */
+        .navbar {
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            border-bottom: 1px solid #eee;
+            z-index: 100;
+        }
+        .nav-links a {
+            text-decoration: none;
+            color: #1e3c72;
+            font-weight: 600;
+            margin-left: 20px;
+            font-size: 0.9em;
+        }
+        
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            gap: 5px;
+            background: #ddd;
+        }
+
+        /* Left Side: Answer Panel */
+        .answer-panel {
+            flex: 1;
+            background: white;
+            overflow-y: auto;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+
+        /* Right Side: Question Paper */
+        .paper-panel {
+            flex: 1.2;
+            background: #525659;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        .paper-page {
+            background: white;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.5);
+            max-width: 100%;
+            display: block;
+        }
+
+        /* Floating Extracts Booklet */
+        .extracts-modal {
+            display: none;
+            position: fixed;
+            top: 10%; left: 10%; width: 80%; height: 80%;
+            background: rgba(0,0,0,0.85);
+            z-index: 2000;
+            border-radius: 15px;
+            overflow: hidden;
+            flex-direction: column;
+        }
+        .extracts-header {
+            padding: 15px 25px;
+            background: #1e3c72;
             color: white;
-            padding: 15px 30px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-        #paperTitle { font-size: 0.9em; }
-        .header-buttons { display: flex; gap: 10px; }
-        .header-btn {
-            background: white;
-            color: #1e3c72;
-            padding: 8px 15px;
-            border-radius: 6px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 0.9em;
-        }
-        .main-container {
+        .extracts-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
             display: flex;
-            height: calc(100vh - 60px);
-            overflow: hidden;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
         }
-        .paper-viewer {
-            flex: 1.2;
-            background-color: #525659;
-            overflow-y: auto;
-            padding: 20px;
-            position: relative;
-        }
-        .paper-page {
-            width: 100%;
-            background: white;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            display: block;
-        }
-        .answer-panel {
-            flex: 0.8;
-            background: white;
-            border-left: 2px solid #ddd;
-            padding: 25px;
-            padding-bottom: 600px; /* Even more space at bottom to ensure centering */
-            overflow-y: auto;
-        }
-        .question-title {
-            color: #1e3c72;
-            font-size: 1.5em;
-            margin-bottom: 20px;
-            border-bottom: 2px solid #1e3c72;
-            padding-bottom: 10px;
-        }
+
+        /* UI Elements */
         .sub-question-item {
-            margin-bottom: 30px;
-            padding: 20px;
+            background: #fff;
             border: 1px solid #e0e0e0;
             border-radius: 12px;
-            background: #fafafa;
-            scroll-margin-top: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            transition: all 0.3s;
+        }
+        .sub-question-item:focus-within {
+            border-color: #1e3c72;
+            box-shadow: 0 5px 15px rgba(30, 60, 114, 0.1);
         }
         .sub-header {
-            font-weight: 700;
-            margin-bottom: 12px;
             display: flex;
             justify-content: space-between;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
         }
         .mark-badge {
-            background: #1e3c72;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 0.8em;
+            background: #e1e7ff;
+            color: #1e3c72;
+            padding: 2px 10px;
+            border-radius: 10px;
+            font-weight: 800;
+            font-size: 0.85em;
         }
-        .short-input, textarea {
+        
+        textarea {
             width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 1em;
-            margin-top: 5px;
-        }
-        .mcq-container { display: flex; gap: 10px; margin: 10px 0; }
-        .mcq-option {
-            flex: 1;
-            padding: 12px;
-            text-align: center;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 700;
-            background: white;
-        }
-        .mcq-option.selected {
-            background: #1e3c72;
-            color: white;
-            border-color: #1e3c72;
-        }
-        .calculation-container {
-            border: 1px dashed #ccc;
+            height: 120px;
             padding: 15px;
+            border: 2px solid #eee;
             border-radius: 8px;
-            background: #fff;
+            font-size: 1.05em;
+            resize: vertical;
+            outline: none;
+            font-family: inherit;
         }
-        .working-label { font-size: 0.8em; color: #666; font-weight: 600; }
-        .grade-btn {
-            background: #28a745;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 700;
-            margin-top: 15px;
-            width: 100%;
-        }
-        .feedback-box {
-            margin-top: 15px;
-            padding: 15px;
-            border-radius: 8px;
-            display: none;
-        }
-        .feedback-box.show { display: block; }
-        .feedback-good { background: #d4edda; color: #155724; }
-        .feedback-partial { background: #fff3cd; color: #856404; }
-        .feedback-bad { background: #f8d7da; color: #721c24; }
-        .error-msg {
-            color: #dc3545;
-            font-size: 0.9em;
-            margin-top: 10px;
-            font-weight: 600;
-            display: none;
-        }
-        .paper-controls {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-        }
+        textarea:focus { border-color: #1e3c72; }
+
         .control-btn {
-            padding: 12px 25px;
+            padding: 12px 20px;
             border-radius: 8px;
-            border: none;
-            cursor: pointer;
             font-weight: 700;
+            cursor: pointer;
+            border: none;
             transition: all 0.2s;
-            background: #1e3c72;
-            color: white;
         }
-        .control-btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-        .control-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-        }
-        .control-btn.highlight {
+        .btn-prev { background: #f1f3f5; color: #1e3c72; }
+        .btn-next { background: #1e3c72; color: white; }
+        .btn-grade {
             background: #28a745;
-            box-shadow: 0 0 15px rgba(40, 167, 69, 0.4);
+            color: white;
+            margin-top: 15px;
+            width: 100%;
         }
-        .control-btn.highlight:hover:not(:disabled) {
-            background: #218838;
+        
+        .feedback-zone {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            background: #f8f9fa;
+            border-left: 5px solid #1e3c72;
+            display: none;
         }
+        .feedback-zone.show { display: block; }
+
+        .spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
-    <div class="header">
-        <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
-            <h2 id="paperTitle">Loading...</h2>
-            <select id="questionSelector" onchange="jumpToQuestion(this.value)" style="padding: 10px 15px; border-radius: 8px; font-weight: 700; color: #1e3c72; border: none; cursor: pointer; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); font-size: 0.9em; min-width: 160px;">
-                <option value="">Jump to Question...</option>
-            </select>
-            <button id="extractsBtn" onclick="toggleExtracts()" style="display: none; padding: 10px 15px; border-radius: 8px; font-weight: 700; background: #ffc107; color: #000; border: none; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); font-size: 0.9em;">📖 Extracts Booklet</button>
+    <div class="navbar">
+        <div style="font-weight: 800; color: #1e3c72; font-size: 1.1em; display: flex; align-items: center; gap: 15px;">
+            🎓 ExamQ <span id="paperTitle" style="font-weight: 400; color: #666; font-size: 0.9em; border-left: 1px solid #ddd; padding-left: 15px;">Loading Paper...</span>
         </div>
-        <div class="header-buttons">
-            <span id="welcomeUser" style="margin-right: 15px; font-weight: 600; color: white;"></span>
-            <a href="/results" class="header-btn">🏠 Home</a>
-            <a href="/exam_questions.html" class="header-btn">📝 Papers</a>
-            <a href="#" onclick="logout()" class="header-btn" style="background: #dc3545; color: white;">🚪 Logout</a>
-        </div>
-    </div>
-
-    <!-- Draggable/Resizable Extracts Popup -->
-    <div id="extractsPopup" style="display: none; position: fixed; top: 100px; right: 50px; width: 500px; height: 600px; background: white; border: 2px solid #1e3c72; border-radius: 12px; z-index: 2000; box-shadow: 0 10px 30px rgba(0,0,0,0.5); flex-direction: column; overflow: hidden; resize: both;">
-        <div id="extractsHeader" style="background: #1e3c72; color: white; padding: 10px 15px; cursor: move; display: flex; justify-content: space-between; align-items: center; user-select: none;">
-            <span style="font-weight: bold;">Extracts Booklet</span>
-            <button onclick="toggleExtracts()" style="background: none; border: none; color: white; font-size: 1.5em; cursor: pointer; line-height: 1;">&times;</button>
-        </div>
-        <div id="extractsContent" style="flex: 1; overflow-y: auto; background: #525659; padding: 10px;">
-            <!-- Extract pages will be injected here -->
+        <div class="nav-links">
+            <button onclick="toggleExtracts()" id="extractsBtn" style="display:none; background:#ffc107; border:none; padding:5px 12px; border-radius:5px; font-weight:bold; cursor:pointer;">📖 Reading Booklet</button>
+            <a href="/exam_questions.html">🔙 Library</a>
+            <a href="/results">📊 Results</a>
         </div>
     </div>
 
     <div class="main-container">
-        <div id="paperViewer" class="paper-viewer"></div>
-        <div class="answer-panel">
-            <h1 class="question-title" id="currentQuestionId"></h1>
-            <div id="subQuestionsList"></div>
+        <div class="answer-panel" id="answerPanel">
+            <div id="questionList"></div>
             
-            <div class="paper-controls">
-                <button id="prevBtn" class="control-btn" onclick="changeQuestion(-1)">← Previous</button>
-                <button id="nextBtn" class="control-btn" onclick="changeQuestion(1)">Next →</button>
+            <div style="display: flex; justify-content: space-between; margin-top: auto; padding-top: 20px;">
+                <button class="control-btn btn-prev" onclick="changeQuestion(-1)">← Previous</button>
+                <button class="control-btn btn-next" onclick="changeQuestion(1)">Next →</button>
             </div>
+        </div>
+
+        <div class="paper-panel" id="paperPanel">
+            <!-- Paper pages injected here -->
         </div>
     </div>
 
+    <div id="extractsModal" class="extracts-modal">
+        <div class="extracts-header">
+            <h3>Extracts Booklet</h3>
+            <button onclick="toggleExtracts()" style="background:none; border:none; color:white; font-size:24px; cursor:pointer;">&times;</button>
+        </div>
+        <div class="extracts-body" id="extractsBody"></div>
+    </div>
+
     <script>
-        console.log("Exam Player v1.4 - Question Grouping Logic");
         let examData = null;
-        let pageGroups = [];
         let currentGroupIdx = 0;
+        let pageGroups = [];
         let savedAnswers = {};
-        let isCompleted = false;
-        let selectedQuestionInGroup = {}; // groupIdx -> questionId
-        let totalPages = 0;
-        
-        const urlParams = new URLSearchParams(window.location.search);
-        const paperId = urlParams.get('paper_id') || 'biology_2B_nov_2025';
-        const username = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
-
-        let lastJumpedPage = null;
         let isManualJumping = false;
-
-        function jump(pageNum, element) {
-            const img = document.getElementById('page_' + pageNum);
-            if (!img) return;
-
-            let alignment = 'start';
-            if (element) {
-                const item = element.closest('.sub-question-item') || element;
-                if (item && item.getAttribute('data-align') === 'end') {
-                    alignment = 'end';
-                }
-            }
-
-            img.scrollIntoView({ behavior: 'smooth', block: alignment });
-            lastJumpedPage = pageNum;
-            
-            if (element && (element.tagName === 'TEXTAREA' || element.tagName === 'INPUT' || element.tagName === 'CANVAS')) {
-                isManualJumping = true;
-                setTimeout(() => { isManualJumping = false; }, 1000);
-            }
-        }
-
-        function jumpToQuestion(idx) {
-            if (idx === "") return;
-            currentGroupIdx = parseInt(idx);
-            render();
-            saveProgress();
-        }
-
-        function toggleExtracts() {
-            const popup = document.getElementById('extractsPopup');
-            if (popup.style.display === 'none') {
-                popup.style.display = 'flex';
-            } else {
-                popup.style.display = 'none';
-            }
-            savePopupState();
-        }
-
-        function savePopupState() {
-            const popup = document.getElementById('extractsPopup');
-            const state = {
-                top: popup.style.top,
-                left: popup.style.left,
-                width: popup.style.width,
-                height: popup.style.height,
-                isOpen: popup.style.display !== 'none'
-            };
-            localStorage.setItem('extracts_popup_state', JSON.stringify(state));
-        }
-
-        function loadPopupState() {
-            const popup = document.getElementById('extractsPopup');
-            const saved = localStorage.getItem('extracts_popup_state');
-            if (saved) {
-                const state = JSON.parse(saved);
-                if (state.top) popup.style.top = state.top;
-                if (state.left) popup.style.left = state.left;
-                if (state.width) popup.style.width = state.width;
-                if (state.height) popup.style.height = state.height;
-                if (state.isOpen) popup.style.display = 'flex';
-                popup.style.right = 'auto'; 
-            }
-        }
-
-        function makeDraggable(element, header) {
-            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-            header.onmousedown = dragMouseDown;
-
-            function dragMouseDown(e) {
-                e = e || window.event;
-                e.preventDefault();
-                pos3 = e.clientX;
-                pos4 = e.clientY;
-                document.onmouseup = closeDragElement;
-                document.onmousemove = elementDrag;
-            }
-
-            function elementDrag(e) {
-                e = e || window.event;
-                e.preventDefault();
-                pos1 = pos3 - e.clientX;
-                pos2 = pos4 - e.clientY;
-                pos3 = e.clientX;
-                pos4 = e.clientY;
-                element.style.top = (element.offsetTop - pos2) + "px";
-                element.style.left = (element.offsetLeft - pos1) + "px";
-                element.style.right = 'auto';
-            }
-
-            function closeDragElement() {
-                document.onmouseup = null;
-                document.onmousemove = null;
-                savePopupState();
-            }
-
-            const resizeObserver = new ResizeObserver(() => {
-                if (element.style.display !== 'none') {
-                    savePopupState();
-                }
-            });
-            resizeObserver.observe(element);
-        }
+        let lastJumpedPage = null;
+        let selectedQuestionInGroup = {}; // For choice questions
 
         async function init() {
-            if (username) {
-                const welcomeEl = document.getElementById('welcomeUser');
-                if (welcomeEl) welcomeEl.textContent = '👤 ' + username;
+            const urlParams = new URLSearchParams(window.location.search);
+            const paperId = urlParams.get('paper_id');
+            const username = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
+            
+            if (!username) { window.location.href = 'login.html'; return; }
+
+            const [examRes, progRes] = await Promise.all([
+                fetch(`/api/official-exams/${paperId}`),
+                fetch(`/api/student/exam-progress/get?username=${username}&paper_id=${paperId}`)
+            ]);
+
+            examData = await examRes.json();
+            const prog = await progRes.json();
+            
+            if (prog.success) {
+                savedAnswers = prog.answers || {};
+                currentGroupIdx = prog.current_question_idx || 0;
+                selectedQuestionInGroup = savedAnswers._selections || {};
             }
 
-            const resp = await fetch(`/api/official-exams/${paperId}`);
-            examData = await resp.json();
             document.getElementById('paperTitle').textContent = examData.title;
-
+            
+            // Show extracts button if pages exist
             if (examData.extract_pages && examData.extract_pages.length > 0) {
-                const btn = document.getElementById('extractsBtn');
-                btn.style.display = 'block';
-                const content = document.getElementById('extractsContent');
-                content.innerHTML = '';
+                document.getElementById('extractsBtn').style.display = 'inline-block';
+                const body = document.getElementById('extractsBody');
                 examData.extract_pages.forEach(p => {
                     const img = document.createElement('img');
-                    img.src = `${examData.qp_img_dir}page_${String(p).padStart(2, '0')}.png`;
-                    img.style.width = '100%';
-                    img.style.marginBottom = '10px';
-                    img.style.boxShadow = '0 2px 10px rgba(0,0,0,0.5)';
-                    content.appendChild(img);
+                    img.src = `${examData.qp_img_dir}page_${p.toString().padStart(2, '0')}.png`;
+                    img.className = 'paper-page';
+                    body.appendChild(img);
                 });
-                makeDraggable(document.getElementById('extractsPopup'), document.getElementById('extractsHeader'));
-                loadPopupState();
             }
 
-            const pageResp = await fetch(`/api/official-exams/${paperId}/page-count`);
-            const pageData = await pageResp.json();
-            totalPages = pageData.count || 0;
-            
-            pageGroups = [];
-            if (examData.questions && examData.questions.length > 0) {
-                let currentGroup = {
-                    startPage: examData.questions[0].sub_questions[0].qp_pages[0],
-                    questions: []
-                };
-                examData.questions.forEach(q => {
-                    const qStartPage = q.sub_questions[0].qp_pages[0];
-                    if (qStartPage === currentGroup.startPage) {
-                        currentGroup.questions.push(q);
-                    } else {
-                        pageGroups.push(currentGroup);
-                        currentGroup = {
-                            startPage: qStartPage,
-                            questions: [q]
-                        };
-                    }
-                });
-                pageGroups.push(currentGroup);
-            }
-
-            try {
-                const pResp = await fetch(`/api/student/exam-progress/get?username=${username}&paper_id=${paperId}`);
-                const pData = await pResp.json();
-                if (pData.success) {
-                    const savedIdx = pData.current_question_idx || 0;
-                    currentGroupIdx = pageGroups.findIndex(g => 
-                        g.questions.some(q => examData.questions.indexOf(q) === savedIdx)
-                    );
-                    if (currentGroupIdx === -1) currentGroupIdx = 0;
-                    
-                    savedAnswers = pData.answers || {};
-                    if (savedAnswers._selections) {
-                        selectedQuestionInGroup = savedAnswers._selections;
-                    }
-                    isCompleted = pData.status === 'completed';
-
-                    pageGroups.forEach((group, idx) => {
-                        if (selectedQuestionInGroup[idx] === undefined) {
-                            const answeredQ = group.questions.find(q => 
-                                q.sub_questions.some(sq => savedAnswers[sq.sub_id] && savedAnswers[sq.sub_id].value)
-                            );
-                            if (answeredQ) {
-                                selectedQuestionInGroup[idx] = answeredQ.id;
-                            }
-                        }
-                    });
+            // Group questions by their first page to create logical steps
+            let groups = [];
+            examData.questions.forEach(q => {
+                const firstPage = q.sub_questions[0].qp_pages[0];
+                let group = groups.find(g => g.page === firstPage);
+                if (!group) {
+                    group = { page: firstPage, questions: [] };
+                    groups.push(group);
                 }
-            } catch (e) {}
-
-            const selector = document.getElementById('questionSelector');
-            selector.innerHTML = '<option value="">Jump to Question...</option>';
-            pageGroups.forEach((group, idx) => {
-                const opt = document.createElement('option');
-                opt.value = idx;
-                const qLabels = group.questions.map(q => q.id).join('/');
-                opt.textContent = "Question " + qLabels;
-                selector.appendChild(opt);
+                group.questions.push(q);
             });
+            pageGroups = groups;
 
             render();
-        }
-
-        function logout() {
-            localStorage.removeItem('quiz_username');
-            localStorage.removeItem('quiz_admin_username');
-            window.location.href = 'login.html';
-        }
-
-        let scrollObserver = null;
-
-        function checkAllGraded() {
-            if (!pageGroups || pageGroups.length === 0) return;
-            const group = pageGroups[currentGroupIdx];
-
-            let questionsToCheck = group.questions;
-            const hasExplicitChoice = group.questions.some(q => q.choice_group);
-            const isChoiceGroup = hasExplicitChoice || (group.questions.length > 1 && 
-                                 group.questions.every(q => q.sub_questions.length === 1 && q.sub_questions[0].max_marks >= 20));
-
-            if (isChoiceGroup) {
-                if (selectedQuestionInGroup[currentGroupIdx] !== undefined) {
-                    questionsToCheck = group.questions.filter(q => q.id === selectedQuestionInGroup[currentGroupIdx]);
-                } else {
-                    document.getElementById('nextBtn').classList.remove('highlight');
-                    return;
-                }
-            }
-
-            const allGraded = questionsToCheck.every(q => 
-                q.sub_questions.every(sq => savedAnswers[sq.sub_id] && savedAnswers[sq.sub_id].marks !== undefined)
-            );
-            const nextBtn = document.getElementById('nextBtn');
-            if (allGraded && currentGroupIdx < pageGroups.length - 1) {
-                nextBtn.classList.add('highlight');
-            } else {
-                nextBtn.classList.remove('highlight');
-            }
         }
 
         function render() {
-            if (!pageGroups || pageGroups.length === 0) return;
-            const group = pageGroups[currentGroupIdx];
-            const qLabels = group.questions.map(q => q.id).join('/');
-            document.getElementById('currentQuestionId').textContent = "Question " + qLabels;
-            document.getElementById('questionSelector').value = currentGroupIdx;
-            
-            const viewer = document.getElementById('paperViewer');
-            viewer.innerHTML = '';
-            
-            const allPages = [...new Set(group.questions.flatMap(q => 
-                q.sub_questions.flatMap(sq => sq.qp_pages)
-            ))].sort((a,b) => a-b);
+            const list = document.getElementById('questionList');
+            const paper = document.getElementById('paperPanel');
+            list.innerHTML = '';
+            paper.innerHTML = '';
 
-            allPages.forEach(p => {
+            const group = pageGroups[currentGroupIdx];
+            
+            // Load all pages relevant to this group
+            const allPages = [...new Set(group.questions.flatMap(q => q.sub_questions.flatMap(sq => sq.qp_pages)))].sort((a,b)=>a-b);
+            allPages.forEach(pNum => {
                 const img = document.createElement('img');
-                img.src = `${examData.qp_img_dir}page_${String(p).padStart(2, '0')}.png`;
+                img.id = 'page_' + pNum;
+                img.src = `${examData.qp_img_dir}page_${pNum.toString().padStart(2, '0')}.png`;
                 img.className = 'paper-page';
-                img.id = 'page_' + p;
-                viewer.appendChild(img);
+                paper.appendChild(img);
             });
 
-            const list = document.getElementById('subQuestionsList');
-            list.innerHTML = '';
-            
             const panel = document.querySelector('.answer-panel');
             panel.onscroll = () => {
                 if (isManualJumping) return;
-
-                // 1. If actively typing, keep focus
                 const active = document.activeElement;
-                if (active && (active.tagName === 'TEXTAREA' || active.tagName === 'INPUT' || active.tagName === 'CANVAS')) {
-                    const activeItem = active.closest('.sub-question-item');
-                    if (activeItem) {
-                        const pNum = activeItem.getAttribute('data-page');
-                        if (pNum) jump(pNum, active);
-                        return;
-                    }
-                }
+                if (active && (active.tagName === 'TEXTAREA' || active.tagName === 'INPUT')) return; 
+                if (allPages.length <= 1) return;
 
-                // 2. Scan items to find which one is currently at the top of the viewport
                 const items = Array.from(panel.querySelectorAll('.sub-question-item'));
                 const panelTop = panel.getBoundingClientRect().top;
-                
                 let bestItem = null;
                 for (let item of items) {
-                    const rect = item.getBoundingClientRect();
-                    // Threshold: If the top of the question is above the top 25% of the panel
-                    if (rect.top <= panelTop + 150) {
-                        bestItem = item;
-                    } else {
-                        break; // Items are ordered
-                    }
+                    if (item.getBoundingClientRect().top <= panelTop + 150) bestItem = item;
+                    else break; 
                 }
-
                 if (bestItem) {
                     const pNum = bestItem.getAttribute('data-page');
-                    if (pNum) jump(pNum, bestItem);
+                    if (pNum && pNum != lastJumpedPage) jump(pNum, bestItem);
                 }
             };
 
+            // Handle choice groups (Section C)
+            const isChoiceGroup = group.questions.length > 1 && group.questions.every(q => q.id >= 9);
             let questionsToRender = group.questions;
-            
-            const hasExplicitChoice = group.questions.some(q => q.choice_group);
-            const choiceGroupName = hasExplicitChoice ? (group.questions.find(q => q.choice_group).choice_group || "Selection Required") : "Selection Required";
-            
-            const isChoiceGroup = hasExplicitChoice || (group.questions.length > 1 && 
-                                 group.questions.every(q => q.sub_questions.length === 1 && q.sub_questions[0].max_marks >= 20));
-            
+
             if (isChoiceGroup) {
                 const choiceDiv = document.createElement('div');
                 choiceDiv.className = 'sub-question-item';
-                choiceDiv.style.background = '#e9ecef';
+                choiceDiv.style.background = '#f8f9fa';
                 choiceDiv.innerHTML = `
-                    <div class="sub-header">
-                        <span style="font-size: 1.1em; color: #1e3c72; font-weight: 700;">${choiceGroupName}</span>
-                    </div>
-                    <p style="margin-bottom: 15px; color: #555;">Please select <b>one</b> question to answer from this section:</p>
-                    <div id="choiceButtons" style="display: flex; gap: 10px; flex-wrap: wrap;"></div>
+                    <div class="sub-header"><span style="font-weight:700; color:#1e3c72;">Choose One Question</span></div>
+                    <div id="choiceBtns" style="display:flex; gap:10px;"></div>
                 `;
-                
-                const btnContainer = choiceDiv.querySelector('#choiceButtons');
+                const btnContainer = choiceDiv.querySelector('#choiceBtns');
                 group.questions.forEach(q => {
-                    const btn = document.createElement('div');
-                    btn.className = 'mcq-option';
-                    if (selectedQuestionInGroup[currentGroupIdx] === q.id) {
-                        btn.classList.add('selected');
-                    }
+                    const btn = document.createElement('button');
+                    btn.className = 'control-btn ' + (selectedQuestionInGroup[currentGroupIdx] === q.id ? 'btn-next' : 'btn-prev');
                     btn.textContent = 'Question ' + q.id;
-                    btn.onclick = () => {
-                        selectedQuestionInGroup[currentGroupIdx] = q.id;
-                        render();
-                        saveProgress();
-                    };
+                    btn.onclick = () => { selectedQuestionInGroup[currentGroupIdx] = q.id; render(); saveProgress(); };
                     btnContainer.appendChild(btn);
                 });
-                
                 list.appendChild(choiceDiv);
-                
-                if (selectedQuestionInGroup[currentGroupIdx] !== undefined) {
-                    questionsToRender = group.questions.filter(q => q.id === selectedQuestionInGroup[currentGroupIdx]);
-                } else {
-                    questionsToRender = [];
-                }
+                questionsToRender = group.questions.filter(q => q.id === selectedQuestionInGroup[currentGroupIdx]);
             }
-
-            // Flatten all sub-questions to identify the last one on each page
-            const allSubQs = questionsToRender.flatMap(q => q.sub_questions);
-            allSubQs.forEach((sq, idx) => {
-                const nextSq = allSubQs[idx + 1];
-                sq._isLastOnPage = !nextSq || nextSq.qp_pages[0] !== sq.qp_pages[0];
-            });
 
             questionsToRender.forEach(q => {
                 q.sub_questions.forEach(sq => {
-                    const pNum = sq.qp_pages[0];
                     const div = document.createElement('div');
                     div.className = 'sub-question-item';
-                    div.setAttribute('data-page', pNum);
-                    if (sq._isLastOnPage) div.setAttribute('data-align', 'end');
+                    div.setAttribute('data-page', sq.qp_pages[0]);
                     
                     const saved = savedAnswers[sq.sub_id] || {};
-                    
-                    let formattedId = sq.sub_id.replace(/\(/g, ' ').replace(/\)/g, ') ').trim();
-                    formattedId = formattedId.replace(/\s+/g, ' ');
-
-                    let inputHtml = `
+                    div.innerHTML = `
                         <div class="sub-header">
-                            <span style="font-size: 1.1em; font-weight: 800; color: #1e3c72; background: #e1e7ff; padding: 4px 12px; border-radius: 6px; border: 1px solid #c8d4ff; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">${formattedId}</span>
-                            <span class="mark-badge">[${sq.max_marks} marks]</span>
-                        </div>`;
-                    
-                    if (sq.type === 'mcq') {
-                        inputHtml += `<div class="mcq-container">`;
-                        sq.options.forEach(opt => {
-                            const isSel = saved.value === opt ? 'selected' : '';
-                            inputHtml += `<div class="mcq-option ${isSel}" onclick="jump(${pNum}, this); setMcq('${sq.sub_id}', '${opt}', this)">${opt}</div>`;
-                        });
-                        inputHtml += `</div><input type="hidden" id="ans_${sq.sub_id}" value="${saved.value || ''}">`;
-                    } else if (sq.type === 'calculation') {
-                        inputHtml += `<div class="calculation-container">
-                            <div class="working-label">Working:</div>
-                            <textarea id="work_${sq.sub_id}" onfocus="jump(${pNum}, this)" placeholder="Show steps...">${saved.work || ''}</textarea>
-                            <div style="text-align:right; margin-top:10px;">
-                                <b>${sq.final_label || 'Final Answer'}:</b> <input type="text" id="ans_${sq.sub_id}" onfocus="jump(${pNum}, this)" style="width:100px;" value="${saved.value || ''}"> ${sq.suffix || ''}
-                            </div>
-                        </div>`;
-                    } else if (sq.type === 'list') {
-                        const listVals = saved.value ? saved.value.split('; ') : [];
-                        for(let i=1; i<=sq.count; i++) {
-                            const v = listVals[i-1] ? listVals[i-1].replace(/^\d+\.\s*/, '') : '';
-                            inputHtml += `<div style="margin-bottom:5px;">${i}. <input type="text" class="list-in-${sq.sub_id}" onfocus="jump(${pNum}, this)" style="width:80%;" value="${v}"></div>`;
-                        }
-                    } else if (sq.type === 'draw') {
-                        inputHtml += `
-                        <div class="canvas-container" style="border: 2px dashed #1e3c72; border-radius: 8px; overflow: hidden; position: relative; margin-bottom: 10px;">
-                            <div class="canvas-toolbar" style="background: #f8f9fa; padding: 10px; display: flex; gap: 10px; align-items: center; border-bottom: 1px solid #dee2e6; flex-wrap: wrap;">
-                                <button class="tool-btn active" data-tool="pen" onclick="setTool('${sq.sub_id}', 'pen', this)" title="Pen">✏️</button>
-                                <button class="tool-btn" data-tool="line" onclick="setTool('${sq.sub_id}', 'line', this)" title="Line">📏</button>
-                                <button class="tool-btn" data-tool="rect" onclick="setTool('${sq.sub_id}', 'rect', this)" title="Rectangle">⬜</button>
-                                <button class="tool-btn" data-tool="circle" onclick="setTool('${sq.sub_id}', 'circle', this)" title="Circle">⭕</button>
-                                <button class="tool-btn" data-tool="text" onclick="setTool('${sq.sub_id}', 'text', this)" title="Text">🔤</button>
-                                <div style="height: 24px; width: 1px; background: #ccc; margin: 0 5px;"></div>
-                                <input type="color" id="color_${sq.sub_id}" value="#000000" title="Color" style="padding:0; border:none; width:30px; height:30px; cursor:pointer;">
-                                <select id="size_${sq.sub_id}" title="Stroke Size" style="padding: 5px; border-radius: 4px; border: 1px solid #ccc;">
-                                    <option value="2">Thin</option>
-                                    <option value="4" selected>Medium</option>
-                                    <option value="8">Thick</option>
-                                </select>
-                                <button onclick="clearCanvas('${sq.sub_id}')" style="margin-left: auto; padding: 6px 12px; font-size: 0.85em; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Clear</button>
-                            </div>
-                            <canvas id="canvas_${sq.sub_id}" width="800" height="400" onmousedown="jump(${pNum}, this)" ontouchstart="jump(${pNum}, this)" style="background: white; cursor: crosshair; display: block; width: 100%; touch-action: none;"></canvas>
-                            <input type="hidden" id="ans_${sq.sub_id}" value="${saved.value || ''}">
-                        </div>`;
-                        
-                        if (!document.getElementById('canvasStyles')) {
-                            const style = document.createElement('style');
-                            style.id = 'canvasStyles';
-                            style.textContent = `
-                                .tool-btn { background: white; border: 1px solid #ccc; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-size: 1.2em; transition: all 0.2s; }
-                                .tool-btn:hover { background: #e9ecef; }
-                                .tool-btn.active { background: #1e3c72; color: white; border-color: #1e3c72; }
-                            `;
-                            document.head.appendChild(style);
-                        }
-                    } else {
-                        const height = Math.max(120, Math.min(600, sq.max_marks * 40));
-                        inputHtml += `<textarea id="ans_${sq.sub_id}" onfocus="jump(${pNum}, this)" style="height: ${height}px;" placeholder="Type answer here...">${saved.value || ''}</textarea>`;
-                    }
-
-                    const fbShow = saved.marks !== undefined ? 'show' : '';
-                    const fbClass = saved.marks == sq.max_marks ? 'feedback-good' : (saved.marks > 0 ? 'feedback-partial' : 'feedback-bad');
-
-                    inputHtml += `<button class="grade-btn" onclick="grade('${sq.sub_id}', ${sq.max_marks}, \`${sq.ms_text}\`, '${sq.type}')">Submit & Grade</button>
-                        <div id="err_${sq.sub_id}" class="error-msg">⚠️ Please provide an answer or show some working.</div>
-                        <div id="fb_${sq.sub_id}" class="feedback-box ${fbShow} ${fbClass}">
-                            <b>Marks: <span id="m_${sq.sub_id}">${saved.marks || 0}</span> / ${sq.max_marks}</b>
-                            <p id="t_${sq.sub_id}" style="margin-top:10px;">${saved.feedback || ''}</p>
-                            <div style="margin-top:10px; font-size:0.8em; background:#eee; padding:5px;"><b>Mark Scheme:</b><br>${sq.ms_text}</div>
-                        </div>`;
-                    
-                    div.innerHTML = inputHtml;
+                            <span style="font-weight:800; color:#1e3c72;">Question ${sq.sub_id}</span>
+                            <span class="mark-badge">${sq.max_marks} Marks</span>
+                        </div>
+                        <textarea id="ans_${sq.sub_id}" oninput="updateAnswer('${sq.sub_id}')" placeholder="Type your answer here...">${saved.answer || ''}</textarea>
+                        <button class="control-btn btn-grade" onclick="grade('${sq.sub_id}', '${sq.type}')">Submit & Grade</button>
+                        <div id="fb_${sq.sub_id}" class="feedback-zone ${saved.feedback ? 'show' : ''}">${saved.feedback || ''}</div>
+                    `;
                     list.appendChild(div);
-                    
-                    if (sq.type === 'draw') {
-                        setTimeout(() => initCanvas(sq.sub_id, saved.value), 0);
-                    }
                 });
             });
-
-            const lastIdx = pageGroups.length - 1;
-            const actionBtn = document.createElement('button');
-            actionBtn.className = 'control-btn';
-            actionBtn.style.marginTop = '40px';
-
-            if (currentGroupIdx === lastIdx) {
-                actionBtn.style.background = isCompleted ? '#28a745' : '#dc3545';
-                actionBtn.textContent = isCompleted ? '✅ Exam Completed' : '🏁 Finish Exam';
-                actionBtn.onclick = finishExam;
-            } else {
-                actionBtn.style.background = '#6c757d';
-                actionBtn.textContent = '💾 Save Progress';
-                actionBtn.onclick = resumeLater;
-            }
-            list.appendChild(actionBtn);
-
-            document.getElementById('prevBtn').disabled = (currentGroupIdx === 0);
-            document.getElementById('nextBtn').disabled = (currentGroupIdx === lastIdx);
-            checkAllGraded();
             
-            setTimeout(() => {
-                if (allPages && allPages.length > 0) {
-                    jump(allPages[0]);
-                } else {
-                    document.getElementById('paperViewer').scrollTop = 0;
-                }
-            }, 300);
+            // Jump to first page of group
+            setTimeout(() => jump(group.page), 100);
         }
 
-        function setMcq(id, val, el) {
-            const opts = el.parentElement.querySelectorAll('.mcq-option');
-            opts.forEach(o => o.classList.remove('selected'));
-            el.classList.add('selected');
-            document.getElementById('ans_' + id).value = val;
-        }
-
-        let canvasTools = {}; // subId -> toolName
-
-        function setTool(subId, tool, el) {
-            canvasTools[subId] = tool;
-            const parent = el.parentElement;
-            parent.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
-            el.classList.add('active');
-        }
-
-        function initCanvas(subId, savedDataUrl) {
-            const canvas = document.getElementById('canvas_' + subId);
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            let isDrawing = false;
-            let startPos = {x: 0, y: 0};
-            let snapshot = null;
-            
-            canvasTools[subId] = 'pen'; // Default tool
-
-            if (savedDataUrl && savedDataUrl.startsWith('data:image')) {
-                const img = new Image();
-                img.onload = () => ctx.drawImage(img, 0, 0);
-                img.src = savedDataUrl;
-            } else {
-                ctx.fillStyle = "white";
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-            }
-
-            function getMousePos(e) {
-                const rect = canvas.getBoundingClientRect();
-                const scaleX = canvas.width / rect.width;
-                const scaleY = canvas.height / rect.height;
-                const clientX = (e.clientX !== undefined) ? e.clientX : (e.touches ? e.touches[0].clientX : 0);
-                const clientY = (e.clientY !== undefined) ? e.clientY : (e.touches ? e.touches[0].clientY : 0);
-                return {
-                    x: (clientX - rect.left) * scaleX,
-                    y: (clientY - rect.top) * scaleY
-                };
-            }
-
-            function startDraw(e) {
-                if (e.type === 'touchstart') e.preventDefault();
-                const pos = getMousePos(e);
-                startPos = pos;
-                
-                const tool = canvasTools[subId];
-                if (tool === 'text') {
-                    const text = prompt("Enter text:");
-                    if (text) {
-                        ctx.fillStyle = document.getElementById('color_' + subId).value;
-                        ctx.font = (parseInt(document.getElementById('size_' + subId).value) * 5) + "px Arial";
-                        ctx.fillText(text, pos.x, pos.y);
-                        saveToInput();
-                    }
-                    return;
-                }
-
-                isDrawing = true;
-                snapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                
-                ctx.strokeStyle = document.getElementById('color_' + subId).value;
-                ctx.lineWidth = document.getElementById('size_' + subId).value;
-                ctx.lineCap = "round";
-                ctx.lineJoin = "round";
-            }
-            
-            function draw(e) {
-                if (!isDrawing) return;
-                if (e.type === 'touchmove') e.preventDefault();
-                const pos = getMousePos(e);
-                const tool = canvasTools[subId];
-
-                if (tool === 'pen') {
-                    ctx.lineTo(pos.x, pos.y);
-                    ctx.stroke();
-                } else {
-                    ctx.putImageData(snapshot, 0, 0);
-                    ctx.beginPath();
-                    if (tool === 'line') {
-                        ctx.moveTo(startPos.x, startPos.y);
-                        ctx.lineTo(pos.x, pos.y);
-                    } else if (tool === 'rect') {
-                        ctx.strokeRect(startPos.x, startPos.y, pos.x - startPos.x, pos.y - startPos.y);
-                    } else if (tool === 'circle') {
-                        const radius = Math.sqrt(Math.pow(pos.x - startPos.x, 2) + Math.pow(pos.y - startPos.y, 2));
-                        ctx.arc(startPos.x, startPos.y, radius, 0, 2 * Math.PI);
-                    }
-                    ctx.stroke();
-                }
-            }
-            
-            function endDraw(e) {
-                if (isDrawing) {
-                    isDrawing = false;
-                    saveToInput();
-                }
-            }
-
-            function saveToInput() {
-                document.getElementById('ans_' + subId).value = canvas.toDataURL();
-            }
-
-            canvas.addEventListener('mousedown', startDraw);
-            canvas.addEventListener('mousemove', draw);
-            canvas.addEventListener('mouseup', endDraw);
-            canvas.addEventListener('mouseout', endDraw);
-            canvas.addEventListener('touchstart', startDraw, {passive: false});
-            canvas.addEventListener('touchmove', draw, {passive: false});
-            canvas.addEventListener('touchend', endDraw);
-        }
-
-        function clearCanvas(subId) {
-            const canvas = document.getElementById('canvas_' + subId);
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = "white";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            document.getElementById('ans_' + subId).value = '';
-        }
-
-        async function grade(subId, max, ms, type) {
-            let val = "";
-            let work = "";
-            let isBlank = false;
-            const errDiv = document.getElementById('err_' + subId);
-            const fbDiv = document.getElementById('fb_' + subId);
-
-            if (type === 'list') {
-                const inputs = Array.from(document.querySelectorAll('.list-in-' + CSS.escape(subId)));
-                if (inputs.every(i => !i.value.trim())) isBlank = true;
-                val = inputs.map((i, idx) => `${idx+1}. ${i.value}`).join("; ");
-            } else if (type === 'calculation') {
-                work = document.getElementById('work_'+subId).value.trim();
-                val = document.getElementById('ans_'+subId).value.trim();
-                if (!work && !val) isBlank = true;
-            } else {
-                val = document.getElementById('ans_' + subId).value.trim();
-                if (!val) isBlank = true;
-            }
-
-            const nonsenseKeywords = ['lalai', 'abc', '123'];
-            const helpKeywords = ['tell me', 'show me', 'what is the answer', 'i don\'t know', 'give me', 'help'];
-            const lowerAnswer = type === 'calculation' ? (work + ' ' + val).toLowerCase() : val.toLowerCase();
-            const rawLength = type === 'calculation' ? (work.length + val.length) : val.length;
-
-            const isHelpRequest = helpKeywords.some(k => lowerAnswer.includes(k));
-            const isNonsense = type !== 'draw' && nonsenseKeywords.some(k => lowerAnswer.includes(k));
-            const isTooShort = !isHelpRequest && rawLength < 3 && type !== 'mcq' && type !== 'draw';
-
-            if (isBlank || isNonsense || isTooShort) {
-                errDiv.style.display = 'block';
-                errDiv.textContent = isBlank ? "⚠️ Please provide an answer or show some working." : "⚠️ Please provide a meaningful answer.";
-                fbDiv.classList.remove('show');
-                return;
-            }            
-            errDiv.style.display = 'none';
-            const btn = event.target;
-            btn.disabled = true; btn.textContent = "Grading...";
-
-            let answerStr = val;
-            let imageData = null;
-
-            if (type === 'calculation') {
-                answerStr = `[WORKING_START]\n${work}\n[WORKING_END]\n[FINAL_ANSWER_START]\n${val}\n[FINAL_ANSWER_END]`;
-            } else if (type === 'draw') {
-                answerStr = "[DRAWING_SUBMITTED]";
-                imageData = val;
-            }
-
-            const res = await fetch('/api/official-exams/grade', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({paper_id: paperId, sub_id: subId, user_answer: answerStr, image_data: imageData, mark_scheme: ms, max_marks: max})
-            });
-            
-            const data = await res.json();
-            
-            const marksAwarded = (data.marks_awarded !== undefined) ? data.marks_awarded : 0;
-            const feedbackText = data.feedback || "No feedback provided by AI.";
-
-            savedAnswers[subId] = {
-                value: val,
-                work: work,
-                marks: marksAwarded,
-                feedback: feedbackText
-            };
-
-            fbDiv.className = 'feedback-box show ' + (marksAwarded == max ? 'feedback-good' : (marksAwarded > 0 ? 'feedback-partial' : 'feedback-bad'));
-            document.getElementById('m_' + subId).textContent = marksAwarded;
-            document.getElementById('t_' + subId).innerText = feedbackText;
-            
-            if (type === 'draw' && marksAwarded < max) {
-                const selfMarkHtml = `
-                    <div style="margin-top:15px; border-top:1px solid #ccc; padding-top:10px;">
-                        <p style="font-weight:bold; color:#1e3c72;">Based on the tutorial above, how many marks do you give yourself?</p>
-                        <select id="self_mark_${subId}" onchange="updateSelfMark('${subId}', this.value)" style="padding:5px; border-radius:4px;">
-                            ${Array.from({length: max + 1}, (_, i) => `<option value="${i}" ${i == marksAwarded ? 'selected' : ''}>${i} / ${max}</option>`).join('')}
-                        </select>
-                    </div>
-                `;
-                document.getElementById('t_' + subId).innerHTML += selfMarkHtml;
-            }
-
-            btn.disabled = false; btn.textContent = "Re-submit & Grade";
-            await saveProgress();
-            checkAllGraded();
-        }
-
-        function updateSelfMark(subId, val) {
-            const marks = parseInt(val);
-            savedAnswers[subId].marks = marks;
-            document.getElementById('m_' + subId).textContent = marks;
-            const max = pageGroups[currentGroupIdx].questions.flatMap(q => q.sub_questions).find(sq => sq.sub_id === subId).max_marks;
-            const fbDiv = document.getElementById('fb_' + subId);
-            fbDiv.className = 'feedback-box show ' + (marks == max ? 'feedback-good' : (marks > 0 ? 'feedback-partial' : 'feedback-bad'));
+        function updateAnswer(id) {
+            if (!savedAnswers[id]) savedAnswers[id] = {};
+            savedAnswers[id].answer = document.getElementById('ans_'+id).value;
             saveProgress();
-            checkAllGraded();
+        }
+
+        function jump(pageNum) {
+            const img = document.getElementById('page_' + pageNum);
+            if (img) img.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            lastJumpedPage = pageNum;
+        }
+
+        function toggleExtracts() {
+            const m = document.getElementById('extractsModal');
+            m.style.display = (m.style.display === 'flex' ? 'none' : 'flex');
         }
 
         async function saveProgress() {
-            const firstQ = pageGroups[currentGroupIdx].questions[0];
-            const qIdx = examData.questions.indexOf(firstQ);
-            
+            const username = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
+            const paperId = examData.paper_id;
             const answersToSave = { ...savedAnswers };
             answersToSave._selections = selectedQuestionInGroup;
 
@@ -943,18 +390,61 @@
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
-                    username: username,
-                    paper_id: paperId,
-                    current_question_idx: qIdx,
+                    username, paper_id: paperId,
+                    current_question_idx: currentGroupIdx,
                     answers: answersToSave
                 })
             });
         }
 
+        async function grade(subId, type) {
+            const val = document.getElementById('ans_' + subId).value;
+            const btn = event.target;
+            const fbDiv = document.getElementById('fb_' + subId);
+            
+            if (!val.trim()) { alert("Please type an answer first."); return; }
+
+            btn.disabled = true;
+            btn.innerHTML = `<span class="spinner"></span> Grading...`;
+
+            try {
+                const res = await fetch('/api/submit-quiz', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        username: localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username'),
+                        paper_id: examData.paper_id,
+                        sub_id: subId,
+                        answer: val,
+                        ms_text: examData.questions.flatMap(q=>q.sub_questions).find(s=>s.sub_id===subId).ms_text
+                    })
+                });
+                const data = await res.json();
+                const html = `<div style="font-weight:800; color:#28a745; margin-bottom:10px;">Score: ${data.score} / ${data.total_marks}</div><div>${data.feedback}</div>`;
+                fbDiv.innerHTML = html;
+                fbDiv.classList.add('show');
+                savedAnswers[subId].feedback = html;
+                await saveProgress();
+            } catch (e) { alert("Grading failed."); }
+            finally {
+                btn.disabled = false;
+                btn.textContent = "Re-submit & Grade";
+            }
+        }
+
         function changeQuestion(n) {
-            currentGroupIdx += n;
-            render();
-            saveProgress();
+            const newIdx = currentGroupIdx + n;
+            if (newIdx >= 0 && newIdx < pageGroups.length) {
+                currentGroupIdx = newIdx;
+                render();
+                saveProgress();
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('quiz_username');
+            localStorage.removeItem('quiz_admin_username');
+            window.location.href = 'login.html';
         }
 
         init();

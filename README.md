@@ -1,10 +1,10 @@
-# Exam Question Generator
+# ExamQ: AI-Powered IGCSE Exam Platform
 
-Generate multiple-choice quizzes using LLaMA (Ollama).
+A comprehensive platform for generating quizzes, managing official IGCSE papers, and practicing with AI-powered grading.
 
-## Quick Start
+## 🚀 Quick Start
 
-### Start Everything (One Command)
+### Start Everything
 ```bash
 ./start_servers.sh
 ```
@@ -14,122 +14,73 @@ Then open your browser to:
 http://localhost:5001/
 ```
 
-## What This Does
+## ✨ Key Features
 
-1. **Checks Ollama** - Ensures Ollama is running (starts it if not)
-2. **Starts Quiz Server** - Starts the Flask server on port 5001
-3. **Auto-Saves Quizzes** - Generated quizzes save to the project directory
+### 📖 Official Exam Library
+- **AI-Powered Import:** Automatically convert official IGCSE PDFs (Question Paper + Mark Scheme) into interactive digital exams.
+- **Side-by-Side Player:** View the exam paper and answer booklet simultaneously with smart scroll synchronization.
+- **AI Grading:** Instant feedback and marking based strictly on official Edexcel mark schemes using Llama 3.
+- **Extracts Booklet:** Built-in support for English Language reading booklets.
 
-## Features
+### 🤖 Quiz Generator
+- Generate custom multiple-choice quizzes on any topic using Llama 3.
+- Auto-save generated quizzes for offline practice.
 
-- ✅ Generate quiz questions from any topic using LLaMA
-- ✅ Multiple choice questions (A, B, C, D)
-- ✅ Beautiful, styled interface
-- ✅ Auto-save to project directory
-- ✅ Take quizzes offline
-- ✅ Email results (optional setup required)
-- ✅ Smart autocomplete for common topics
+### 👤 User & Admin Management
+- **User Accounts:** Secure registration and login for students.
+- **Admin Panel:** Comprehensive tools to manage users, monitor progress, and build the exam library.
+- **Results Dashboard:** Track performance across different papers and topics.
 
-## File Structure
+## 📁 Project Structure
 
 ```
 /home/obo/playground/examQ/
-├── exam_generator_v2.html    # Main quiz generator web interface
-├── quiz_template.html         # Template for standalone quizzes
-├── email_server.py            # Flask server for saving & email
-├── start_servers.sh           # Start all servers
-├── stop_servers.sh            # Stop quiz server
-└── *_quiz.html                # Generated quizzes (auto-created)
+├── exam_server.py          # Flask backend & AI Orchestrator
+├── official_exam_player.html # interactive Exam Interface
+├── exam_generator_v2.html  # Custom Quiz Generator
+├── admin_exams.html        # Library Management Console
+├── admin_users.html        # User Management Console
+├── results_dashboard.html  # Performance Tracking
+├── start_servers.sh        # Startup Script
+├── stop_servers.sh         # Shutdown Script
+├── exam_data/              # Processed Exam JSONs
+├── static/exams/           # Extracted Exam Images
+└── resources/              # Raw PDF Repository
 ```
 
-## Commands
+## 🛠 Setup Requirements
 
-### Start Servers
+### 1. External Dependencies
+- **Ollama:** Install from https://ollama.ai (Recommended model: `llama3`)
+- **System Tools:** 
+  - `poppler-utils` (for `pdftotext` and PDF conversion)
+  - `tesseract-ocr` (for OCR fallback)
+
+### 2. Python Environment
 ```bash
-./start_servers.sh
+pip3 install -r requirements.txt
 ```
 
-### Stop Servers
-```bash
-./stop_servers.sh
-```
+## 🎮 How to Use
 
-### View Logs
-```bash
-# Ollama logs
-tail -f /tmp/ollama.log
+1. **Student Access:**
+   - Register/Login at `http://localhost:5001/login.html`
+   - Browse the library and start an exam.
+   - Use the "Submit & Grade" button for instant AI feedback.
 
-# Quiz server logs
-tail -f /tmp/quiz_server.log
-```
+2. **Admin Access:**
+   - Log in with admin credentials.
+   - Use **Exam Library Manager** to browse the `resources` folder and import new papers.
+   - Use **User Management** to oversee student accounts.
 
-### Check Status
-```bash
-# Check if Ollama is running
-curl http://localhost:11434/api/tags
+## 📝 Configuration
 
-# Check if quiz server is running
-curl http://localhost:5001/health
-```
+- **Database:** Uses SQLite (`quizzes.db`) for all persistent data.
+- **Port:** Default server runs on `5001`.
+- **Logs:**
+  - Quiz Server: `/tmp/quiz_server.log`
+  - Ollama: `/tmp/ollama.log`
 
-## Setup Requirements
+## ⚖️ License
 
-1. **Ollama** - Install from https://ollama.ai
-2. **Python 3** - For Flask server
-3. **Dependencies:**
-   ```bash
-   pip3 install Flask flask-cors
-   ```
-
-## How to Use
-
-1. **Start servers:** `./start_servers.sh`
-2. **Open browser:** http://localhost:5001/
-3. **Enter topic:** e.g., "Biology IGCSE blood cells"
-4. **Select number of questions:** 1-20
-5. **Click "Generate Quiz"**
-6. **Quiz auto-saves** to project directory!
-7. **Open saved quiz** to take it offline
-
-## Email Setup (Optional)
-
-To email quiz results to `jet2230@gmail.com`:
-
-1. Go to https://myaccount.google.com/security
-2. Enable 2-Step Verification
-3. Generate App Password
-4. Update `SMTP_PASSWORD` in `email_server.py`
-5. Restart server: `./stop_servers.sh && ./start_servers.sh`
-
-## Troubleshooting
-
-### Port 5001 already in use
-```bash
-pkill -f email_server.py
-./start_servers.sh
-```
-
-### Ollama not responding
-```bash
-pkill -f ollama
-OLLAMA_ORIGINS="*" ollama serve
-```
-
-### Quiz not saving
-- Check server is running: `curl http://localhost:5001/health`
-- Check logs: `tail -f /tmp/quiz_server.log`
-
-## Model Information
-
-Default model: `llama3`
-
-To pull more models:
-```bash
-ollama pull llama2
-ollama pull mistral
-ollama pull codellama
-```
-
-## License
-
-Free to use and modify.
+Free to use and modify for educational purposes.

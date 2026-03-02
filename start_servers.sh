@@ -45,13 +45,13 @@ echo ""
 echo "📊 Checking Quiz Server..."
 if lsof -ti:5001 > /dev/null 2>&1; then
     echo "  Stopping old server..."
-    pkill -f "email_server.py" 2>/dev/null
+    pkill -f "exam_server.py" 2>/dev/null
     sleep 1
 fi
 
 # Start the quiz server
 echo "  Starting Quiz Server..."
-nohup python3 -u email_server.py > /tmp/quiz_server.log 2>&1 < /dev/null &
+nohup python3 -u exam_server.py > /tmp/quiz_server.log 2>&1 < /dev/null &
 sleep 2
 
 # Verify server is running
@@ -76,6 +76,6 @@ echo "   Ollama:    tail -f /tmp/ollama.log"
 echo "   Quiz:      tail -f /tmp/quiz_server.log"
 echo ""
 echo "🛑 To stop servers:"
-echo "   pkill -f email_server.py"
+echo "   pkill -f exam_server.py"
 echo "   pkill -f 'ollama serve'"
 echo ""

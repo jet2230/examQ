@@ -3,7 +3,7 @@
   "title": "Pearson Edexcel International GCSE English Language B Paper 1 - June 2019",
   "subject": "English",
   "qp_img_dir": "/static/exams/English_June_2019_Paper_1/qp/",
-  "extract_pages": [30, 32, 33],
+  "extract_pages": [30, 31, 32, 33],
   "questions": [
     {
       "id": 1,
@@ -35,7 +35,7 @@
         {
           "sub_id": "3",
           "type": "text",
-          "qp_pages": [3, 4, 5],
+          "qp_pages": [3],
           "ms_text": "Explain how the writer presents the achievements of the students taking part in the Greig City Academy sailing programme. Reward responses that demonstrate understanding of positive language, contrast, sponsorship, statistics, and positive attitude/support.",
           "max_marks": 10
         }
@@ -78,7 +78,7 @@
         {
           "sub_id": "6",
           "type": "text",
-          "qp_pages": [7, 8, 9],
+          "qp_pages": [7],
           "ms_text": "Explain how the writer persuades the reader to consider trying after-study activities. Reward responses that demonstrate understanding of opening questions, list of activities, sub-headings, listing of benefits, informal tone, direct address, imperatives, and advisory tone.",
           "max_marks": 10
         }
@@ -90,7 +90,7 @@
         {
           "sub_id": "7",
           "type": "text",
-          "qp_pages": [10, 11, 12, 13, 14],
+          "qp_pages": [10],
           "ms_text": "Compare how the writers of Text One and Text Two present ideas and perspectives about after-study activities. Support your answer with examples from both texts.",
           "max_marks": 15
         }
@@ -102,7 +102,7 @@
         {
           "sub_id": "8",
           "type": "text",
-          "qp_pages": [15, 16, 17, 18, 19, 20],
+          "qp_pages": [15],
           "ms_text": "Write a letter to your local newspaper explaining why you think there should be more opportunities for after-study activities in your local community. You should include: the reasons why there are not enough activities, the types of activities that could be offered, the benefits of after-study activities.",
           "max_marks": 30
         }

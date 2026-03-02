@@ -3,228 +3,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - Quiz System</title>
+    <title>Register - ExamQ</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             min-height: 100vh;
+            padding: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px;
         }
         .container {
             max-width: 450px;
             width: 100%;
             background: white;
             border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
             overflow: hidden;
         }
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             color: white;
-            padding: 30px;
+            padding: 40px;
             text-align: center;
         }
-        .header h1 {
-            font-size: 1.8em;
-            margin-bottom: 10px;
-        }
-        .header p {
-            opacity: 0.9;
-        }
-        .form-content {
-            padding: 30px;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        .form-group label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #333;
-        }
+        .header h1 { font-size: 2em; margin-bottom: 10px; }
+        .content { padding: 40px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #555; }
         .form-group input {
             width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
+            padding: 12px 15px;
+            border: 2px solid #eee;
+            border-radius: 10px;
             font-size: 1em;
-            transition: border-color 0.2s;
-        }
-        .form-group input:focus {
             outline: none;
-            border-color: #667eea;
+            transition: border-color 0.3s;
         }
-        .btn {
+        .form-group input:focus { border-color: #1e3c72; }
+        .btn-register {
             width: 100%;
-            padding: 16px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 15px;
+            background: linear-gradient(135deg, #28a745 0%, #218838 100%);
             color: white;
             border: none;
-            border-radius: 12px;
+            border-radius: 10px;
             font-size: 1.1em;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
             transition: transform 0.2s;
         }
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-        }
-        .error-message {
-            background: #f8d7da;
-            border: 1px solid #f5c6cb;
-            color: #721c24;
-            padding: 15px;
+        .btn-register:hover { transform: translateY(-2px); }
+        .footer-links { text-align: center; margin-top: 20px; color: #666; }
+        .footer-links a { color: #1e3c72; text-decoration: none; font-weight: 600; }
+        .error-msg {
+            background: #fff5f5;
+            color: #c53030;
+            padding: 12px;
             border-radius: 8px;
             margin-bottom: 20px;
             display: none;
-        }
-        .error-message.show {
-            display: block;
-        }
-        .success-message {
-            background: #d4edda;
-            border: 1px solid #c3e6cb;
-            color: #155724;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: none;
-        }
-        .success-message.show {
-            display: block;
-        }
-        .login-link {
+            font-size: 0.9em;
             text-align: center;
-            margin-top: 20px;
-            color: #667eea;
+            border: 1px solid #feb2b2;
         }
-        .login-link a {
-            color: #667eea;
-            text-decoration: none;
-            font-weight: 600;
-        }
-        .login-link a:hover {
-            text-decoration: underline;
+        .success-msg {
+            background: #f0fff4;
+            color: #2f855a;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            font-size: 0.9em;
+            text-align: center;
+            border: 1px solid #9ae6b4;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>📝 Register</h1>
-            <p>Create your account to take quizzes</p>
+            <h1>🎓 ExamQ</h1>
+            <p>Create your student account.</p>
         </div>
-
-        <div class="form-content">
-            <div class="error-message" id="errorMessage"></div>
-            <div class="success-message" id="successMessage"></div>
-
-            <form id="registerForm" onsubmit="handleSubmit(event)">
+        <div class="content">
+            <div id="errorMsg" class="error-msg"></div>
+            <div id="successMsg" class="success-msg"></div>
+            <form id="registerForm" onsubmit="handleRegister(event)">
                 <div class="form-group">
-                    <label for="username">👤 Username</label>
-                    <input type="text" id="username" name="username" required minlength="3" placeholder="Choose a username">
-                    <small style="color: #666;">At least 3 characters, lowercase letters and numbers only</small>
+                    <label>Username</label>
+                    <input type="text" id="username" required placeholder="Choose a username">
                 </div>
-
                 <div class="form-group">
-                    <label for="password">🔒 Password</label>
-                    <input type="password" id="password" name="password" required placeholder="Choose a password">
-                    <small style="color: #666;">Any length you like</small>
+                    <label>Password</label>
+                    <input type="password" id="password" required placeholder="Choose a password">
                 </div>
-
-                <div class="form-group">
-                    <label for="confirmPassword">🔒 Confirm Password</label>
-                    <input type="password" id="confirmPassword" name="confirmPassword" required placeholder="Re-enter your password">
-                </div>
-
-                <button type="submit" class="btn" id="submitBtn">Create Account</button>
+                <button type="submit" class="btn-register">Create Account</button>
             </form>
-
-            <div class="login-link">
+            <div class="footer-links">
                 Already have an account? <a href="login.html">Login here</a>
             </div>
         </div>
     </div>
 
     <script>
-        function handleSubmit(event) {
-            event.preventDefault();
-
-            const username = document.getElementById('username').value.trim().toLowerCase();
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-
-            hideMessages();
-
-            // Validation
-            if (username.length < 3) {
-                showError('Username must be at least 3 characters');
-                return;
-            }
-
-            if (password !== confirmPassword) {
-                showError('Passwords do not match');
-                return;
-            }
-
-            // Disable submit button
-            const btn = document.getElementById('submitBtn');
-            btn.disabled = true;
-            btn.textContent = 'Creating account...';
-
-            // Send registration request
-            fetch('/api/register', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            })
-            .then(response => response.json())
-            .then(data => {
+        async function handleRegister(e) {
+            e.preventDefault();
+            const u = document.getElementById('username').value;
+            const p = document.getElementById('password').value;
+            const err = document.getElementById('errorMsg');
+            const success = document.getElementById('successMsg');
+            
+            try {
+                const res = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({username: u, password: p})
+                });
+                const data = await res.json();
                 if (data.success) {
-                    showSuccess(data.message);
-                    setTimeout(() => {
-                        window.location.href = 'login.html';
-                    }, 2000);
+                    success.textContent = "Account created! Redirecting to login...";
+                    success.style.display = 'block';
+                    err.style.display = 'none';
+                    setTimeout(() => window.location.href = 'login.html', 2000);
                 } else {
-                    showError(data.message || 'Registration failed');
+                    err.textContent = data.message || "Registration failed. Try another username.";
+                    err.style.display = 'block';
+                    success.style.display = 'none';
                 }
-            })
-            .catch(error => {
-                showError('Error connecting to server. Make sure the server is running on port 5001.');
-            })
-            .finally(() => {
-                btn.disabled = false;
-                btn.textContent = 'Create Account';
-            });
-        }
-
-        function showError(message) {
-            const errorDiv = document.getElementById('errorMessage');
-            errorDiv.textContent = '❌ ' + message;
-            errorDiv.classList.add('show');
-            setTimeout(() => errorDiv.classList.remove('show'), 5000);
-        }
-
-        function showSuccess(message) {
-            const successDiv = document.getElementById('successMessage');
-            successDiv.textContent = '✅ ' + message;
-            successDiv.classList.add('show');
-        }
-
-        function hideMessages() {
-            document.getElementById('errorMessage').classList.remove('show');
-            document.getElementById('successMessage').classList.remove('show');
+            } catch (e) {
+                err.textContent = "Server error. Try again.";
+                err.style.display = 'block';
+            }
         }
     </script>
 </body>

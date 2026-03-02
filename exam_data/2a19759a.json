@@ -1,0 +1,154 @@
+{
+  "paper_id": "2a19759a",
+  "title": "Pearson Edexcel International GCSE (9\u20131) Biology",
+  "subject": "Biology",
+  "qp_img_dir": "/static/exams/2a19759a/qp/",
+  "er_text": "",
+  "questions": [
+    {
+      "id": 1,
+      "sub_questions": [
+        {
+          "sub_id": "1",
+          "type": "mcq",
+          "max_marks": 3,
+          "ms_text": "An answer that makes reference to one of the following:\n\u2022 The colour of indicator / colour (change) / change in gas composition / change in carbon dioxide / carbon dioxide concentration / ratio of gases / gas exchange / eq (1)",
+          "qp_pages": [
+            2,
+            5
+          ]
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "sub_questions": [
+        {
+          "sub_id": "2",
+          "type": "text/mcq/calculation/draw/list",
+          "max_marks": 4,
+          "ms_text": "\u2022   the jar is closed / jar is a sealed system     Accept no changes in seasons",
+          "qp_pages": [
+            6,
+            9
+          ]
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "sub_questions": [
+        {
+          "sub_id": "3",
+          "type": "mcq",
+          "max_marks": 2,
+          "ms_text": "The process of transcription in the nucleus is followed by translation on ribosomes. Messenger RNA (mRNA) is made from DNA through transcription, and then moves to the ribosome where it is translated into a polypeptide chain.",
+          "qp_pages": [
+            10,
+            12
+          ]
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "sub_questions": [
+        {
+          "sub_id": "4",
+          "type": "text",
+          "max_marks": 8,
+          "qp_pages": [
+            14,
+            15
+          ]
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "sub_questions": [
+        {
+          "sub_id": "5",
+          "type": "text/mcq/calculation/draw/list",
+          "max_marks": 13,
+          "ms_text": "An answer that that makes reference to five of the following:\n\n1. antibodies produced after day 3 / after first dose / antibodies increase after 3 days / eq (1)\n2. memory cells are made / eq (1)\n3. primary (immune) response occurs after first dose / secondary (immune) response occurs after second dose / at day 30 / eq (1)\n4. (secondary response) has higher antibody number / quicker response / more antibodies (than primary) made after 30 days / more antibodies (than primary) after second dose / eq (1)\n5. person 1 makes most antibodies / highest peaks / biggest responses / person 3 has poor response / eq (1)\n6. no need for needles / easier to administer / would be cheaper / no need for medical professionals / eq (1)\n7. small sample size / other people could have different responses / may not work on everyone / eq (1)\n8. no idea of sex / health / infection state / age / previous exposure to viruses / eq (1)\n9. not tested on other pathogens / may not work for all viruses / eq (1)\n10.if people are immune then viruses cannot reproduce / could provide herd immunity / eq (1)",
+          "qp_pages": [
+            16,
+            19
+          ]
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "sub_questions": [
+        {
+          "sub_id": "6",
+          "type": "text/mcq/calculation/draw/list",
+          "max_marks": 12,
+          "ms_text": "An answer that that makes reference to five of the following:\n\n1. antibodies produced after day 3 / after first dose / antibodies increase after 3 days / eq (1)\n2. memory cells are made / eq (1)\n3. primary (immune) response occurs after first dose / secondary (immune) response occurs after second dose / at day 30 / eq (1)\n4. (secondary response) has higher antibody number / quicker response / more antibodies (than primary) made after 30 days / more antibodies (than primary) after second dose / eq (1)\n5. person 1 makes most antibodies / highest peaks / biggest responses / person 3 has poor response / eq (1)\n6. no need for needles / easier to administer / would be cheaper / no need for medical professionals / eq (1)\n7. small sample size / other people could have different responses / may not work on everyone / eq (1)\n8. no idea of sex / health / infection state / age / previous exposure to viruses / eq (1)\n9. not tested on other pathogens / may not work for all viruses / eq (1)\n10.if people are immune then viruses cannot reproduce / could provide herd immunity / eq (1)",
+          "qp_pages": [
+            21,
+            23
+          ]
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "sub_questions": [
+        {
+          "sub_id": "13",
+          "type": "text/mcq/calculation/draw/list",
+          "max_marks": 1,
+          "ms_text": "\u2022   colour of indicator / colour (change) / change in gas composition / change in carbon dioxide / carbon dioxide concentration / ratio of gases / gas exchange / eq (1)",
+          "qp_pages": [
+            13
+          ]
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "sub_questions": [
+        {
+          "sub_id": "20",
+          "type": "text/mcq",
+          "max_marks": 2,
+          "qp_pages": [
+            2
+          ]
+        }
+      ]
+    },
+    {
+      "id": 25,
+      "sub_questions": [
+        {
+          "sub_id": "25",
+          "type": "text/mcq/calculation/draw/list",
+          "max_marks": 4,
+          "ms_text": "An answer that that makes reference to four of the following:\n\n1. transcription in nucleus / translation in the cytoplasm / translation on ribosomes (1)\nAccept mRNA made by transcription / is made from gene / from DNA\n2. messenger RNA made by transcription / mRNA made by transcription (1) \n3. mRNA moves to ribosome / mRNA binds to ribosome (1)\n4. transfer RNA brings amino acid / tRNA brings amino acids (1)\n5. codons bind to anticodons / eq (1) Reject if codons are on tRNA / anticodons on mRNA\n6. polypeptide chain made / chain of amino acids made / amino acids joined together / eq (1)",
+          "qp_pages": [
+            3
+          ]
+        }
+      ]
+    },
+    {
+      "id": 200,
+      "sub_questions": [
+        {
+          "sub_id": "200",
+          "type": "text/mcq/calculation/draw/list",
+          "max_marks": "8",
+          "ms_text": "...",
+          "qp_pages": [
+            22
+          ]
+        }
+      ]
+    }
+  ],
+  "extract_pages": []
+}

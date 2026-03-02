@@ -8,9 +8,9 @@ echo "============================================"
 echo ""
 
 # Stop quiz server
-if pgrep -f "email_server.py" > /dev/null; then
+if pgrep -f "exam_server.py" > /dev/null; then
     echo "📊 Stopping Quiz Server..."
-    pkill -f "email_server.py"
+    pkill -f "exam_server.py"
     echo "✓ Quiz Server stopped"
 else
     echo "ℹ️  Quiz Server not running"
