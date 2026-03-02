@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ExamQ - Practice Quiz</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        .header h1 { font-size: 2em; margin-bottom: 10px; }
+        
+        .navbar {
+            padding: 15px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+        }
+        .nav-links a {
+            text-decoration: none;
+            color: #1e3c72;
+            font-weight: 600;
+            margin-left: 20px;
+        }
+        .content { padding: 40px; }
+
+        .question-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 1px solid #eee;
+        }
+        .question-text {
+            font-size: 1.2em;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .options-grid {
+            display: grid;
+            gap: 10px;
+        }
+        .option-btn {
+            background: white;
+            border: 2px solid #eee;
+            padding: 15px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: left;
+            font-size: 1em;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .option-btn:hover { border-color: #1e3c72; background: #f0f4f8; }
+        .option-btn.selected { border-color: #1e3c72; background: #e1e7ff; font-weight: 700; }
+        .option-btn.correct { background: #d4edda; border-color: #28a745; color: #155724; }
+        .option-btn.wrong { background: #f8d7da; border-color: #dc3545; color: #721c24; }
+
+        .badge {
+            width: 30px;
+            height: 30px;
+            background: #eee;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+        .selected .badge { background: #1e3c72; color: white; }
+
+        .btn-submit {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 20px;
+        }
+        .btn-submit:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(40, 167, 69, 0.2); }
+
+        #results {
+            display: none;
+            text-align: center;
+            padding: 40px;
+            background: #f0fdf4;
+            border-radius: 15px;
+            border: 2px solid #28a745;
+            margin-top: 30px;
+        }
+        .score-value { font-size: 4em; font-weight: 900; color: #28a745; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="navbar">
+            <div style="font-weight: 800; color: #1e3c72; font-size: 1.2em;">🎓 ExamQ Practice</div>
+            <div class="nav-links">
+                <span id="welcomeUser" style="margin-right: 15px; font-weight: 600; color: #1e3c72;"></span>
+                <a href="/">🏠 Generator</a>
+                <a href="/exam_questions.html">📖 Exam Library</a>
+                <a href="/results">📊 Results</a>
+            </div>
+        </div>
+
+        <div class="header">
+            <h1 id="quizTopic">Loading Quiz...</h1>
+            <p id="quizMeta">Created by AI Assistant</p>
+        </div>
+
+        <div class="content">
+            <div id="questionsContainer"></div>
+            <button id="submitBtn" class="btn-submit" onclick="submitQuiz()">Submit Quiz for Grading</button>
+
+            <div id="results">
+                <h2>Quiz Complete!</h2>
+                <div class="score-value" id="scoreDisplay">0 / 0</div>
+                <p id="feedbackText" style="font-size: 1.2em; color: #555;"></p>
+                <button class="btn-submit" style="background: #1e3c72;" onclick="window.location.href='/results'">View History</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let quizData = null;
+        let userAnswers = {};
+        const quizId = window.location.pathname.match(/quiz_(\d+)\.html/)[1];
+
+        function showLineAlert(msg, type='info') {
+            const alertDiv = document.createElement('div');
+            alertDiv.style.position = 'fixed';
+            alertDiv.style.top = '20px';
+            alertDiv.style.left = '50%';
+            alertDiv.style.transform = 'translateX(-50%)';
+            alertDiv.style.padding = '12px 25px';
+            alertDiv.style.borderRadius = '8px';
+            alertDiv.style.color = 'white';
+            alertDiv.style.fontWeight = '700';
+            alertDiv.style.zIndex = '9999';
+            alertDiv.style.boxShadow = '0 5px 15px rgba(0,0,0,0.3)';
+            alertDiv.style.transition = 'all 0.3s';
+            if (type === 'error') alertDiv.style.background = '#dc3545';
+            else if (type === 'success') alertDiv.style.background = '#28a745';
+            else alertDiv.style.background = '#1e3c72';
+            alertDiv.textContent = msg;
+            document.body.appendChild(alertDiv);
+            setTimeout(() => {
+                alertDiv.style.opacity = '0';
+                setTimeout(() => alertDiv.remove(), 300);
+            }, 3000);
+        }
+
+        async function init() {
+            const username = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
+            if (!username) { window.location.href = 'login.html'; return; }
+            const welcomeEl = document.getElementById('welcomeUser');
+            const displayUser = username.length > 6 ? username.substring(0, 6) + '...' : username;
+            welcomeEl.textContent = '👤 ' + displayUser;
+            welcomeEl.title = username;
+
+            try {
+                const res = await fetch(`/api/quiz/${quizId}`);
+                const data = await res.json();
+                if (data.success) {
+                    quizData = data.quiz;
+                    renderQuiz();
+                } else {
+                    showLineAlert("Quiz not found", "error");
+                }
+            } catch (e) {
+                showLineAlert("Error loading quiz", "error");
+            }
+        }
+
+        function renderQuiz() {
+            document.getElementById('quizTopic').textContent = quizData.topic;
+            const container = document.getElementById('questionsContainer');
+            container.innerHTML = '';
+
+            quizData.questions.forEach((q, qIdx) => {
+                const card = document.createElement('div');
+                card.className = 'question-card';
+                card.innerHTML = `
+                    <div class="question-text">${qIdx + 1}. ${q.question}</div>
+                    <div class="options-grid">
+                        ${q.options.map((opt, oIdx) => {
+                            const label = String.fromCharCode(65 + oIdx);
+                            return `
+                                <div class="option-btn" onclick="selectOption(${qIdx}, '${label}')" id="q${qIdx}_opt${label}">
+                                    <div class="badge">${label}</div>
+                                    <span>${opt}</span>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function selectOption(qIdx, label) {
+            if (document.getElementById('results').style.display === 'block') return;
+            ['A','B','C','D'].forEach(l => {
+                const el = document.getElementById(`q${qIdx}_opt${l}`);
+                if (el) el.classList.remove('selected');
+            });
+            document.getElementById(`q${qIdx}_opt${label}`).classList.add('selected');
+            userAnswers[qIdx] = label;
+        }
+
+        async function submitQuiz() {
+            let score = 0;
+            const total = quizData.questions.length;
+            
+            // Validation
+            if (Object.keys(userAnswers).length < total) {
+                showLineAlert("Please answer all questions first.", "error");
+                return;
+            }
+
+            quizData.questions.forEach((q, qIdx) => {
+                const userAns = userAnswers[qIdx];
+                const correctAns = q.answer;
+                const userEl = document.getElementById(`q${qIdx}_opt${userAns}`);
+                const correctEl = document.getElementById(`q${qIdx}_opt${correctAns}`);
+                if (userAns === correctAns) {
+                    score++;
+                    if (userEl) userEl.classList.add('correct');
+                } else {
+                    if (userEl) userEl.classList.add('wrong');
+                    if (correctEl) correctEl.classList.add('correct');
+                }
+            });
+
+            document.getElementById('submitBtn').style.display = 'none';
+            document.getElementById('results').style.display = 'block';
+            document.getElementById('scoreDisplay').textContent = `${score} / ${total}`;
+            
+            const pct = Math.round((score/total)*100);
+            let msg = "Good try! Keep practicing.";
+            if (pct >= 80) msg = "Excellent! You've mastered this topic.";
+            else if (pct >= 50) msg = "Well done! A solid performance.";
+            document.getElementById('feedbackText').textContent = msg;
+
+            const username = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
+            try {
+                await fetch('/api/submit-quiz', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        username,
+                        topic: quizData.topic,
+                        score: `${score} / ${total}`,
+                        percentage: `${pct}%`,
+                        questions: quizData.questions.map((q, idx) => ({
+                            ...q,
+                            user_answer: userAnswers[idx],
+                            is_correct: userAnswers[idx] === q.answer
+                        }))
+                    })
+                });
+                showLineAlert("Results saved!", "success");
+            } catch (e) { console.error("Failed to save results", e); }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        init();
+    </script>
+</body>
+</html>

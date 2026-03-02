@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ExamQ - User Settings</title>
+    <script src="/static/theme_manager.js"></script>
+    <style>
+        :root {
+            --primary-color: #1e3c72;
+            --secondary-color: #2a5298;
+            --main-gradient: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--main-gradient);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            overflow: hidden;
+        }
+        .navbar {
+            padding: 15px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+        }
+        .navbar a { text-decoration: none; color: var(--primary-color); font-weight: 600; margin-left: 20px; }
+        
+        .header {
+            background: var(--main-gradient);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        .content { padding: 40px; }
+
+        .settings-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            border: 1px solid #eee;
+            margin-bottom: 30px;
+        }
+        .section-title { color: var(--primary-color); margin-bottom: 20px; font-size: 1.5em; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+
+        .theme-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .theme-preset {
+            padding: 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            text-align: center;
+            color: white;
+            font-weight: 700;
+            transition: transform 0.2s;
+            border: 3px solid transparent;
+        }
+        .theme-preset:hover { transform: scale(1.05); }
+        .theme-preset.active { border-color: #333; }
+
+        .custom-pickers {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            margin-top: 20px;
+        }
+        .picker-group { flex: 1; }
+        .picker-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #666; }
+        input[type="color"] {
+            width: 100%;
+            height: 50px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .btn-save {
+            width: 100%;
+            padding: 15px;
+            background: var(--main-gradient);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .btn-reset {
+            background: #eee;
+            color: #666;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="navbar">
+            <div style="font-weight: 800; color: var(--primary-color); font-size: 1.2em;">🎓 ExamQ Settings</div>
+            <div class="nav-links">
+                <span id="welcomeUser" style="margin-right: 15px; font-weight: 600; color: var(--primary-color);"></span>
+                <a href="/">🏠 Home</a>
+                <a href="/exam_questions.html">📖 Exam Library</a>
+                <a href="#" onclick="logout()">🚪 Logout</a>
+            </div>
+        </div>
+
+        <div class="header">
+            <h1>Personalize Your Experience</h1>
+            <p>Customize the interface colors to suit your preference.</p>
+        </div>
+
+        <div class="content">
+            <div class="settings-card">
+                <h2 class="section-title">Theme Customization</h2>
+                <p style="margin-bottom: 20px; color: #666;">Choose a preset theme or pick your own custom colors.</p>
+                
+                <div class="theme-grid">
+                    <div class="theme-preset" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);" onclick="setPreset('#1e3c72', '#2a5298')">Classic Blue</div>
+                    <div class="theme-preset" style="background: linear-gradient(135deg, #0f0c29 0%, #302b63 100%);" onclick="setPreset('#0f0c29', '#302b63')">Midnight</div>
+                    <div class="theme-preset" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);" onclick="setPreset('#11998e', '#38ef7d')">Forest Green</div>
+                    <div class="theme-preset" style="background: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%);" onclick="setPreset('#8e2de2', '#4a00e0')">Royal Purple</div>
+                    <div class="theme-preset" style="background: linear-gradient(135deg, #d63384 0%, #e83e8c 100%);" onclick="setPreset('#d63384', '#e83e8c')">Classy Pink</div>
+                    <div class="theme-preset" style="background: linear-gradient(135deg, #232526 0%, #414345 100%);" onclick="setPreset('#232526', '#414345')">Slate Gray</div>
+                </div>
+
+                <h3 style="color: #666; font-size: 1em; margin-bottom: 15px;">Custom Colors</h3>
+                <div class="custom-pickers">
+                    <div class="picker-group">
+                        <label>Primary Color</label>
+                        <input type="color" id="primaryPicker" value="#1e3c72">
+                    </div>
+                    <div class="picker-group">
+                        <label>Secondary Color</label>
+                        <input type="color" id="secondaryPicker" value="#2a5298">
+                    </div>
+                </div>
+
+                <button class="btn-save" onclick="saveTheme()">Apply & Save Theme</button>
+                <button class="btn-save btn-reset" onclick="ThemeManager.reset()">Reset to Default</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function logout() {
+            localStorage.removeItem('quiz_username');
+            localStorage.removeItem('quiz_admin_username');
+            window.location.href = 'login.html';
+        }
+
+        function setPreset(p, s) {
+            document.getElementById('primaryPicker').value = p;
+            document.getElementById('secondaryPicker').value = s;
+            saveTheme();
+        }
+
+        function saveTheme() {
+            const p = document.getElementById('primaryPicker').value;
+            const s = document.getElementById('secondaryPicker').value;
+            ThemeManager.save(p, s);
+        }
+
+        // Init
+        const username = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
+        if (username) {
+            const welcomeEl = document.getElementById('welcomeUser');
+            const displayUser = username.length > 6 ? username.substring(0, 6) + '...' : username;
+            welcomeEl.textContent = '👤 ' + displayUser;
+            welcomeEl.title = username;
+        }
+
+        const current = localStorage.getItem('examq_theme');
+        if (current) {
+            const { primary, secondary } = JSON.parse(current);
+            document.getElementById('primaryPicker').value = primary;
+            document.getElementById('secondaryPicker').value = secondary;
+        }
+    </script>
+</body>
+</html>

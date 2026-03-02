@@ -4,11 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ExamQ - AI Quiz Generator</title>
+    <script src="/static/theme_manager.js"></script>
     <style>
+        :root {
+            --primary-color: #1e3c72;
+            --secondary-color: #2a5298;
+            --main-gradient: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            background: var(--main-gradient);
             min-height: 100vh;
             padding: 20px;
         }
@@ -21,14 +27,14 @@
             overflow: hidden;
         }
         .header {
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            background: var(--main-gradient);
             color: white;
             padding: 40px;
             text-align: center;
         }
         .header h1 { font-size: 2.5em; margin-bottom: 10px; }
         .header p { opacity: 0.9; font-size: 1.1em; }
-        
+
         .navbar {
             padding: 15px 40px;
             display: flex;
@@ -38,7 +44,7 @@
         }
         .nav-links a {
             text-decoration: none;
-            color: #1e3c72;
+            color: var(--primary-color);
             font-weight: 600;
             margin-left: 20px;
         }
@@ -48,11 +54,11 @@
             background: #f8f9fa;
             padding: 30px;
             border-radius: 15px;
-            border: 2px dashed #1e3c72;
+            border: 2px dashed var(--primary-color);
             max-width: 800px;
             margin: 0 auto 40px;
         }
-        
+
         .form-group { margin-bottom: 20px; position: relative; }
         .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #555; }
         .form-group input, .form-group select {
@@ -63,12 +69,12 @@
             font-size: 1.1em;
             outline: none;
         }
-        .form-group input:focus { border-color: #1e3c72; }
+        .form-group input:focus { border-color: var(--primary-color); }
 
         .btn-generate {
             width: 100%;
             padding: 18px;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            background: var(--main-gradient);
             color: white;
             border: none;
             border-radius: 10px;
@@ -89,7 +95,7 @@
             width: 50px;
             height: 50px;
             border: 5px solid #f3f3f3;
-            border-top: 5px solid #1e3c72;
+            border-top: 5px solid var(--primary-color);
             border-radius: 50%;
             animation: spin 1s linear infinite;
             margin: 0 auto 20px;
@@ -113,11 +119,11 @@
             justify-content: space-between;
         }
         .quiz-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
-        .quiz-topic { font-weight: 800; color: #1e3c72; font-size: 1.2em; margin-bottom: 10px; }
+        .quiz-topic { font-weight: 800; color: var(--primary-color); font-size: 1.2em; margin-bottom: 10px; }
         .quiz-meta { font-size: 0.85em; color: #888; margin-bottom: 15px; }
         .btn-take {
             background: #f1f3f5;
-            color: #1e3c72;
+            color: var(--primary-color);
             text-decoration: none;
             padding: 10px;
             border-radius: 8px;
@@ -125,7 +131,81 @@
             font-weight: 700;
             transition: background 0.2s;
         }
-        .btn-take:hover { background: #1e3c72; color: white; }
+        .btn-take:hover { background: var(--primary-color); color: white; }
+
+        /* Progress Styles */
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.7em;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .status-started { background: #fff3cd; color: #856404; }
+        .last-accessed {
+            font-size: 0.75em;
+            color: #888;
+            margin-top: 5px;
+            font-style: italic;
+        }
+        .paper-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .paper-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid #eee;
+            border-left: 5px solid #ffc107;
+            transition: all 0.3s;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .paper-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+        .paper-title { font-weight: 800; color: #333; font-size: 1em; line-height: 1.4; }
+
+        /* Unified Split Button */
+        .split-btn {
+            display: flex;
+            margin-top: 10px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #ffc107;
+            text-decoration: none;
+            transition: transform 0.2s;
+        }
+        .split-btn:hover { transform: translateY(-2px); }
+        .split-btn .btn-main {
+            flex: 1;
+            padding: 10px;
+            color: #333;
+            text-align: center;
+            font-weight: 700;
+            text-decoration: none;
+            border-right: 1px solid rgba(0,0,0,0.1);
+        }
+        .split-btn .btn-close {
+            width: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(0,0,0,0.4);
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .split-btn .btn-close:hover {
+            background: rgba(0,0,0,0.1);
+            color: #dc3545;
+        }
+        .paper-card { position: relative; overflow: visible; }
+
 
         .autocomplete-items {
             position: absolute;
@@ -156,8 +236,9 @@
                 <span id="welcomeUser" style="margin-right: 15px; font-weight: 600; color: #1e3c72;"></span>
                 <a href="/admin_users.html" id="usersLink" class="admin-only" style="display:none; color:#d63384;">⚙️ Users</a>
                 <a href="/admin_exams.html" id="adminLink" class="admin-only" style="display:none; color:#d63384;">⚙️ Exams</a>
-                <a href="/exam_questions.html">📖 Library</a>
+                <a href="/exam_questions.html">📖 Exam Library</a>
                 <a href="/results">📊 Results</a>
+                <a href="/settings.html">⚙️ Settings</a>
                 <a href="#" onclick="logout()">🚪 Logout</a>
             </div>
         </div>
@@ -192,6 +273,14 @@
                 </div>
             </div>
 
+            <div id="resumeView" style="display:none; margin-bottom: 40px;">
+                <h2 style="color: #1e3c72; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                    ⏳ Continue Your Progress
+                </h2>
+                <div id="resumeGrid" class="paper-grid"></div>
+                <div style="margin-top: 30px; border-bottom: 2px solid #eee;"></div>
+            </div>
+
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px;">
                 <h2 style="color: #1e3c72;">Your Saved AI Quizzes</h2>
             </div>
@@ -223,14 +312,134 @@
             
             if (!username) { window.location.href = 'login.html'; return; }
             
-            document.getElementById('welcomeUser').textContent = '👤 ' + username;
+            const welcomeEl = document.getElementById('welcomeUser');
+            const displayUser = username.length > 6 ? username.substring(0, 6) + '...' : username;
+            welcomeEl.textContent = '👤 ' + displayUser;
+            welcomeEl.title = username;
+            
             if (isAdmin) {
                 document.getElementById('adminLink').style.display = 'inline';
                 document.getElementById('usersLink').style.display = 'inline';
             }
 
             loadSavedQuizzes();
+            loadResumeSection();
             setupAutocomplete();
+        }
+
+        async function loadResumeSection() {
+            const username = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
+            try {
+                const [examRes, progRes] = await Promise.all([
+                    fetch('/api/official-exams/list'),
+                    fetch(`/api/student/exam-progress/list?username=${username}`)
+                ]);
+                
+                const examData = await examRes.json();
+                const progData = await progRes.json();
+                
+                const allExams = examData.exams || [];
+                const allProgress = progData.progress || {};
+                
+                const resumeContainer = document.getElementById('resumeView');
+                const resumeGrid = document.getElementById('resumeGrid');
+                const inProgress = allExams.filter(e => allProgress[e.id] && allProgress[e.id].status === 'in_progress');
+                
+                if (inProgress.length > 0) {
+                    resumeContainer.style.display = 'block';
+                    inProgress.sort((a,b) => new Date(allProgress[b.id].last_updated) - new Date(allProgress[a.id].last_updated));
+                    
+                    resumeGrid.innerHTML = inProgress.map(exam => {
+                        const prog = allProgress[exam.id];
+                        return `
+                            <div class="paper-card" onclick="window.location.href='/official_exam_player.html?paper_id=${exam.id}'">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                    <span style="background: var(--primary-color); color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.7em; font-weight: bold; text-transform: uppercase;">${exam.subject}</span>
+                                    <div class="status-badge status-started">In Progress</div>
+                                </div>
+                                <div class="paper-title">${exam.title}</div>
+                                <div style="font-size: 0.85em; color: #666;">
+                                    <div style="font-weight: 700; color: #555;">${formatLongDate(exam.date)}</div>
+                                    <div class="last-accessed">🕒 ${formatLastAccessed(prog.last_updated)}</div>
+                                </div>
+                                <div class="split-btn">
+                                    <a href="/official_exam_player.html?paper_id=${exam.id}" class="btn-main">Continue →</a>
+                                    <div class="btn-close" onclick="deleteProgress(event, '${exam.id}')" title="Clear Progress">&times;</div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            } catch (e) { console.error("Progress load failed", e); }
+        }
+
+        async function deleteProgress(event, paperId) {
+            event.stopPropagation(); // Don't trigger the card click
+            const btn = event.currentTarget.closest('.split-btn');
+            const main = btn.querySelector('.btn-main');
+            const close = btn.querySelector('.btn-close');
+
+            if (btn.getAttribute('data-confirm') === 'true') {
+                const username = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
+                try {
+                    const res = await fetch('/api/student/exam-progress/delete', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ username, paper_id: paperId })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        showLineAlert("Progress cleared.", "success");
+                        loadResumeSection();
+                    }
+                } catch (e) { showLineAlert("Failed to delete progress", "error"); }
+            } else {
+                // First click: Show inline confirmation
+                btn.setAttribute('data-confirm', 'true');
+                btn.style.background = '#dc3545';
+                main.style.color = 'white';
+                main.textContent = 'Confirm Clear?';
+                close.style.color = 'white';
+                close.style.background = 'rgba(0,0,0,0.2)';
+
+                // Auto-reset after 3 seconds
+                setTimeout(() => {
+                    if (btn && btn.getAttribute('data-confirm') === 'true') {
+                        btn.removeAttribute('data-confirm');
+                        btn.style.background = '';
+                        main.style.color = '';
+                        main.textContent = 'Continue →';
+                        close.style.color = '';
+                        close.style.background = '';
+                    }
+                }, 3000);
+            }
+        }
+
+        function formatLongDate(dateStr) {
+            if (!dateStr || dateStr === 'Unknown') return dateStr;
+            const months = {'jan':0,'feb':1,'mar':2,'apr':3,'may':4,'jun':5,'jul':6,'aug':7,'sep':8,'oct':9,'nov':10,'dec':11};
+            const parts = dateStr.toLowerCase().split(/[\s,]+/);
+            let date = null;
+            if (parts.length >= 2) {
+                const year = parseInt(parts.find(p => p.match(/^\d{4}$/)));
+                const monthName = parts.find(p => months[p.substring(0,3)] !== undefined);
+                if (year && monthName) date = new Date(year, months[monthName.substring(0,3)], 1);
+            }
+            if (date && !isNaN(date.getTime())) {
+                return new Intl.DateTimeFormat('en-GB', { year: 'numeric', month: 'long' }).format(date);
+            }
+            return dateStr;
+        }
+
+        function formatLastAccessed(isoStr) {
+            if (!isoStr) return '';
+            const date = new Date(isoStr.replace(' ', 'T') + (isoStr.includes('Z') ? '' : 'Z'));
+            if (isNaN(date.getTime())) return '';
+            const now = new Date();
+            const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            if (date.toDateString() === now.toDateString()) return `Today, ${timeStr}`;
+            return `${date.toLocaleDateString([], { day: 'numeric', month: 'short' })}, ${timeStr}`;
         }
 
         async function loadSavedQuizzes() {
@@ -260,12 +469,39 @@
             });
         }
 
+        function showLineAlert(msg, type='info') {
+            const alertDiv = document.createElement('div');
+            alertDiv.style.position = 'fixed';
+            alertDiv.style.top = '20px';
+            alertDiv.style.left = '50%';
+            alertDiv.style.transform = 'translateX(-50%)';
+            alertDiv.style.padding = '12px 25px';
+            alertDiv.style.borderRadius = '8px';
+            alertDiv.style.color = 'white';
+            alertDiv.style.fontWeight = '700';
+            alertDiv.style.zIndex = '9999';
+            alertDiv.style.boxShadow = '0 5px 15px rgba(0,0,0,0.3)';
+            alertDiv.style.transition = 'all 0.3s';
+            if (type === 'error') alertDiv.style.background = '#dc3545';
+            else if (type === 'success') alertDiv.style.background = '#28a745';
+            else alertDiv.style.background = '#1e3c72';
+            alertDiv.textContent = msg;
+            document.body.appendChild(alertDiv);
+            setTimeout(() => {
+                alertDiv.style.opacity = '0';
+                setTimeout(() => alertDiv.remove(), 300);
+            }, 3000);
+        }
+
         async function generateQuiz() {
             const topic = document.getElementById('topic').value;
             const num = document.getElementById('num_questions').value;
             const u = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
             
-            if (!topic) { alert("Please enter a topic"); return; }
+            if (!topic) { 
+                showLineAlert("Please enter a topic", "error"); 
+                return; 
+            }
 
             document.getElementById('genBtn').disabled = true;
             document.getElementById('loading').style.display = 'block';
@@ -278,12 +514,13 @@
                 });
                 const data = await res.json();
                 if (data.success) {
-                    window.location.href = `/quiz_${data.quiz_id}.html`;
+                    showLineAlert("Quiz generated! Redirecting...", "success");
+                    setTimeout(() => window.location.href = `/quiz_${data.quiz_id}.html`, 1000);
                 } else {
-                    alert("Generation failed: " + data.error);
+                    showLineAlert("Generation failed: " + data.error, "error");
                 }
             } catch (e) {
-                alert("Server error");
+                showLineAlert("Server error", "error");
             } finally {
                 document.getElementById('genBtn').disabled = false;
                 document.getElementById('loading').style.display = 'none';

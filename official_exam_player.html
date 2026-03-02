@@ -4,7 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Official IGCSE Exam Module</title>
+    <script src="/static/theme_manager.js"></script>
     <style>
+        :root {
+            --primary-color: #1e3c72;
+            --secondary-color: #2a5298;
+            --main-gradient: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -17,44 +23,39 @@
         
         /* Unifying Navbar Style */
         .navbar {
-            padding: 10px 20px;
+            padding: 10px 30px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: white;
-            border-bottom: 1px solid #eee;
+            background: var(--main-gradient);
+            color: white;
             z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
         }
-        .nav-links a {
+        .navbar a {
             text-decoration: none;
-            color: #1e3c72;
+            color: white;
             font-weight: 600;
             margin-left: 20px;
             font-size: 0.9em;
+            opacity: 0.9;
+            transition: opacity 0.2s;
         }
+        .navbar a:hover { opacity: 1; }
         
         .main-container {
             display: flex;
             flex: 1;
             overflow: hidden;
-            gap: 5px;
+            gap: 0;
             background: #ddd;
+            position: relative;
         }
 
-        /* Left Side: Answer Panel */
-        .answer-panel {
-            flex: 1;
-            background: white;
-            overflow-y: auto;
-            padding: 30px;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-        }
-
-        /* Right Side: Question Paper */
+        /* Left Side: Question Paper */
         .paper-panel {
-            flex: 1.2;
+            width: 70%;
+            min-width: 300px;
             background: #525659;
             overflow-y: auto;
             padding: 20px;
@@ -62,6 +63,37 @@
             flex-direction: column;
             align-items: center;
             gap: 20px;
+            z-index: 10;
+        }
+
+        /* Vertical Resizer */
+        .resizer-v {
+            width: 8px;
+            cursor: col-resize;
+            background: #e0e0e0;
+            transition: background 0.2s;
+            z-index: 15;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .resizer-v:hover { background: #1e3c72; }
+        .resizer-v::after {
+            content: "⋮";
+            color: #999;
+            font-weight: bold;
+        }
+
+        /* Right Side: Answer Panel */
+        .answer-panel {
+            flex: 1;
+            min-width: 250px;
+            background: white;
+            overflow-y: auto;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
         }
         .paper-page {
             background: white;
@@ -74,29 +106,77 @@
         .extracts-modal {
             display: none;
             position: fixed;
-            top: 10%; left: 10%; width: 80%; height: 80%;
-            background: rgba(0,0,0,0.85);
+            top: 50px; left: 50px; 
+            width: 600px; height: 700px;
+            background: rgba(255,255,255,0.98);
             z-index: 2000;
-            border-radius: 15px;
+            border-radius: 12px;
             overflow: hidden;
             flex-direction: column;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.4);
+            border: 1px solid #ccc;
+            min-width: 300px;
+            min-height: 300px;
         }
         .extracts-header {
-            padding: 15px 25px;
+            padding: 10px 20px;
             background: #1e3c72;
             color: white;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            cursor: move;
+            user-select: none;
         }
         .extracts-body {
             flex: 1;
             overflow-y: auto;
-            padding: 20px;
+            padding: 15px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 20px;
+            gap: 15px;
+            background: #f0f2f5;
+        }
+        .resizer {
+            width: 15px;
+            height: 15px;
+            background: transparent;
+            position: absolute;
+            right: 0;
+            bottom: 0;
+            cursor: se-resize;
+            z-index: 2001;
+        }
+        .resizer-r {
+            width: 5px;
+            height: 100%;
+            background: transparent;
+            position: absolute;
+            right: 0;
+            top: 0;
+            cursor: e-resize;
+            z-index: 2005;
+        }
+        .resizer-l {
+            width: 5px;
+            height: 100%;
+            background: transparent;
+            position: absolute;
+            left: 0;
+            top: 0;
+            cursor: w-resize;
+            z-index: 2005;
+        }
+        .resizer::after {
+            content: "";
+            position: absolute;
+            right: 3px;
+            bottom: 3px;
+            width: 5px;
+            height: 5px;
+            border-right: 2px solid #999;
+            border-bottom: 2px solid #999;
         }
 
         /* UI Elements */
@@ -130,7 +210,7 @@
         
         textarea {
             width: 100%;
-            height: 120px;
+            min-height: 100px;
             padding: 15px;
             border: 2px solid #eee;
             border-radius: 8px;
@@ -180,41 +260,64 @@
             vertical-align: middle;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Review Mode Styles */
+        body.review-mode .btn-grade,
+        body.review-mode #finishBtn {
+            display: none !important;
+        }
+        body.review-mode textarea {
+            background: #f8f9fa;
+            cursor: default;
+            pointer-events: none;
+        }
     </style>
 </head>
-<body>
+<body id="playerBody">
     <div class="navbar">
-        <div style="font-weight: 800; color: #1e3c72; font-size: 1.1em; display: flex; align-items: center; gap: 15px;">
-            🎓 ExamQ <span id="paperTitle" style="font-weight: 400; color: #666; font-size: 0.9em; border-left: 1px solid #ddd; padding-left: 15px;">Loading Paper...</span>
+        <div style="font-weight: 800; color: white; font-size: 1.1em; display: flex; align-items: center; gap: 15px;">
+            🎓 ExamQ <span id="paperTitle" style="font-weight: 400; color: rgba(255,255,255,0.8); font-size: 0.9em; border-left: 1px solid rgba(255,255,255,0.3); padding-left: 15px;">Loading Paper...</span>
+            <button onclick="toggleExtracts()" id="extractsBtn" style="display:none; background:#ffc107; border:none; padding:5px 12px; border-radius:5px; font-weight:bold; cursor:pointer; color: #333; margin-left: 10px;">📖 Reading Booklet</button>
+            <select id="questionJump" onchange="jumpToQuestion(this.value)" style="padding: 5px 10px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white; font-weight: bold; cursor: pointer; outline: none; margin-left: 10px;">
+                <option value="" style="color: #333;">Jump to...</option>
+            </select>
         </div>
         <div class="nav-links">
-            <button onclick="toggleExtracts()" id="extractsBtn" style="display:none; background:#ffc107; border:none; padding:5px 12px; border-radius:5px; font-weight:bold; cursor:pointer;">📖 Reading Booklet</button>
-            <a href="/exam_questions.html">🔙 Library</a>
-            <a href="/results">📊 Results</a>
+            <span id="welcomeUser" style="margin-right: 15px; font-weight: 600; color: white; font-size: 0.9em;"></span>
+            <a href="/exam_questions.html">📖 Exam Library</a>
         </div>
     </div>
 
     <div class="main-container">
+        <div class="paper-panel" id="paperPanel">
+            <!-- Paper pages injected here -->
+        </div>
+
+        <div class="resizer-v" id="panelResizer"></div>
+
         <div class="answer-panel" id="answerPanel">
             <div id="questionList"></div>
             
-            <div style="display: flex; justify-content: space-between; margin-top: auto; padding-top: 20px;">
-                <button class="control-btn btn-prev" onclick="changeQuestion(-1)">← Previous</button>
-                <button class="control-btn btn-next" onclick="changeQuestion(1)">Next →</button>
+            <div style="display: flex; justify-content: space-between; margin-top: auto; padding-top: 20px; gap: 10px;">
+                <button class="control-btn btn-prev" id="prevBtn" onclick="changeQuestion(-1)">← Previous</button>
+                <button class="control-btn btn-next" id="nextBtn" onclick="changeQuestion(1)">Next →</button>
+                <button class="control-btn" id="finishBtn" onclick="submitFullExam()" style="display:none; background: linear-gradient(135deg, #28a745 0%, #218838 100%); color: white; flex: 1;">Finish & Submit Exam</button>
             </div>
-        </div>
-
-        <div class="paper-panel" id="paperPanel">
-            <!-- Paper pages injected here -->
         </div>
     </div>
 
     <div id="extractsModal" class="extracts-modal">
-        <div class="extracts-header">
-            <h3>Extracts Booklet</h3>
+        <div class="resizer-l" id="extractsResizerL"></div>
+        <div class="resizer-r" id="extractsResizerR"></div>
+        <div class="extracts-header" id="extractsHeader">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <span style="font-weight:700;">📖 Extracts Booklet</span>
+                <button onclick="toggleExtractMode()" id="extractModeBtn" style="background:rgba(255,255,255,0.2); border:1px solid white; color:white; padding:2px 8px; border-radius:4px; font-size:0.75em; cursor:pointer;">Switch to Text Mode</button>
+            </div>
             <button onclick="toggleExtracts()" style="background:none; border:none; color:white; font-size:24px; cursor:pointer;">&times;</button>
         </div>
         <div class="extracts-body" id="extractsBody"></div>
+        <div class="resizer" id="extractsResizer"></div>
     </div>
 
     <script>
@@ -226,17 +329,237 @@
         let lastJumpedPage = null;
         let selectedQuestionInGroup = {}; // For choice questions
 
+        async function setupDraggableAndResizable() {
+            const modal = document.getElementById('extractsModal');
+            const header = document.getElementById('extractsHeader');
+            const resizer = document.getElementById('extractsResizer');
+            const panelResizer = document.getElementById('panelResizer');
+            const paperPanel = document.getElementById('paperPanel');
+            const username = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
+
+            // Load saved state from server
+            if (username) {
+                try {
+                    const res = await fetch(`/api/user/preferences/get?username=${username}`);
+                    const data = await res.json();
+                    if (data.success && data.ui_state) {
+                        const state = data.ui_state;
+                        if (state.left) modal.style.left = state.left;
+                        if (state.top) modal.style.top = state.top;
+                        if (state.width) modal.style.width = state.width;
+                        if (state.height) modal.style.height = state.height;
+                        if (state.paperPanelWidth) paperPanel.style.width = state.paperPanelWidth;
+                    }
+                } catch (e) { console.error("UI state sync failed", e); }
+            }
+
+            async function saveModalState() {
+                const ui_state = {
+                    left: modal.style.left,
+                    top: modal.style.top,
+                    width: modal.style.width,
+                    height: modal.style.height,
+                    paperPanelWidth: paperPanel.style.width
+                };
+                if (username) {
+                    try {
+                        await fetch('/api/user/preferences/save', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({ username, ui_state })
+                        });
+                    } catch (e) { console.error("Failed to save UI state", e); }
+                }
+            }
+
+            // Panel Resizing (Vertical Divider)
+            let isPanelResizing = false;
+            panelResizer.onmousedown = (e) => {
+                isPanelResizing = true;
+                document.onmousemove = onPanelResize;
+                document.onmouseup = stopPanelResize;
+                document.body.style.cursor = 'col-resize';
+                e.preventDefault();
+            };
+
+            function onPanelResize(e) {
+                if (!isPanelResizing) return;
+                const containerWidth = document.querySelector('.main-container').offsetWidth;
+                const newWidth = (e.clientX / containerWidth) * 100;
+                if (newWidth > 15 && newWidth < 85) {
+                    paperPanel.style.width = newWidth + '%';
+                }
+            }
+
+            function stopPanelResize() {
+                isPanelResizing = false;
+                document.onmousemove = null;
+                document.onmouseup = null;
+                document.body.style.cursor = 'default';
+                saveModalState();
+            }
+
+            // Dragging
+            let isDragging = false;
+            let startX, startY, initialLeft, initialTop;
+
+            header.onmousedown = (e) => {
+                if (e.target.tagName === 'BUTTON') return;
+                isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                initialLeft = modal.offsetLeft;
+                initialTop = modal.offsetTop;
+                document.onmousemove = onDrag;
+                document.onmouseup = stopDrag;
+            };
+
+            function onDrag(e) {
+                if (!isDragging) return;
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+                modal.style.left = (initialLeft + dx) + 'px';
+                modal.style.top = (initialTop + dy) + 'px';
+            }
+
+            function stopDrag() {
+                isDragging = false;
+                document.onmousemove = null;
+                document.onmouseup = null;
+                saveModalState();
+            }
+
+            // Resizing (Bottom-Right)
+            let isResizing = false;
+            let startW, startH;
+
+            resizer.onmousedown = (e) => {
+                isResizing = 'both';
+                startX = e.clientX;
+                startY = e.clientY;
+                startW = modal.offsetWidth;
+                startH = modal.offsetHeight;
+                document.onmousemove = onResize;
+                document.onmouseup = stopResize;
+                e.preventDefault();
+            };
+
+            // Resizing (Right Edge)
+            const resizerR = document.getElementById('extractsResizerR');
+            resizerR.onmousedown = (e) => {
+                isResizing = 'right';
+                startX = e.clientX;
+                startW = modal.offsetWidth;
+                document.onmousemove = onResize;
+                document.onmouseup = stopResize;
+                e.preventDefault();
+            };
+
+            // Resizing (Left Edge)
+            const resizerL = document.getElementById('extractsResizerL');
+            resizerL.onmousedown = (e) => {
+                isResizing = 'left';
+                startX = e.clientX;
+                startW = modal.offsetWidth;
+                initialLeft = modal.offsetLeft;
+                document.onmousemove = onResize;
+                document.onmouseup = stopResize;
+                e.preventDefault();
+            };
+
+            function onResize(e) {
+                if (!isResizing) return;
+                
+                if (isResizing === 'both' || isResizing === 'right') {
+                    const dw = e.clientX - startX;
+                    modal.style.width = Math.max(300, startW + dw) + 'px';
+                }
+                
+                if (isResizing === 'both') {
+                    const dh = e.clientY - startY;
+                    modal.style.height = Math.max(300, startH + dh) + 'px';
+                }
+
+                if (isResizing === 'left') {
+                    const dw = startX - e.clientX;
+                    const newWidth = Math.max(300, startW + dw);
+                    if (newWidth > 300) {
+                        modal.style.width = newWidth + 'px';
+                        modal.style.left = (initialLeft - dw) + 'px';
+                    }
+                }
+            }
+
+            function stopResize() {
+                isResizing = false;
+                document.onmousemove = null;
+                document.onmouseup = null;
+                saveModalState();
+            }
+        }
+
+        function jumpToQuestion(groupIdx) {
+            if (groupIdx === "") return;
+            currentGroupIdx = parseInt(groupIdx);
+            render();
+            saveProgress();
+        }
+
+        function populateQuestionJump() {
+            const select = document.getElementById('questionJump');
+            // Keep the first option
+            select.innerHTML = '<option value="" style="color: #333;">Jump to...</option>';
+            
+            pageGroups.forEach((group, idx) => {
+                const opt = document.createElement('option');
+                opt.value = idx;
+                opt.style.color = '#333';
+                
+                // Get a nice label: "Question 1, 2" or just "Question 1"
+                const qIds = group.questions.map(q => q.id).join(', ');
+                opt.textContent = `Question ${qIds} (Page ${group.page})`;
+                select.appendChild(opt);
+            });
+        }
+
+        let isReviewMode = false;
+
         async function init() {
+            setupDraggableAndResizable();
             const urlParams = new URLSearchParams(window.location.search);
             const paperId = urlParams.get('paper_id');
-            const username = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
+            const mode = urlParams.get('mode');
+            const reviewStudent = urlParams.get('student');
+            const currentUser = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
+            const isAdmin = !!localStorage.getItem('quiz_admin_username');
             
-            if (!username) { window.location.href = 'login.html'; return; }
+            if (!currentUser) { window.location.href = 'login.html'; return; }
+            
+            isReviewMode = (mode === 'review');
+            const targetStudent = isReviewMode ? (reviewStudent || currentUser) : currentUser;
+            
+            if (isReviewMode) {
+                document.getElementById('playerBody').classList.add('review-mode');
+            }
 
-            const [examRes, progRes] = await Promise.all([
-                fetch(`/api/official-exams/${paperId}`),
-                fetch(`/api/student/exam-progress/get?username=${username}&paper_id=${paperId}`)
-            ]);
+            const welcomeEl = document.getElementById('welcomeUser');
+            const displayUser = currentUser.length > 6 ? currentUser.substring(0, 6) + '...' : currentUser;
+            welcomeEl.textContent = '👤 ' + displayUser;
+            welcomeEl.title = currentUser;
+
+            let examRes, progRes;
+            if (isReviewMode) {
+                // In review mode, we fetch from the results table, not progress
+                [examRes, progRes] = await Promise.all([
+                    fetch(`/api/official-exams/${paperId}`),
+                    fetch(`/api/results/detail?username=${targetStudent}&paper_id=${paperId}`)
+                ]);
+            } else {
+                [examRes, progRes] = await Promise.all([
+                    fetch(`/api/official-exams/${paperId}`),
+                    fetch(`/api/student/exam-progress/get?username=${currentUser}&paper_id=${paperId}`)
+                ]);
+            }
 
             examData = await examRes.json();
             const prog = await progRes.json();
@@ -261,18 +584,13 @@
                 });
             }
 
-            // Group questions by their first page to create logical steps
-            let groups = [];
-            examData.questions.forEach(q => {
-                const firstPage = q.sub_questions[0].qp_pages[0];
-                let group = groups.find(g => g.page === firstPage);
-                if (!group) {
-                    group = { page: firstPage, questions: [] };
-                    groups.push(group);
-                }
-                group.questions.push(q);
-            });
-            pageGroups = groups;
+            // Do NOT group by page. Every question in the JSON array is a distinct step.
+            pageGroups = examData.questions.map(q => ({
+                page: q.sub_questions[0].qp_pages[0],
+                questions: [q]
+            }));
+            
+            populateQuestionJump();
 
             render();
         }
@@ -282,6 +600,9 @@
             const paper = document.getElementById('paperPanel');
             list.innerHTML = '';
             paper.innerHTML = '';
+
+            // Sync the dropdown
+            document.getElementById('questionJump').value = currentGroupIdx;
 
             const group = pageGroups[currentGroupIdx];
             
@@ -295,7 +616,7 @@
                 paper.appendChild(img);
             });
 
-            const panel = document.querySelector('.answer-panel');
+            const panel = document.getElementById('answerPanel');
             panel.onscroll = () => {
                 if (isManualJumping) return;
                 const active = document.activeElement;
@@ -306,12 +627,19 @@
                 const panelTop = panel.getBoundingClientRect().top;
                 let bestItem = null;
                 for (let item of items) {
-                    if (item.getBoundingClientRect().top <= panelTop + 150) bestItem = item;
-                    else break; 
+                    const rect = item.getBoundingClientRect();
+                    // If the top of the question is near the top of our scroll container
+                    if (rect.top <= panelTop + 100) {
+                        bestItem = item;
+                    } else {
+                        break; 
+                    }
                 }
                 if (bestItem) {
                     const pNum = bestItem.getAttribute('data-page');
-                    if (pNum && pNum != lastJumpedPage) jump(pNum, bestItem);
+                    if (pNum && pNum != lastJumpedPage) {
+                        jump(pNum);
+                    }
                 }
             };
 
@@ -346,12 +674,21 @@
                     div.setAttribute('data-page', sq.qp_pages[0]);
                     
                     const saved = savedAnswers[sq.sub_id] || {};
+                    
+                    // Dynamic height based on marks
+                    let height = 120;
+                    if (sq.max_marks >= 30) height = 600;
+                    else if (sq.max_marks >= 10) height = 400;
+                    else if (sq.max_marks >= 5) height = 250;
+
                     div.innerHTML = `
                         <div class="sub-header">
                             <span style="font-weight:800; color:#1e3c72;">Question ${sq.sub_id}</span>
                             <span class="mark-badge">${sq.max_marks} Marks</span>
                         </div>
-                        <textarea id="ans_${sq.sub_id}" oninput="updateAnswer('${sq.sub_id}')" placeholder="Type your answer here...">${saved.answer || ''}</textarea>
+                        <textarea id="ans_${sq.sub_id}" oninput="updateAnswer('${sq.sub_id}')" 
+                            style="height: ${height}px;"
+                            placeholder="Type your answer here...">${saved.answer || ''}</textarea>
                         <button class="control-btn btn-grade" onclick="grade('${sq.sub_id}', '${sq.type}')">Submit & Grade</button>
                         <div id="fb_${sq.sub_id}" class="feedback-zone ${saved.feedback ? 'show' : ''}">${saved.feedback || ''}</div>
                     `;
@@ -359,6 +696,16 @@
                 });
             });
             
+            // Button Visibility
+            document.getElementById('prevBtn').style.visibility = currentGroupIdx === 0 ? 'hidden' : 'visible';
+            if (currentGroupIdx === pageGroups.length - 1) {
+                document.getElementById('nextBtn').style.display = 'none';
+                document.getElementById('finishBtn').style.display = 'block';
+            } else {
+                document.getElementById('nextBtn').style.display = 'block';
+                document.getElementById('finishBtn').style.display = 'none';
+            }
+
             // Jump to first page of group
             setTimeout(() => jump(group.page), 100);
         }
@@ -375,12 +722,79 @@
             lastJumpedPage = pageNum;
         }
 
+        let extractMode = 'image'; // 'image' or 'text'
+        let extractTexts = null;
+
         function toggleExtracts() {
             const m = document.getElementById('extractsModal');
-            m.style.display = (m.style.display === 'flex' ? 'none' : 'flex');
+            const isOpening = m.style.display !== 'flex';
+            m.style.display = (isOpening ? 'flex' : 'none');
+            if (isOpening) renderExtracts();
+        }
+
+        async function toggleExtractMode() {
+            extractMode = (extractMode === 'image' ? 'text' : 'image');
+            const btn = document.getElementById('extractModeBtn');
+            btn.textContent = (extractMode === 'image' ? 'Show Selectable Text' : 'Hide Selectable Text');
+            
+            if (extractMode === 'text' && !extractTexts) {
+                btn.disabled = true;
+                btn.textContent = "Loading Text...";
+                try {
+                    const res = await fetch(`/api/official-exams/${examData.paper_id}/extracts-text`);
+                    const data = await res.json();
+                    if (data.success) extractTexts = data.texts;
+                } catch (e) { console.error("Failed to load extract text", e); }
+                btn.disabled = false;
+                btn.textContent = 'Hide Selectable Text';
+            }
+            renderExtracts();
+        }
+
+        function renderExtracts() {
+            const body = document.getElementById('extractsBody');
+            body.innerHTML = '';
+            
+            examData.extract_pages.forEach(p => {
+                const pageDiv = document.createElement('div');
+                pageDiv.style.width = '100%';
+                pageDiv.style.marginBottom = '30px';
+                pageDiv.style.display = 'flex';
+                pageDiv.style.flexDirection = 'column';
+                pageDiv.style.alignItems = 'center';
+
+                // Always show image
+                const img = document.createElement('img');
+                img.src = `${examData.qp_img_dir}page_${p.toString().padStart(2, '0')}.png`;
+                img.className = 'paper-page';
+                img.style.width = '100%';
+                img.style.borderRadius = (extractMode === 'text' ? '8px 8px 0 0' : '8px');
+                pageDiv.appendChild(img);
+
+                // In text mode, show the selectable block below
+                if (extractMode === 'text' && extractTexts) {
+                    const item = extractTexts.find(t => t.page === p);
+                    if (item) {
+                        const textDiv = document.createElement('div');
+                        textDiv.style.width = '100%';
+                        textDiv.style.background = '#fcfcfc';
+                        textDiv.style.padding = '30px';
+                        textDiv.style.border = '1px solid #ddd';
+                        textDiv.style.borderTop = 'none';
+                        textDiv.style.borderRadius = '0 0 8px 8px';
+                        textDiv.innerHTML = `
+                            <div style="color:#1e3c72; font-size:0.7em; font-weight:800; margin-bottom:15px; text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid #eee; padding-bottom:5px;">Selectable Text Layer (Page ${item.page})</div>
+                            <pre style="white-space: pre-wrap; font-family: 'Consolas', 'Monaco', 'Courier New', monospace; font-size: 0.95em; line-height: 1.5; color: #222; user-select: text; -webkit-user-select: text;">${item.text}</pre>
+                        `;
+                        pageDiv.appendChild(textDiv);
+                    }
+                }
+                body.appendChild(pageDiv);
+            });
         }
 
         async function saveProgress() {
+            if (isReviewMode) return;
             const username = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
             const paperId = examData.paper_id;
             const answersToSave = { ...savedAnswers };
@@ -397,38 +811,132 @@
             });
         }
 
+        function showLineAlert(msg, type='info') {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'line-alert';
+            alertDiv.style.position = 'fixed';
+            alertDiv.style.top = '20px';
+            alertDiv.style.left = '50%';
+            alertDiv.style.transform = 'translateX(-50%)';
+            alertDiv.style.padding = '12px 25px';
+            alertDiv.style.borderRadius = '8px';
+            alertDiv.style.color = 'white';
+            alertDiv.style.fontWeight = '700';
+            alertDiv.style.zIndex = '9999';
+            alertDiv.style.boxShadow = '0 5px 15px rgba(0,0,0,0.3)';
+            alertDiv.style.transition = 'all 0.3s';
+            if (type === 'error') alertDiv.style.background = '#dc3545';
+            else if (type === 'success') alertDiv.style.background = '#28a745';
+            else alertDiv.style.background = '#1e3c72';
+            alertDiv.textContent = msg;
+            document.body.appendChild(alertDiv);
+            setTimeout(() => {
+                alertDiv.style.opacity = '0';
+                setTimeout(() => alertDiv.remove(), 300);
+            }, 3000);
+        }
+
         async function grade(subId, type) {
+            if (isReviewMode) return;
             const val = document.getElementById('ans_' + subId).value;
             const btn = event.target;
             const fbDiv = document.getElementById('fb_' + subId);
             
-            if (!val.trim()) { alert("Please type an answer first."); return; }
+            if (!val.trim()) { 
+                showLineAlert("Please type an answer first.", "error"); 
+                return; 
+            }
 
             btn.disabled = true;
             btn.innerHTML = `<span class="spinner"></span> Grading...`;
 
             try {
-                const res = await fetch('/api/submit-quiz', {
+                const res = await fetch('/api/official-exams/grade', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
                         username: localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username'),
                         paper_id: examData.paper_id,
                         sub_id: subId,
-                        answer: val,
-                        ms_text: examData.questions.flatMap(q=>q.sub_questions).find(s=>s.sub_id===subId).ms_text
+                        user_answer: val,
+                        max_marks: examData.questions.flatMap(q=>q.sub_questions).find(s=>s.sub_id===subId).max_marks,
+                        mark_scheme: examData.questions.flatMap(q=>q.sub_questions).find(s=>s.sub_id===subId).ms_text
                     })
                 });
                 const data = await res.json();
-                const html = `<div style="font-weight:800; color:#28a745; margin-bottom:10px;">Score: ${data.score} / ${data.total_marks}</div><div>${data.feedback}</div>`;
+                const score = data.marks_awarded !== undefined ? data.marks_awarded : 0;
+                const total = data.max_marks || examData.questions.flatMap(q=>q.sub_questions).find(s=>s.sub_id===subId).max_marks;
+                
+                const html = `<div style="font-weight:800; color:#28a745; margin-bottom:10px;">Score: ${score} / ${total}</div><div>${data.feedback}</div>`;
                 fbDiv.innerHTML = html;
                 fbDiv.classList.add('show');
+                
+                if (!savedAnswers[subId]) savedAnswers[subId] = { answer: val };
                 savedAnswers[subId].feedback = html;
+                savedAnswers[subId].marks_awarded = score;
+                savedAnswers[subId].max_marks = total;
+                
                 await saveProgress();
-            } catch (e) { alert("Grading failed."); }
+                showLineAlert("Answer graded successfully!", "success");
+            } catch (e) { 
+                console.error(e);
+                showLineAlert("Grading failed.", "error"); 
+            }
             finally {
                 btn.disabled = false;
                 btn.textContent = "Re-submit & Grade";
+            }
+        }
+
+        async function submitFullExam() {
+            const username = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
+            
+            // Calculate total score from saved graded results
+            let totalMarks = 0;
+            let awardedMarks = 0;
+            
+            Object.values(savedAnswers).forEach(ans => {
+                if (ans.max_marks !== undefined) {
+                    totalMarks += ans.max_marks;
+                    awardedMarks += (ans.marks_awarded || 0);
+                }
+            });
+
+            if (totalMarks === 0) {
+                showLineAlert("No questions have been graded yet. Please grade at least one question before finishing.", "error");
+                return;
+            }
+
+            if (!confirm(`Are you sure you want to finish and submit? Final Score: ${awardedMarks} / ${totalMarks}`)) return;
+
+            try {
+                const res = await fetch('/api/official-exams/submit', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        username,
+                        paper_id: examData.paper_id,
+                        topic: examData.title,
+                        score: awardedMarks,
+                        total_marks: totalMarks,
+                        answers: savedAnswers
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    // Clear the in-progress status
+                    await fetch('/api/student/exam-progress/delete', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ username, paper_id: examData.paper_id })
+                    });
+                    window.location.href = '/results';
+                } else {
+                    showLineAlert("Submission failed: " + data.error, "error");
+                }
+            } catch (e) {
+                console.error(e);
+                showLineAlert("Server error during submission", "error");
             }
         }
 

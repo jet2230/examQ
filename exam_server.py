@@ -78,13 +78,17 @@ def init_db():
     # New table for saved quizzes (AI generated)
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS saved_quizzes (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            topic TEXT,
-            quiz_json TEXT,
-            created_by TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            id INTEGER PRIMARY KEY AUTOINCREMENT, topic TEXT, quiz_json TEXT, 
+            created_by TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     ''')
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS user_preferences (
+            username TEXT PRIMARY KEY, theme_json TEXT, ui_state_json TEXT,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    conn.commit()
     
     cursor.execute("INSERT OR IGNORE INTO users (username, password, role) VALUES ('admin', 'pass123', 'admin')")
     conn.commit()
@@ -301,17 +305,59 @@ def get_import_progress():
     job_id = request.args.get('job_id')
     return jsonify(import_jobs.get(job_id, {'status': 'not_found'})), (200 if job_id in import_jobs else 404)
 
-# --- QUIZ GENERATION PROXY ---
 @app.route('/api/generate-quiz', methods=['POST'])
-def proxy_generate_quiz():
-    """Proxy quiz generation to local Ollama instance"""
+def generate_quiz_api():
+    """Generate a quiz using Ollama and save it"""
     try:
         data = request.json
-        # Forward request to Ollama
-        response = requests.post(OLLAMA_API, json=data, timeout=120)
-        return jsonify(response.json()), response.status_code
+        topic = data.get('topic')
+        num = data.get('num_questions', 10)
+        username = data.get('username')
+
+        prompt = f"""Create a multiple-choice quiz about: {topic}.
+Number of questions: {num}.
+For each question, provide 4 options (A, B, C, D) and identify the correct letter.
+
+Return ONLY a JSON list of objects:
+[
+  {{
+    "question": "...",
+    "options": ["option 1", "option 2", "option 3", "option 4"],
+    "answer": "A/B/C/D"
+  }}
+]"""
+
+        # Call Ollama
+        response = requests.post(OLLAMA_API, json={
+            'model': 'llama3',
+            'prompt': prompt,
+            'stream': False,
+            'format': 'json'
+        }, timeout=120)
+        
+        if response.status_code != 200:
+            return jsonify({'success': False, 'error': 'AI model failed'}), 500
+            
+        quiz_json_raw = response.json().get('response', '[]')
+        questions = clean_ai_json(quiz_json_raw)
+        
+        if not questions:
+            return jsonify({'success': False, 'error': 'Failed to parse AI response'}), 500
+
+        # Save to database
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO saved_quizzes (topic, quiz_json, created_by) VALUES (?, ?, ?)",
+            (topic, json.dumps(questions), username)
+        )
+        quiz_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+
+        return jsonify({'success': True, 'quiz_id': quiz_id})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/save-quiz', methods=['POST'])
 def save_quiz():
@@ -352,6 +398,63 @@ def get_my_quizzes():
         return jsonify({'success': True, 'quizzes': quizzes})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/quiz/<int:quiz_id>')
+def get_single_quiz(quiz_id):
+    """Fetch a single AI-generated quiz by its ID"""
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, topic, quiz_json FROM saved_quizzes WHERE id = ?", (quiz_id,))
+        row = cursor.fetchone()
+        conn.close()
+        if row:
+            return jsonify({
+                'success': True, 
+                'quiz': {
+                    'id': row['id'], 
+                    'topic': row['topic'], 
+                    'questions': json.loads(row['quiz_json'])
+                }
+            })
+        return jsonify({'success': False, 'message': 'Quiz not found'}), 404
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/quiz_<int:quiz_id>.html')
+def serve_quiz_player(quiz_id):
+    """Serve the dynamic quiz player for any quiz ID"""
+    return send_from_directory('.', 'quiz_player.html')
+
+@app.route('/api/official-exams/submit', methods=['POST'])
+def submit_official_exam():
+    try:
+        data = request.json
+        u = data.get('username')
+        paper_id = data.get('paper_id')
+        topic = data.get('topic')
+        score = data.get('score')
+        total = data.get('total_marks')
+        answers = data.get('answers')
+        
+        if not u or not paper_id: return jsonify({'error': 'Missing data'}), 400
+        
+        # Structure the quiz_data_json to match AI quiz expectations for the dashboard
+        quiz_summary = {
+            'paper_id': paper_id,
+            'title': topic,
+            'topic': topic,
+            'is_official': True
+        }
+        
+        conn = get_db(); cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO quiz_results (username, quiz_data_json, answers_json, score, total_marks) VALUES (?, ?, ?, ?, ?)",
+            (u, json.dumps(quiz_summary), json.dumps(answers), score, total)
+        )
+        conn.commit(); conn.close()
+        return jsonify({'success': True})
+    except Exception as e: return jsonify({'error': str(e)}), 500
 
 @app.route('/api/submit-quiz', methods=['POST'])
 def submit_quiz():
@@ -553,6 +656,14 @@ def list_official_exams():
         return jsonify({'success': True, 'exams': exams}), 200
     except Exception as e: return jsonify({'error': str(e)}), 500
 
+@app.route('/api/official-exams/check/<paper_id>')
+def check_exam_exists(paper_id):
+    conn = get_db(); cursor = conn.cursor()
+    cursor.execute("SELECT id FROM official_exams WHERE id = ?", (paper_id,))
+    exists = cursor.fetchone() is not None
+    conn.close()
+    return jsonify({'exists': exists})
+
 @app.route('/api/official-exams/<paper_id>')
 def get_official_exam(paper_id):
     path = f'exam_data/{paper_id}.json'
@@ -566,6 +677,36 @@ def get_exam_page_count(paper_id):
         full_path = os.path.join(os.getcwd(), data['qp_img_dir'].lstrip('/'))
         return jsonify({'count': len([f for f in os.listdir(full_path) if f.endswith('.png')])})
     except: return jsonify({'count': 0})
+
+@app.route('/api/official-exams/<paper_id>/extracts-text')
+def get_extracts_text(paper_id):
+    try:
+        conn = get_db(); cursor = conn.cursor()
+        cursor.execute("SELECT source_path, data_json_path FROM official_exams WHERE id = ?", (paper_id,))
+        row = cursor.fetchone()
+        if not row: return jsonify({'error': 'Not found'}), 404
+        
+        source_path = row['source_path']
+        with open(row['data_json_path'], 'r') as f:
+            extract_pages = json.load(f).get('extract_pages', [])
+        
+        if not extract_pages: return jsonify({'success': True, 'texts': []})
+
+        # Extract text using pdftotext
+        res = subprocess.run(['pdftotext', '-layout', source_path, '-'], capture_output=True, text=True)
+        if res.returncode != 0: return jsonify({'error': 'PDF extraction failed'}), 500
+        
+        all_pages = res.stdout.split('\f')
+        extract_texts = []
+        for p_num in extract_pages:
+            if 0 < p_num <= len(all_pages):
+                extract_texts.append({
+                    'page': p_num,
+                    'text': all_pages[p_num-1].strip()
+                })
+        
+        return jsonify({'success': True, 'texts': extract_texts})
+    except Exception as e: return jsonify({'error': str(e)}), 500
 
 @app.route('/api/official-exams/grade', methods=['POST'])
 def grade_official_question():
@@ -653,6 +794,31 @@ def get_exam_progress():
         return jsonify({'success': False}), 404
     except Exception as e: return jsonify({'error': str(e)}), 500
 
+@app.route('/api/results/detail')
+def get_result_detail():
+    u = request.args.get('username')
+    paper_id = request.args.get('paper_id')
+    if not u or not paper_id: return jsonify({'error': 'Missing params'}), 400
+    
+    conn = get_db(); cursor = conn.cursor()
+    # Find the most recent result for this student and paper
+    cursor.execute("""
+        SELECT * FROM quiz_results 
+        WHERE username = ? AND quiz_data_json LIKE ? 
+        ORDER BY timestamp DESC LIMIT 1
+    """, (u, f'%"{paper_id}"%'))
+    row = cursor.fetchone(); conn.close()
+    
+    if row:
+        return jsonify({
+            'success': True,
+            'answers': json.loads(row['answers_json']),
+            'score': row['score'],
+            'total_marks': row['total_marks'],
+            'timestamp': row['timestamp']
+        })
+    return jsonify({'success': False, 'message': 'Result not found'}), 404
+
 @app.route('/api/results')
 def get_results_api():
     u = request.args.get('username'); conn = get_db(); cursor = conn.cursor()
@@ -673,7 +839,9 @@ def get_results_api():
             'topic': topic, 
             'score': row['score'], 
             'total_marks': row['total_marks'],
-            'timestamp': row['timestamp']
+            'timestamp': row['timestamp'],
+            'answers': json.loads(row['answers_json']) if row['answers_json'] else [],
+            'quiz_data': json.loads(row['quiz_data_json']) if row['quiz_data_json'] else {}
         })
     conn.close(); return jsonify({'success': True, 'results': results})
 
@@ -686,10 +854,65 @@ def list_student_progress():
         return jsonify({'success': True, 'progress': {r['paper_id']: {'status': r['status'], 'last_updated': r['last_updated']} for r in rows}}), 200
     except Exception as e: return jsonify({'error': str(e)}), 500
 
+# --- USER PREFERENCES API ---
+
+@app.route('/api/user/preferences/get')
+def get_user_preferences():
+    try:
+        u = request.args.get('username')
+        if not u: return jsonify({'error': 'Missing username'}), 400
+        conn = get_db(); cursor = conn.cursor()
+        cursor.execute("SELECT theme_json, ui_state_json FROM user_preferences WHERE username = ?", (u,))
+        row = cursor.fetchone(); conn.close()
+        if row:
+            return jsonify({
+                'success': True,
+                'theme': json.loads(row['theme_json']) if row['theme_json'] else None,
+                'ui_state': json.loads(row['ui_state_json']) if row['ui_state_json'] else None
+            })
+        return jsonify({'success': True, 'theme': None, 'ui_state': None})
+    except Exception as e: return jsonify({'error': str(e)}), 500
+
+@app.route('/api/user/preferences/save', methods=['POST'])
+def save_user_preferences():
+    try:
+        data = request.json
+        u = data.get('username')
+        if not u: return jsonify({'error': 'Missing username'}), 400
+        
+        conn = get_db(); cursor = conn.cursor()
+        if 'theme' in data:
+            cursor.execute('''
+                INSERT INTO user_preferences (username, theme_json) VALUES (?, ?)
+                ON CONFLICT(username) DO UPDATE SET theme_json = excluded.theme_json, updated_at = CURRENT_TIMESTAMP
+            ''', (u, json.dumps(data['theme'])))
+            
+        if 'ui_state' in data:
+            cursor.execute('''
+                INSERT INTO user_preferences (username, ui_state_json) VALUES (?, ?)
+                ON CONFLICT(username) DO UPDATE SET ui_state_json = excluded.ui_state_json, updated_at = CURRENT_TIMESTAMP
+            ''', (u, json.dumps(data['ui_state'])))
+            
+        conn.commit(); conn.close()
+        return jsonify({'success': True})
+    except Exception as e: return jsonify({'error': str(e)}), 500
+
 # --- PAGE ROUTES ---
 
 @app.route('/')
 def home_page(): return send_from_directory('.', 'exam_generator_v2.html')
+
+@app.route('/api/student/exam-progress/delete', methods=['POST'])
+def delete_exam_progress():
+    try:
+        data = request.json
+        u, paper_id = data.get('username'), data.get('paper_id')
+        if not u or not paper_id: return jsonify({'success': False}), 400
+        conn = get_db(); cursor = conn.cursor()
+        cursor.execute("DELETE FROM exam_progress WHERE username = ? AND paper_id = ?", (u, paper_id))
+        conn.commit(); conn.close()
+        return jsonify({'success': True})
+    except Exception as e: return jsonify({'error': str(e)}), 500
 
 @app.route('/results')
 def results_dashboard_page(): return send_from_directory('.', 'results_dashboard.html')

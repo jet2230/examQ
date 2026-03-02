@@ -3,12 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Official Exam Papers - Gallery</title>
+    <title>Official Exam Library - Gallery</title>
+    <script src="/static/theme_manager.js"></script>
     <style>
+        :root {
+            --primary-color: #1e3c72;
+            --secondary-color: #2a5298;
+            --main-gradient: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            background: var(--main-gradient);
             min-height: 100vh;
             padding: 20px;
         }
@@ -21,7 +27,7 @@
             overflow: hidden;
         }
         .header {
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            background: var(--main-gradient);
             color: white;
             padding: 40px;
             text-align: center;
@@ -29,42 +35,46 @@
         .header h1 { font-size: 2.5em; margin-bottom: 10px; }
         .header p { opacity: 0.9; font-size: 1.1em; }
         .content { padding: 40px; }
-        .category-section { margin-bottom: 40px; }
-        .category-title {
-            font-size: 1.8em;
-            color: #1e3c72;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 3px solid #eee;
+        
+        .navbar {
+            padding: 15px 40px;
             display: flex;
-            align-items: center;
             justify-content: space-between;
-        }
-        .paper-count-badge {
-            background: #667eea;
-            color: white;
-            font-size: 0.5em;
-            padding: 4px 12px;
-            border-radius: 15px;
-            vertical-align: middle;
-        }
-        .sub-group-title {
-            font-size: 1.2em;
-            color: #555;
-            margin: 25px 0 15px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            display: flex;
             align-items: center;
-            gap: 10px;
+            border-bottom: 1px solid #eee;
+            background: white;
         }
-        .sub-group-title::after {
-            content: "";
-            flex: 1;
-            height: 1px;
-            background: #eee;
+        .nav-brand { font-weight: 800; color: var(--primary-color); font-size: 1.2em; }
+        .nav-links a { text-decoration: none; color: var(--primary-color); font-weight: 600; margin-left: 20px; }
+
+        .subject-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            padding: 20px 0;
         }
+        .subject-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid #ddd;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+        .subject-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            border-color: var(--primary-color);
+            background: white;
+        }
+        .subject-icon { font-size: 4em; }
+        .subject-name { font-size: 1.5em; font-weight: 800; color: var(--primary-color); }
+
         .paper-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -80,6 +90,8 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
+            position: relative;
+            overflow: visible;
         }
         .paper-title {
             font-size: 1em;
@@ -97,96 +109,48 @@
             font-size: 0.85em;
             margin-bottom: 5px;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .btn-start {
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            color: white;
-            border: none;
-            padding: 10px;
-            border-radius: 6px;
-            font-weight: 700;
-            text-align: center;
-            text-decoration: none;
-            font-size: 0.9em;
-        }
-        .navbar {
-            padding: 15px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #eee;
-        }
-        .nav-links a {
-            text-decoration: none;
-            color: #1e3c72;
-            font-weight: 600;
-            margin-left: 20px;
-        }
-        .search-container {
-            max-width: 800px;
-            margin: -30px auto 30px;
-            padding: 0 20px;
-            position: relative;
-            z-index: 10;
-        }
-        .search-input {
-            width: 100%;
-            padding: 15px 25px;
-            border-radius: 30px;
-            border: none;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-            font-size: 1.1em;
-            outline: none;
-            transition: all 0.3s;
-        }
-        .search-input:focus {
-            box-shadow: 0 10px 30px rgba(30, 60, 114, 0.25);
-            transform: translateY(-2px);
-        }
-        
-        .subject-card {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            border-radius: 20px;
-            padding: 40px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            border: 1px solid #ddd;
-            display: flex;
             flex-direction: column;
-            align-items: center;
-            gap: 15px;
+            align-items: flex-start;
+            gap: 5px;
         }
-        .subject-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-            border-color: #1e3c72;
-            background: white;
-        }
-        .subject-icon {
-            font-size: 4em;
-        }
-        .subject-name {
-            font-size: 1.5em;
-            font-weight: 800;
-            color: #1e3c72;
-        }
-        .subject-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 30px;
-            padding: 20px 0;
-        }
-        .back-btn {
-            display: inline-block;
-            margin-bottom: 20px;
-            color: #1e3c72;
+
+        /* Unified Split Button */
+        .split-btn {
+            display: flex;
+            margin-top: 10px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #ffc107;
             text-decoration: none;
-            font-weight: 700;
-            cursor: pointer;
+            transition: transform 0.2s;
         }
+        .split-btn:hover { transform: translateY(-2px); }
+        .split-btn .btn-main {
+            flex: 1;
+            padding: 10px;
+            color: #333;
+            text-align: center;
+            font-weight: 700;
+            text-decoration: none;
+            border-right: 1px solid rgba(0,0,0,0.1);
+        }
+        .split-btn .btn-close {
+            width: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(0,0,0,0.4);
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .split-btn .btn-close:hover {
+            background: rgba(0,0,0,0.1);
+            color: #dc3545;
+        }
+
         .status-badge {
             padding: 4px 10px;
             border-radius: 12px;
@@ -207,24 +171,61 @@
             align-items: center;
             gap: 4px;
         }
+        .btn-start {
+            background: var(--main-gradient);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: 700;
+            text-align: center;
+            text-decoration: none;
+            font-size: 0.9em;
+        }
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .search-container {
+            max-width: 800px;
+            margin: -30px auto 30px;
+            padding: 0 20px;
+            position: relative;
+            z-index: 10;
+        }
+        .search-input {
+            width: 100%;
+            padding: 15px 25px;
+            border-radius: 30px;
+            border: none;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            font-size: 1.1em;
+            outline: none;
+            transition: all 0.3s;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="navbar">
-            <div style="font-weight: 800; color: #1e3c72; font-size: 1.2em;">🎓 ExamQ Papers</div>
+            <div class="nav-brand">🎓 ExamQ Exam Library</div>
             <div class="nav-links">
-                <span id="welcomeUser" style="margin-right: 15px; font-weight: 600; color: #1e3c72;"></span>
+                <span id="welcomeUser" style="margin-right: 15px; font-weight: 600; color: var(--primary-color);"></span>
                 <a href="/admin_users.html" id="usersLink" class="admin-only" style="display:none; color:#d63384;">⚙️ Users</a>
                 <a href="/admin_exams.html" id="adminLink" class="admin-only" style="display:none; color:#d63384;">⚙️ Exams</a>
                 <a href="/">🏠 Generator</a>
                 <a href="/results">📊 Results</a>
+                <a href="/settings.html">⚙️ Settings</a>
                 <a href="#" onclick="logout()">🚪 Logout</a>
             </div>
         </div>
 
         <div class="header">
-            <h1 id="mainTitle">Official Exam Papers</h1>
+            <h1 id="mainTitle">Official Exam Library</h1>
             <p id="mainSubtitle">Select a subject to browse available papers</p>
         </div>
 
@@ -233,9 +234,15 @@
         </div>
 
         <div class="content">
-            <div id="subjectView" class="subject-grid">
-                <!-- Subjects will be injected here -->
+            <div id="resumeView" style="display:none; margin-bottom: 40px;">
+                <h2 style="color: var(--primary-color); margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                    ⏳ Continue Your Progress
+                </h2>
+                <div id="resumeGrid" class="paper-grid"></div>
+                <div style="margin-top: 30px; border-bottom: 2px solid #eee;"></div>
             </div>
+
+            <div id="subjectView" class="subject-grid"></div>
             
             <div id="paperView" style="display:none;">
                 <span class="back-btn" onclick="showSubjects()">← Back to Subjects</span>
@@ -255,57 +262,32 @@
             window.location.href = 'login.html';
         }
 
-        function parseExamDate(dateStr) {
-            if (!dateStr || dateStr === 'Unknown') return new Date(0);
-            const months = {
-                'jan': 0, 'feb': 1, 'mar': 2, 'apr': 3, 'may': 4, 'jun': 5,
-                'jul': 6, 'aug': 7, 'sep': 8, 'oct': 9, 'nov': 10, 'dec': 11,
-                'january': 0, 'february': 1, 'march': 2, 'april': 3, 'may': 4, 'june': 5,
-                'july': 6, 'august': 7, 'september': 8, 'october': 9, 'november': 10, 'december': 11
-            };
-            const parts = dateStr.toLowerCase().split(/[\s,]+/);
-
-            const year = parseInt(parts.find(p => p.match(/^\d{4}$/)));
-            const monthName = parts.find(p => months[p] !== undefined);
-            const day = parseInt(parts.find(p => p.match(/^\d{1,2}$/))) || 1;
-
-            if (year && monthName) {
-                return new Date(year, months[monthName], day);
-            }
-            return new Date(0);
-        }
-
-
         async function loadExams() {
             const username = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
             const isAdmin = !!localStorage.getItem('quiz_admin_username');
-            
             if (username) {
                 const welcomeEl = document.getElementById('welcomeUser');
-                if (welcomeEl) welcomeEl.textContent = '👤 ' + username;
+                const displayUser = username.length > 6 ? username.substring(0, 6) + '...' : username;
+                if (welcomeEl) {
+                    welcomeEl.textContent = '👤 ' + displayUser;
+                    welcomeEl.title = username;
+                }
                 if (isAdmin) {
-                    document.getElementById('adminLink').style.display = 'inline';
-                    document.getElementById('usersLink').style.display = 'inline';
+                    const al = document.getElementById('adminLink');
+                    const ul = document.getElementById('usersLink');
+                    if (al) al.style.display = 'inline';
+                    if (ul) ul.style.display = 'inline';
                 }
             }
-
             try {
                 const [examRes, progRes] = await Promise.all([
                     fetch('/api/official-exams/list'),
                     fetch(`/api/student/exam-progress/list?username=${username}`)
                 ]);
-                
-                const examData = await examRes.json();
-                const progData = await progRes.json();
-                
-                allExams = examData.exams || [];
-                allProgress = progData.progress || {};
-                
+                allExams = (await examRes.json()).exams || [];
+                allProgress = (await progRes.json()).progress || {};
                 showSubjects();
-
-            } catch (error) {
-                console.error("Failed to load:", error);
-            }
+            } catch (e) { console.error(e); }
         }
 
         function showSubjects() {
@@ -313,13 +295,40 @@
             document.getElementById('subjectView').style.display = 'grid';
             document.getElementById('paperView').style.display = 'none';
             document.getElementById('searchContainer').style.display = 'none';
-            document.getElementById('mainTitle').textContent = "Official Exam Papers";
-            document.getElementById('mainSubtitle').textContent = "Select a subject to browse available papers";
+            document.getElementById('mainTitle').textContent = "Official Exam Library";
+            
+            const resumeContainer = document.getElementById('resumeView');
+            const resumeGrid = document.getElementById('resumeGrid');
+            const inProgress = allExams.filter(e => allProgress[e.id] && allProgress[e.id].status === 'in_progress');
+            
+            if (inProgress.length > 0) {
+                resumeContainer.style.display = 'block';
+                inProgress.sort((a,b) => new Date(allProgress[b.id].last_updated) - new Date(allProgress[a.id].last_updated));
+                resumeGrid.innerHTML = inProgress.map(exam => {
+                    const prog = allProgress[exam.id];
+                    return `
+                        <div class="paper-card" style="border-left: 5px solid #ffc107;" onclick="window.location.href='/official_exam_player.html?paper_id=${exam.id}'">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                <span style="background: var(--primary-color); color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.7em; font-weight: bold; text-transform: uppercase;">${exam.subject}</span>
+                                <div class="status-badge status-started">In Progress</div>
+                            </div>
+                            <div class="paper-title">${exam.title}</div>
+                            <div class="paper-meta">
+                                <div style="font-weight: 700; color: #555; font-size: 0.85em;">${formatLongDate(exam.date)}</div>
+                                <div class="last-accessed">🕒 ${formatLastAccessed(prog.last_updated)}</div>
+                            </div>
+                            <div class="split-btn">
+                                <a href="/official_exam_player.html?paper_id=${exam.id}" class="btn-main">Continue →</a>
+                                <div class="btn-close" onclick="deleteProgress(event, '${exam.id}')" title="Clear Progress">&times;</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } else { resumeContainer.style.display = 'none'; }
 
-            const subjects = [...new Set(allExams.map(e => e.subject))].sort();
             const grid = document.getElementById('subjectView');
             grid.innerHTML = '';
-
+            const subjects = [...new Set(allExams.map(e => e.subject))].sort();
             subjects.forEach(s => {
                 const count = allExams.filter(e => e.subject === s).length;
                 let icon = '📖';
@@ -327,141 +336,110 @@
                 else if (s.toLowerCase().includes('physics')) icon = '⚡';
                 else if (s.toLowerCase().includes('math')) icon = '🔢';
                 else if (s.toLowerCase().includes('english')) icon = '✍️';
-
                 const card = document.createElement('div');
                 card.className = 'subject-card';
                 card.onclick = () => selectSubject(s);
-                card.innerHTML = `
-                    <div class="subject-icon">${icon}</div>
-                    <div class="subject-name">${s}</div>
-                    <div style="color: #666;">${count} Papers Available</div>
-                `;
+                card.innerHTML = `<div class="subject-icon">${icon}</div><div class="subject-name">${s}</div><div style="color: #666;">${count} Exam Library Available</div>`;
                 grid.appendChild(card);
             });
         }
 
-        function selectSubject(subject) {
-            currentSubject = subject;
+        async function deleteProgress(event, paperId) {
+            event.stopPropagation();
+            const btn = event.currentTarget.closest('.split-btn');
+            const main = btn.querySelector('.btn-main');
+            const close = btn.querySelector('.btn-close');
+            if (btn.getAttribute('data-confirm') === 'true') {
+                const username = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
+                const res = await fetch('/api/student/exam-progress/delete', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ username, paper_id: paperId })
+                });
+                if ((await res.json()).success) loadExams();
+            } else {
+                btn.setAttribute('data-confirm', 'true');
+                btn.style.background = '#dc3545';
+                main.style.color = 'white'; main.textContent = 'Confirm Clear?';
+                close.style.color = 'white'; close.style.background = 'rgba(0,0,0,0.2)';
+                setTimeout(() => {
+                    if (btn && btn.getAttribute('data-confirm') === 'true') {
+                        btn.removeAttribute('data-confirm');
+                        btn.style.background = ''; main.style.color = ''; main.textContent = 'Continue →';
+                        close.style.color = ''; close.style.background = '';
+                    }
+                }, 3000);
+            }
+        }
+
+        function selectSubject(s) {
+            currentSubject = s;
             document.getElementById('subjectView').style.display = 'none';
             document.getElementById('paperView').style.display = 'block';
             document.getElementById('searchContainer').style.display = 'block';
-            document.getElementById('mainTitle').textContent = subject + " Papers";
-            document.getElementById('mainSubtitle').textContent = `Showing all categorized ${subject} papers`;
-            
+            document.getElementById('mainTitle').textContent = s + " Exam Library";
             filterExams();
         }
 
         function filterExams() {
-            const query = document.getElementById('searchInput').value.toLowerCase();
-            const filtered = allExams.filter(exam => 
-                exam.subject === currentSubject && (
-                    exam.title.toLowerCase().includes(query) || 
-                    exam.date.toLowerCase().includes(query) ||
-                    exam.paper.toLowerCase().includes(query)
-                )
-            );
+            const q = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = allExams.filter(e => e.subject === currentSubject && (e.title.toLowerCase().includes(q) || e.date.toLowerCase().includes(q)));
             renderExams(filtered);
         }
 
-        function formatLongDate(dateStr) {
-            if (!dateStr || dateStr === 'Unknown') return dateStr;
-            const months = {
-                'jan': 0, 'feb': 1, 'mar': 2, 'apr': 3, 'may': 4, 'jun': 5,
-                'jul': 6, 'aug': 7, 'sep': 8, 'oct': 9, 'nov': 10, 'dec': 11,
-                'january': 0, 'february': 1, 'march': 2, 'april': 3, 'may': 4, 'june': 5,
-                'july': 6, 'august': 7, 'september': 8, 'october': 9, 'november': 10, 'december': 11
-            };
-            const parts = dateStr.toLowerCase().split(/[\s,]+/);
-            let date = null;
-            
-            if (parts.length >= 2) {
-                const year = parseInt(parts.find(p => p.match(/^\d{4}$/)));
-                const monthName = parts.find(p => months[p] !== undefined);
-                const day = parseInt(parts.find(p => p.match(/^\d{1,2}$/))) || 1;
-                
-                if (year && monthName) {
-                    date = new Date(year, months[monthName], day);
-                }
-            }
-
-            if (date && !isNaN(date.getTime())) {
-                return new Intl.DateTimeFormat('en-GB', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                }).format(date);
-            }
-            return dateStr;
+        function parseExamDate(d) {
+            if (!d || d === 'Unknown') return new Date(0);
+            const months = {'jan':0,'feb':1,'mar':2,'apr':3,'may':4,'jun':5,'jul':6,'aug':7,'sep':8,'oct':9,'nov':10,'dec':11,
+                           'january':0,'february':1,'march':2,'april':3,'may':4,'june':5,'july':6,'august':7,'september':8,'october':9,'november':10,'december':11};
+            const parts = d.toLowerCase().split(/[\s,]+/);
+            let y = parseInt(parts.find(p => p.match(/^\d{4}$/)));
+            let m = parts.find(p => months[p] !== undefined);
+            let day = parseInt(parts.find(p => p.match(/^\d{1,2}$/))) || 1;
+            return (y && m) ? new Date(y, months[m], day) : new Date(0);
         }
 
-        function formatLastAccessed(isoStr) {
-            if (!isoStr) return '';
-            // SQLite timestamp is UTC
-            const date = new Date(isoStr.replace(' ', 'T') + (isoStr.includes('Z') ? '' : 'Z'));
-            if (isNaN(date.getTime())) return '';
+        function formatLongDate(d) {
+            const date = parseExamDate(d);
+            return date.getTime() === 0 ? d : new Intl.DateTimeFormat('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }).format(date);
+        }
 
-            const now = new Date();
-            const isToday = date.toDateString() === now.toDateString();
-            
-            const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            
-            if (isToday) {
-                return `Last accessed: Today, ${timeStr}`;
-            } else {
-                const dateStr = date.toLocaleDateString([], { day: 'numeric', month: 'short' });
-                return `Last accessed: ${dateStr}, ${timeStr}`;
-            }
+        function formatLastAccessed(iso) {
+            if (!iso) return '';
+            const d = new Date(iso.replace(' ', 'T') + (iso.includes('Z') ? '' : 'Z'));
+            if (isNaN(d.getTime())) return '';
+            const now = new Date(), t = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            return (d.toDateString() === now.toDateString()) ? `Last accessed: Today, ${t}` : `Last accessed: ${d.toLocaleDateString([], { day: 'numeric', month: 'short' })}, ${t}`;
         }
 
         function renderExams(exams) {
             const content = document.getElementById('examContent');
             content.innerHTML = '';
-
-            if (exams.length === 0) {
-                content.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;">No papers found.</div>';
-                return;
-            }
-
-            // Sort all exams by date descending (Newest first)
-            exams.sort((a, b) => {
-                const dateA = parseExamDate(a.date);
-                const dateB = parseExamDate(b.date);
-                return dateB - dateA;
-            });
-
+            if (exams.length === 0) { content.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;">No papers found.</div>'; return; }
+            exams.sort((a,b) => parseExamDate(b.date) - parseExamDate(a.date));
             const grid = document.createElement('div');
             grid.className = 'paper-grid';
             grid.style.marginTop = '20px';
-            
             grid.innerHTML = exams.map(exam => {
                 const prog = allProgress[exam.id];
-                let statusClass = 'status-not-started';
-                let statusText = 'Not Started';
-                let btnText = 'Start';
-                let lastAccessedHtml = '';
-
+                let statusClass = 'status-not-started', statusText = 'Not Started', btnText = 'Start', lastAccessedHtml = '';
                 if (prog) {
                     lastAccessedHtml = `<div class="last-accessed">🕒 ${formatLastAccessed(prog.last_updated)}</div>`;
-                    if (prog.status === 'completed') {
-                        statusClass = 'status-completed';
-                        statusText = 'Finished';
-                        btnText = 'Review';
-                    } else {
-                        statusClass = 'status-started';
+                    if (prog.status === 'completed') { statusClass = 'status-completed'; statusText = 'Finished'; btnText = 'Review'; }
+                    else { 
+                        statusClass = 'status-started'; 
                         let left = Math.max(0, (exam.total_questions || 0) - (prog.current_question_idx || 0));
-                        statusText = left > 0 ? `Resume (${left} questions left)` : 'Resume';                        btnText = 'Continue';
+                        statusText = left > 0 ? `Resume (${left} questions left)` : 'Resume';
+                        btnText = 'Continue';
                     }
                 }
-
                 return `
                     <div class="paper-card" onclick="window.location.href='/official_exam_player.html?paper_id=${exam.id}'">
                         <div class="paper-title">${exam.title}</div>
-                        <div class="paper-meta" style="flex-direction: column; align-items: flex-start; gap: 5px;">
-                            <div style="font-weight: 700; color: #1e3c72; font-size: 0.95em;">${formatLongDate(exam.date)}</div>
+                        <div class="paper-meta">
+                            <div style="font-weight: 700; color: var(--primary-color); font-size: 0.95em;">${formatLongDate(exam.date)}</div>
                             <div style="display: flex; justify-content: space-between; width: 100%; align-items: center; margin-top: 5px;">
                                 <span style="color: #666; font-size: 0.9em;">${exam.total_questions || 0} Questions</span>
-                                <div class="status-badge ${statusClass}" style="margin-top:0;">${statusText}</div>
+                                <div class="status-badge ${statusClass}">${statusText}</div>
                             </div>
                             ${lastAccessedHtml}
                         </div>
@@ -469,7 +447,6 @@
                     </div>
                 `;
             }).join('');
-            
             content.appendChild(grid);
         }
 

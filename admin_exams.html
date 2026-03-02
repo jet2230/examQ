@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ExamQ Admin - Library Manager</title>
+    <title>ExamQ Admin - Exam Library Manager</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -140,7 +140,7 @@
             <div class="nav-links">
                 <span id="welcomeUser" style="margin-right: 15px; font-weight: 600; color: #1e3c72;"></span>
                 <a href="/admin_users.html" style="color:#d63384;">⚙️ Users</a>
-                <a href="/exam_questions.html">📖 Library</a>
+                <a href="/exam_questions.html">📖 Exam Library</a>
                 <a href="/results">📊 Results</a>
                 <a href="#" onclick="logout()">🚪 Logout</a>
             </div>
@@ -221,6 +221,30 @@
             window.location.href = 'login.html';
         }
 
+        function showLineAlert(msg, type='info') {
+            const alertDiv = document.createElement('div');
+            alertDiv.style.position = 'fixed';
+            alertDiv.style.top = '20px';
+            alertDiv.style.left = '50%';
+            alertDiv.style.transform = 'translateX(-50%)';
+            alertDiv.style.padding = '12px 25px';
+            alertDiv.style.borderRadius = '8px';
+            alertDiv.style.color = 'white';
+            alertDiv.style.fontWeight = '700';
+            alertDiv.style.zIndex = '9999';
+            alertDiv.style.boxShadow = '0 5px 15px rgba(0,0,0,0.3)';
+            alertDiv.style.transition = 'all 0.3s';
+            if (type === 'error') alertDiv.style.background = '#dc3545';
+            else if (type === 'success') alertDiv.style.background = '#28a745';
+            else alertDiv.style.background = '#1e3c72';
+            alertDiv.textContent = msg;
+            document.body.appendChild(alertDiv);
+            setTimeout(() => {
+                alertDiv.style.opacity = '0';
+                setTimeout(() => alertDiv.remove(), 300);
+            }, 3000);
+        }
+
         async function loadExams() {
             const resp = await fetch('/api/official-exams/list');
             const data = await resp.json();
@@ -255,7 +279,10 @@
 
         async function browseServer() {
             const folder_name = document.getElementById('subjectFolder').value;
-            if (!folder_name) { alert("Please select a subject folder first."); return; }
+            if (!folder_name) { 
+                showLineAlert("Please select a subject folder first.", "error"); 
+                return; 
+            }
             const admin_username = localStorage.getItem('quiz_admin_username') || localStorage.getItem('quiz_username');
             const res = await fetch('/api/admin/list-files', {
                 method: 'POST',
@@ -357,9 +384,14 @@
                     }
                     else if (pData.status === 'completed') {
                         clearInterval(poll); statusText.textContent = "✅ Done!"; progressBar.style.width = '100%';
+                        showLineAlert("Exam imported successfully!", "success");
                         setTimeout(() => { loading.style.display = 'none'; loadExams(); }, 2000);
                     }
-                    else if (pData.status === 'failed') { clearInterval(poll); alert("Failed: " + pData.error); loading.style.display = 'none'; }
+                    else if (pData.status === 'failed') { 
+                        clearInterval(poll); 
+                        showLineAlert("Import failed: " + pData.error, "error");
+                        loading.style.display = 'none'; 
+                    }
                 }, 2000);
             }
         }
@@ -376,7 +408,10 @@
 
         const username = localStorage.getItem('quiz_admin_username');
         if (!username) window.location.href = 'login.html';
-        document.getElementById('welcomeUser').textContent = '👤 ' + username;
+        const welcomeEl = document.getElementById('welcomeUser');
+        const displayUser = username.length > 6 ? username.substring(0, 6) + '...' : username;
+        welcomeEl.textContent = '👤 ' + displayUser;
+        welcomeEl.title = username;
         loadExams();
         loadFolders();
     </script>

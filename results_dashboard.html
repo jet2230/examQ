@@ -4,11 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ExamQ - Results Dashboard</title>
+    <script src="/static/theme_manager.js"></script>
     <style>
+        :root {
+            --primary-color: #1e3c72;
+            --secondary-color: #2a5298;
+            --main-gradient: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            background: var(--main-gradient);
             min-height: 100vh;
             padding: 20px;
         }
@@ -21,7 +27,7 @@
             overflow: hidden;
         }
         .header {
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            background: var(--main-gradient);
             color: white;
             padding: 40px;
             text-align: center;
@@ -36,12 +42,8 @@
             align-items: center;
             border-bottom: 1px solid #eee;
         }
-        .nav-links a {
-            text-decoration: none;
-            color: #1e3c72;
-            font-weight: 600;
-            margin-left: 20px;
-        }
+        .nav-brand { font-weight: 800; color: var(--primary-color); font-size: 1.2em; }
+        .nav-links a { text-decoration: none; color: var(--primary-color); font-weight: 600; margin-left: 20px; }
         .content { padding: 40px; }
 
         .stats-grid {
@@ -57,128 +59,242 @@
             text-align: center;
             border: 1px solid #eee;
         }
-        .stat-value { font-size: 2.2em; font-weight: 800; color: #1e3c72; }
+        .stat-value { font-size: 2.2em; font-weight: 800; color: var(--primary-color); }
         .stat-label { font-size: 0.9em; color: #666; text-transform: uppercase; font-weight: 700; margin-top: 5px; }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
-        th { background: #f1f3f5; color: #1e3c72; font-weight: 700; }
-        .score-badge {
-            padding: 5px 12px;
-            border-radius: 12px;
-            font-weight: 800;
-            font-size: 0.9em;
+        .filter-bar {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid #eee;
+            align-items: flex-end;
+            flex-wrap: wrap;
         }
+        .filter-group { flex: 1; min-width: 200px; }
+        .filter-group label { display: block; font-size: 0.8em; font-weight: 700; color: #666; margin-bottom: 5px; text-transform: uppercase; }
+        .filter-input { width: 100%; padding: 10px 15px; border: 2px solid #eee; border-radius: 8px; outline: none; font-size: 0.95em; }
+        .filter-input:focus { border-color: var(--primary-color); }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f1f3f5; color: var(--primary-color); font-weight: 700; }
+        
+        .score-badge { padding: 5px 12px; border-radius: 12px; font-weight: 800; font-size: 0.9em; }
         .score-high { background: #d4edda; color: #155724; }
         .score-med { background: #fff3cd; color: #856404; }
         .score-low { background: #f8d7da; color: #721c24; }
+
+        .btn-view { background: var(--primary-color); color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: opacity 0.2s; }
+        .btn-view:hover { opacity: 0.9; }
+
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); }
+        .modal-content { background: white; margin: 50px auto; max-width: 900px; max-height: 85vh; border-radius: 20px; overflow: hidden; display: flex; flex-direction: column; }
+        .modal-header { padding: 20px 30px; background: #f1f3f5; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; }
+        .modal-body { padding: 30px; overflow-y: auto; flex: 1; }
+        .review-q-card { background: #f8f9fa; border-radius: 12px; padding: 20px; margin-bottom: 20px; border-left: 5px solid #ddd; }
+        .review-q-card.correct { border-left-color: #28a745; }
+        .review-q-card.wrong { border-left-color: #dc3545; }
+        .q-text { font-weight: 700; color: #333; margin-bottom: 10px; }
+        .ans-text { color: #555; margin-bottom: 10px; font-style: italic; }
+        .fb-text { background: white; padding: 15px; border-radius: 8px; border: 1px solid #eee; font-size: 0.95em; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="navbar">
-            <div style="font-weight: 800; color: #1e3c72; font-size: 1.2em;">🎓 ExamQ Results</div>
+            <div class="nav-brand">🎓 ExamQ Results</div>
             <div class="nav-links">
-                <span id="welcomeUser" style="margin-right: 15px; font-weight: 600; color: #1e3c72;"></span>
-                <a href="/admin_users.html" id="usersLink" class="admin-only" style="display:none; color:#d63384;">⚙️ Users</a>
-                <a href="/admin_exams.html" id="adminLink" class="admin-only" style="display:none; color:#d63384;">⚙️ Exams</a>
+                <span id="welcomeUser" style="margin-right: 15px; font-weight: 600; color: var(--primary-color);"></span>
+                <a href="/admin_users.html" id="usersLink" style="display:none; color:#d63384;">⚙️ Users</a>
+                <a href="/admin_exams.html" id="adminLink" style="display:none; color:#d63384;">⚙️ Exams</a>
                 <a href="/">🏠 Generator</a>
-                <a href="/exam_questions.html">📖 Library</a>
+                <a href="/exam_questions.html">📖 Exam Library</a>
+                <a href="/settings.html">⚙️ Settings</a>
                 <a href="#" onclick="logout()">🚪 Logout</a>
             </div>
         </div>
 
         <div class="header">
             <h1>Performance Dashboard</h1>
-            <p>Track your progress and review previous attempts.</p>
+            <p>Track progress and review student completions.</p>
         </div>
 
         <div class="content">
             <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-value" id="totalQuizzes">0</div>
-                    <div class="stat-label">Total Attempts</div>
+                <div class="stat-card"><div class="stat-value" id="totalQuizzes">0</div><div class="stat-label">Total Attempts</div></div>
+                <div class="stat-card"><div class="stat-value" id="avgScore">0%</div><div class="stat-label">Average Score</div></div>
+                <div class="stat-card"><div class="stat-value" id="topTopic">-</div><div class="stat-label">Recent Student</div></div>
+            </div>
+
+            <div class="filter-bar">
+                <div class="filter-group">
+                    <label>Search Topic / Paper</label>
+                    <input type="text" id="searchTopic" class="filter-input" placeholder="🔍 Filter by name..." oninput="renderTable()">
                 </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="avgScore">0%</div>
-                    <div class="stat-label">Average Score</div>
+                <div id="studentFilterGroup" class="filter-group" style="display:none;">
+                    <label>Search Student</label>
+                    <input type="text" id="searchStudent" class="filter-input" placeholder="👤 Filter by username..." oninput="renderTable()">
                 </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="topTopic">-</div>
-                    <div class="stat-label">Best Subject</div>
+                <div class="filter-group" style="max-width: 150px;">
+                    <label>Min Score %</label>
+                    <input type="number" id="minScore" class="filter-input" placeholder="0" min="0" max="100" oninput="renderTable()">
                 </div>
             </div>
 
-            <h2 style="color: #1e3c72; margin-bottom: 20px;">Recent Activity</h2>
+            <h2 style="color: var(--primary-color); margin-bottom: 20px;">Detailed Activity</h2>
             <table>
                 <thead>
                     <tr>
                         <th>Date</th>
+                        <th id="studentHeader" style="display:none;">Student</th>
                         <th>Topic / Paper</th>
                         <th>Score</th>
-                        <th>Status</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
-                <tbody id="resultsTable">
-                    <!-- Results injected here -->
-                </tbody>
+                <tbody id="resultsTable"></tbody>
             </table>
         </div>
     </div>
 
+    <div id="reviewModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Attempt Review</h2>
+                <span style="cursor:pointer; font-size: 24px;" onclick="closeModal()">&times;</span>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+        </div>
+    </div>
+
     <script>
-        function logout() {
-            localStorage.removeItem('quiz_username');
-            localStorage.removeItem('quiz_admin_username');
-            window.location.href = 'login.html';
-        }
+        let allResults = [];
+        let isAdmin = false;
+
+        function logout() { localStorage.removeItem('quiz_username'); localStorage.removeItem('quiz_admin_username'); window.location.href = 'login.html'; }
 
         async function loadResults() {
             const u = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
-            const isAdmin = !!localStorage.getItem('quiz_admin_username');
+            isAdmin = !!localStorage.getItem('quiz_admin_username');
             if (!u) { window.location.href = 'login.html'; return; }
 
-            document.getElementById('welcomeUser').textContent = '👤 ' + u;
+            const welcomeEl = document.getElementById('welcomeUser');
+            const displayUser = u.length > 6 ? u.substring(0, 6) + '...' : u;
+            welcomeEl.textContent = '👤 ' + displayUser;
+            welcomeEl.title = u;
+
             if (isAdmin) {
                 document.getElementById('adminLink').style.display = 'inline';
                 document.getElementById('usersLink').style.display = 'inline';
+                document.getElementById('studentHeader').style.display = 'table-cell';
+                document.getElementById('studentFilterGroup').style.display = 'block';
             }
 
             try {
                 const res = await fetch(`/api/results?username=${u}`);
                 const data = await res.json();
-                
-                const table = document.getElementById('resultsTable');
-                table.innerHTML = '';
-                
-                let totalPct = 0;
-                data.results.forEach(r => {
-                    const pct = Math.round((r.score / r.total_marks) * 100) || 0;
-                    totalPct += pct;
-                    
-                    let badgeClass = 'score-low';
-                    if (pct >= 70) badgeClass = 'score-high';
-                    else if (pct >= 40) badgeClass = 'score-med';
-
-                    const tr = document.createElement('tr');
-                    const date = new Date(r.timestamp).toLocaleDateString();
-                    tr.innerHTML = `
-                        <td>${date}</td>
-                        <td><strong>${r.topic || 'Official Paper'}</strong></td>
-                        <td><span class="score-badge ${badgeClass}">${r.score} / ${r.total_marks} (${pct}%)</span></td>
-                        <td>Completed</td>
-                    `;
-                    table.appendChild(tr);
-                });
-
-                document.getElementById('totalQuizzes').textContent = data.results.length;
-                if (data.results.length > 0) {
-                    document.getElementById('avgScore').textContent = Math.round(totalPct / data.results.length) + '%';
-                }
-
+                allResults = data.results || [];
+                renderTable();
             } catch (e) { console.error(e); }
         }
 
+        function renderTable() {
+            const topicQuery = document.getElementById('searchTopic').value.toLowerCase();
+            const studentQuery = document.getElementById('searchStudent').value.toLowerCase();
+            const minScorePct = parseInt(document.getElementById('minScore').value) || 0;
+            
+            const table = document.getElementById('resultsTable');
+            table.innerHTML = '';
+            
+            let totalPct = 0, count = 0;
+            
+            allResults.forEach((r, idx) => {
+                const pct = Math.round((r.score / r.total_marks) * 100) || 0;
+                
+                // Filtering
+                if (topicQuery && !r.topic.toLowerCase().includes(topicQuery)) return;
+                if (isAdmin && studentQuery && !r.username.toLowerCase().includes(studentQuery)) return;
+                if (pct < minScorePct) return;
+
+                count++;
+                totalPct += pct;
+                
+                let badgeClass = 'score-low';
+                if (pct >= 70) badgeClass = 'score-high';
+                else if (pct >= 40) badgeClass = 'score-med';
+
+                const tr = document.createElement('tr');
+                const ts = new Date(r.timestamp);
+                const dateStr = ts.toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' });
+                const timeStr = ts.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                
+                let studentTd = isAdmin ? `<td><strong title="${r.username}">${r.username.length > 6 ? r.username.substring(0,6)+'...' : r.username}</strong></td>` : '';
+                
+                tr.innerHTML = `
+                    <td>${dateStr}, ${timeStr}</td>
+                    ${studentTd}
+                    <td><strong>${r.topic}</strong></td>
+                    <td><span class="score-badge ${badgeClass}">${r.score} / ${r.total_marks} (${pct}%)</span></td>
+                    <td><button class="btn-view" onclick="openReview(${idx})">Review</button></td>
+                `;
+                table.appendChild(tr);
+            });
+
+            document.getElementById('totalQuizzes').textContent = count;
+            document.getElementById('avgScore').textContent = count > 0 ? Math.round(totalPct / count) + '%' : '0%';
+            if (count > 0 && isAdmin) {
+                const topUser = allResults.find(r => r.username.toLowerCase().includes(studentQuery))?.username || '-';
+                document.getElementById('topTopic').textContent = topUser.length > 6 ? topUser.substring(0,6)+'...' : topUser;
+                document.getElementById('topTopic').title = topUser;
+            }
+        }
+
+        async function openReview(idx) {
+            const r = allResults[idx];
+            
+            // If this is an official exam with a paper_id, launch the full player in review mode
+            const paperId = r.quiz_data ? r.quiz_data.paper_id : null;
+            if (paperId) {
+                // Check if the paper still exists on the server
+                try {
+                    const checkRes = await fetch(`/api/official-exams/check/${paperId}`);
+                    const checkData = await checkRes.json();
+                    if (checkData.exists) {
+                        window.location.href = `official_exam_player.html?paper_id=${paperId}&mode=review&student=${r.username}`;
+                        return;
+                    }
+                } catch (e) { console.error("Paper check failed", e); }
+            }
+
+            const modal = document.getElementById('reviewModal');
+            const body = document.getElementById('modalBody');
+            document.getElementById('modalTitle').textContent = `${r.username} - ${r.topic}`;
+            body.innerHTML = '';
+            
+            if (Array.isArray(r.answers)) {
+                r.answers.forEach(ans => {
+                    const card = document.createElement('div');
+                    card.className = 'review-q-card ' + (ans.is_correct === false ? 'wrong' : 'correct');
+                    card.innerHTML = `<div class="q-text">Q: ${ans.question || ans.sub_id}</div><div class="ans-text">Answer: ${ans.user_answer || ans.answer || '(empty)'}</div><div class="fb-text">${ans.feedback || 'No feedback.'}</div>`;
+                    body.appendChild(card);
+                });
+            } else {
+                Object.entries(r.answers).forEach(([id, data]) => {
+                    if (id === '_selections') return;
+                    const card = document.createElement('div');
+                    card.className = 'review-q-card';
+                    card.innerHTML = `<div class="q-text">Question ${id}</div><div class="ans-text">Answer: ${data.answer || '(empty)'}</div><div class="fb-text">${data.feedback || 'Not graded.'}</div>`;
+                    body.appendChild(card);
+                });
+            }
+            modal.style.display = 'block';
+        }
+
+        function closeModal() { document.getElementById('reviewModal').style.display = 'none'; }
+        window.onclick = (e) => { if (e.target == document.getElementById('reviewModal')) closeModal(); };
         loadResults();
     </script>
 </body>

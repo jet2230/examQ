@@ -1,154 +1,71 @@
 {
   "paper_id": "2a19759a",
-  "title": "Pearson Edexcel International GCSE (9\u20131) Biology",
+  "title": "Pearson Edexcel International GCSE Biology Paper 2B - November 2025",
   "subject": "Biology",
+  "paper": "2B",
+  "date": "November 2025",
   "qp_img_dir": "/static/exams/2a19759a/qp/",
   "er_text": "",
+  "extract_pages": [],
   "questions": [
     {
       "id": 1,
       "sub_questions": [
-        {
-          "sub_id": "1",
-          "type": "mcq",
-          "max_marks": 3,
-          "ms_text": "An answer that makes reference to one of the following:\n\u2022 The colour of indicator / colour (change) / change in gas composition / change in carbon dioxide / carbon dioxide concentration / ratio of gases / gas exchange / eq (1)",
-          "qp_pages": [
-            2,
-            5
-          ]
-        }
+        { "sub_id": "1(a)", "type": "text", "max_marks": 2, "ms_text": "An explanation that makes reference to two: 1. (increased) temperature / light (1). 2. (increased) rate of photosynthesis (1). 3. (so more) oxygen produced (1).", "qp_pages": [2] },
+        { "sub_id": "1(b)(i)", "type": "mcq", "options": ["A", "B", "C", "D"], "ms_text": "Correct Answer: B (P and R). Q is incorrect as it is respiration. S is incorrect as it is combustion.", "max_marks": 1, "qp_pages": [3] },
+        { "sub_id": "1(b)(ii)", "type": "text", "max_marks": 2, "ms_text": "An explanation that makes reference to two: 1. jar is closed / sealed (1). 2. carbon dioxide is recycled / reused (1). 3. plants respire AND photosynthesise (1).", "qp_pages": [3] },
+        { "sub_id": "1(c)", "type": "text", "max_marks": 2, "ms_text": "Any two from: 1. reduce use of fossil fuels (1). 2. use renewable energy / nuclear (1). 3. plant more trees / reduce deforestation (1). 4. reduce livestock farming (1).", "qp_pages": [3] },
+        { "sub_id": "1(d)", "type": "text", "max_marks": 4, "ms_text": "An explanation that makes reference to four: 1. greenhouse gases trap heat / reflect IR (1). 2. global warming / earth temperature increases (1). 3. ice caps melt / sea levels rise (1). 4. habitat loss / loss of biodiversity (1). 5. extreme weather / migration (1).", "qp_pages": [4] },
+        { "sub_id": "1(e)", "type": "text", "max_marks": 2, "ms_text": "An explanation that makes reference to two: 1. sulfur dioxide dissolves in water (in clouds) (1). 2. forms sulfuric acid / acid rain (1). 3. damages trees / kills fish / lowers pH of lakes (1).", "qp_pages": [4] },
+        { "sub_id": "1(f)", "type": "text", "max_marks": 1, "ms_text": "lichens (1).", "qp_pages": [4] },
+        { "sub_id": "1(g)", "type": "text", "max_marks": 2, "ms_text": "An explanation that makes reference to two: 1. (less) nitrogen oxides / soot (1). 2. reduces acid rain (1). 3. improves air quality / reduces smog (1).", "qp_pages": [5] },
+        { "sub_id": "1(h)", "type": "text", "max_marks": 2, "ms_text": "A description that makes reference to: 1. CO binds to haemoglobin (1). 2. reduces oxygen-carrying capacity of blood (1).", "qp_pages": [5] }
       ]
     },
     {
       "id": 2,
       "sub_questions": [
-        {
-          "sub_id": "2",
-          "type": "text/mcq/calculation/draw/list",
-          "max_marks": 4,
-          "ms_text": "\u2022   the jar is closed / jar is a sealed system     Accept no changes in seasons",
-          "qp_pages": [
-            6,
-            9
-          ]
-        }
+        { "sub_id": "2(a)(i)", "type": "text", "max_marks": 2, "ms_text": "1. 10 / 10.1 (1). 2. 10.1 / 10.2 (1). Accept any range between 10.0 and 10.3.", "qp_pages": [6] },
+        { "sub_id": "2(a)(ii)", "type": "text", "max_marks": 4, "ms_text": "A description that makes reference to four: 1. use quadrats (1). 2. random sampling / random coordinates (1). 3. count number of species / named species (1). 4. repeat at different heights / areas (1). 5. calculate mean per quadrat (1).", "qp_pages": [7] },
+        { "sub_id": "2(b)", "type": "text", "max_marks": 4, "ms_text": "An answer that makes reference to four: 1. light intensity increases with height (1). 2. temperature increases with height (1). 3. more light/warmth for photosynthesis (1). 4. more minerals/water at base (1). 5. competition for space (1).", "qp_pages": [8] }
       ]
     },
     {
       "id": 3,
       "sub_questions": [
-        {
-          "sub_id": "3",
-          "type": "mcq",
-          "max_marks": 2,
-          "ms_text": "The process of transcription in the nucleus is followed by translation on ribosomes. Messenger RNA (mRNA) is made from DNA through transcription, and then moves to the ribosome where it is translated into a polypeptide chain.",
-          "qp_pages": [
-            10,
-            12
-          ]
-        }
+        { "sub_id": "3(a)", "type": "mcq", "options": ["A", "B", "C", "D"], "ms_text": "Correct Answer: C (oestrogen). A is incorrect as adrenaline is for fight/flight. B is incorrect as insulin is for glucose. D is incorrect as testosterone is male.", "max_marks": 1, "qp_pages": [10] },
+        { "sub_id": "3(b)(i)", "type": "text", "max_marks": 2, "ms_text": "An explanation that makes reference to two: 1. thickening of uterus lining (1). 2. maintenance of lining (1). 3. inhibits FSH / LH (1).", "qp_pages": [11] },
+        { "sub_id": "3(b)(ii)", "type": "text", "max_marks": 2, "ms_text": "An explanation that makes reference to two: 1. corpus luteum produces progesterone (1). 2. lining remains thick for implantation (1). 3. if no pregnancy, progesterone falls and lining sheds (1).", "qp_pages": [11] },
+        { "sub_id": "3(b)(iii)", "type": "text", "max_marks": 4, "ms_text": "An explanation that makes reference to: 1. placenta develops (1). 2. diffusion of glucose/oxygen to foetus (1). 3. diffusion of CO2/urea from foetus (1). 4. umbilical cord transports blood (1).", "qp_pages": [12] }
       ]
     },
     {
       "id": 4,
       "sub_questions": [
-        {
-          "sub_id": "4",
-          "type": "text",
-          "max_marks": 8,
-          "qp_pages": [
-            14,
-            15
-          ]
-        }
+        { "sub_id": "4(a)", "type": "mcq", "options": ["A", "B", "C", "D"], "ms_text": "Correct Answer: D (X, Y and Z). All three genotypes (AA, Aa, aa) result from a cross of two heterozygotes.", "max_marks": 1, "qp_pages": [14] },
+        { "sub_id": "4(b)(i)", "type": "text", "max_marks": 2, "ms_text": "An answer that makes reference to two: 1. parents are Aa and Aa (1). 2. offspring genotypes are AA, Aa, Aa, aa (1). 3. ratio 3:1 (1).", "qp_pages": [15] },
+        { "sub_id": "4(b)(ii)", "type": "text", "max_marks": 2, "ms_text": "A description that makes reference to two: 1. cystic fibrosis (1). 2. mucus in lungs / digestive system (1). 3. difficulty breathing / absorbing nutrients (1).", "qp_pages": [15] },
+        { "sub_id": "4(b)(iii)", "type": "text", "max_marks": 3, "ms_text": "A description that makes reference to three: 1. gene therapy (1). 2. use of vector / virus / inhaler (1). 3. insert working allele into cells (1). 4. cells produce correct protein (1).", "qp_pages": [15] }
       ]
     },
     {
       "id": 5,
       "sub_questions": [
-        {
-          "sub_id": "5",
-          "type": "text/mcq/calculation/draw/list",
-          "max_marks": 13,
-          "ms_text": "An answer that that makes reference to five of the following:\n\n1. antibodies produced after day 3 / after first dose / antibodies increase after 3 days / eq (1)\n2. memory cells are made / eq (1)\n3. primary (immune) response occurs after first dose / secondary (immune) response occurs after second dose / at day 30 / eq (1)\n4. (secondary response) has higher antibody number / quicker response / more antibodies (than primary) made after 30 days / more antibodies (than primary) after second dose / eq (1)\n5. person 1 makes most antibodies / highest peaks / biggest responses / person 3 has poor response / eq (1)\n6. no need for needles / easier to administer / would be cheaper / no need for medical professionals / eq (1)\n7. small sample size / other people could have different responses / may not work on everyone / eq (1)\n8. no idea of sex / health / infection state / age / previous exposure to viruses / eq (1)\n9. not tested on other pathogens / may not work for all viruses / eq (1)\n10.if people are immune then viruses cannot reproduce / could provide herd immunity / eq (1)",
-          "qp_pages": [
-            16,
-            19
-          ]
-        }
+        { "sub_id": "5(a)(i)", "type": "calculation", "max_marks": 2, "ms_text": "9.4 (2 marks). (Calculation: 15 / 1.6). Accept 9. Allow 1 mark for correct working.", "qp_pages": [16] },
+        { "sub_id": "5(a)(ii)", "type": "text", "max_marks": 3, "ms_text": "An answer that makes reference to: 1. antibodies produced (1). 2. memory cells made (1). 3. secondary response faster/higher (1).", "qp_pages": [17] },
+        { "sub_id": "5(a)(iii)", "type": "text", "max_marks": 2, "ms_text": "An answer that makes reference to two: 1. no need for needles / cheaper (1). 2. easier to administer (1). 3. herd immunity (1).", "qp_pages": [17] },
+        { "sub_id": "5(b)(i)", "type": "text", "max_marks": 1, "ms_text": "antigen (1).", "qp_pages": [18] },
+        { "sub_id": "5(b)(ii)", "type": "text", "max_marks": 4, "ms_text": "An answer that makes reference to: 1. small sample size (1). 2. health / age / sex not known (1). 3. only one virus tested (1). 4. no control group mentioned (1).", "qp_pages": [19] },
+        { "sub_id": "5(b)(iii)", "type": "text", "max_marks": 1, "ms_text": "lymphocyte / B-cell (1).", "qp_pages": [19] }
       ]
     },
     {
       "id": 6,
       "sub_questions": [
-        {
-          "sub_id": "6",
-          "type": "text/mcq/calculation/draw/list",
-          "max_marks": 12,
-          "ms_text": "An answer that that makes reference to five of the following:\n\n1. antibodies produced after day 3 / after first dose / antibodies increase after 3 days / eq (1)\n2. memory cells are made / eq (1)\n3. primary (immune) response occurs after first dose / secondary (immune) response occurs after second dose / at day 30 / eq (1)\n4. (secondary response) has higher antibody number / quicker response / more antibodies (than primary) made after 30 days / more antibodies (than primary) after second dose / eq (1)\n5. person 1 makes most antibodies / highest peaks / biggest responses / person 3 has poor response / eq (1)\n6. no need for needles / easier to administer / would be cheaper / no need for medical professionals / eq (1)\n7. small sample size / other people could have different responses / may not work on everyone / eq (1)\n8. no idea of sex / health / infection state / age / previous exposure to viruses / eq (1)\n9. not tested on other pathogens / may not work for all viruses / eq (1)\n10.if people are immune then viruses cannot reproduce / could provide herd immunity / eq (1)",
-          "qp_pages": [
-            21,
-            23
-          ]
-        }
-      ]
-    },
-    {
-      "id": 13,
-      "sub_questions": [
-        {
-          "sub_id": "13",
-          "type": "text/mcq/calculation/draw/list",
-          "max_marks": 1,
-          "ms_text": "\u2022   colour of indicator / colour (change) / change in gas composition / change in carbon dioxide / carbon dioxide concentration / ratio of gases / gas exchange / eq (1)",
-          "qp_pages": [
-            13
-          ]
-        }
-      ]
-    },
-    {
-      "id": 20,
-      "sub_questions": [
-        {
-          "sub_id": "20",
-          "type": "text/mcq",
-          "max_marks": 2,
-          "qp_pages": [
-            2
-          ]
-        }
-      ]
-    },
-    {
-      "id": 25,
-      "sub_questions": [
-        {
-          "sub_id": "25",
-          "type": "text/mcq/calculation/draw/list",
-          "max_marks": 4,
-          "ms_text": "An answer that that makes reference to four of the following:\n\n1. transcription in nucleus / translation in the cytoplasm / translation on ribosomes (1)\nAccept mRNA made by transcription / is made from gene / from DNA\n2. messenger RNA made by transcription / mRNA made by transcription (1) \n3. mRNA moves to ribosome / mRNA binds to ribosome (1)\n4. transfer RNA brings amino acid / tRNA brings amino acids (1)\n5. codons bind to anticodons / eq (1) Reject if codons are on tRNA / anticodons on mRNA\n6. polypeptide chain made / chain of amino acids made / amino acids joined together / eq (1)",
-          "qp_pages": [
-            3
-          ]
-        }
-      ]
-    },
-    {
-      "id": 200,
-      "sub_questions": [
-        {
-          "sub_id": "200",
-          "type": "text/mcq/calculation/draw/list",
-          "max_marks": "8",
-          "ms_text": "...",
-          "qp_pages": [
-            22
-          ]
-        }
+        { "sub_id": "6(a)", "type": "text", "max_marks": 4, "ms_text": "An answer that makes reference to four: 1. transcription in nucleus (1). 2. translation at ribosomes (1). 3. mRNA copied from DNA (1). 4. tRNA brings amino acids (1). 5. codons bind to anticodons (1). 6. polypeptide chain made (1).", "qp_pages": [21] },
+        { "sub_id": "6(b)(i)", "type": "calculation", "max_marks": 3, "ms_text": "1150 (%) (3 marks). (Calculation: (25 - 2) / 2 * 100). Allow 1 mark for 23, 2 marks for 23/2.", "qp_pages": [22] },
+        { "sub_id": "6(b)(ii)", "type": "text", "max_marks": 5, "ms_text": "An answer that makes reference to five: 1. restrict movement (1). 2. keep warm / indoors (1). 3. less energy lost as heat / movement (1). 4. more energy for growth (1). 5. high protein / calorie food (1). 6. antibiotics / hormones (1).", "qp_pages": [23] }
       ]
     }
-  ],
-  "extract_pages": []
+  ]
 }

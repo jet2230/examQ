@@ -96,7 +96,7 @@
             <div class="nav-links">
                 <span id="welcomeUser" style="margin-right: 15px; font-weight: 600; color: #1e3c72;"></span>
                 <a href="/admin_exams.html" style="color:#d63384;">⚙️ Exams</a>
-                <a href="/exam_questions.html">📖 Library</a>
+                <a href="/exam_questions.html">📖 Exam Library</a>
                 <a href="/results">📊 Results</a>
                 <a href="#" onclick="logout()">🚪 Logout</a>
             </div>
@@ -155,7 +155,11 @@
         async function loadUsers() {
             const admin_username = localStorage.getItem('quiz_admin_username');
             if (!admin_username) { window.location.href = 'login.html'; return; }
-            document.getElementById('welcomeUser').textContent = '👤 ' + admin_username;
+            
+            const welcomeEl = document.getElementById('welcomeUser');
+            const displayAdmin = admin_username.length > 6 ? admin_username.substring(0, 6) + '...' : admin_username;
+            welcomeEl.textContent = '👤 ' + displayAdmin;
+            welcomeEl.title = admin_username;
 
             const res = await fetch('/api/admin/users', {
                 method: 'POST',
@@ -169,8 +173,9 @@
                 for (const [username, info] of Object.entries(data.users)) {
                     const tr = document.createElement('tr');
                     const joined = info.created_at ? new Date(info.created_at).toLocaleDateString() : '-';
+                    const displayUser = username.length > 6 ? username.substring(0, 6) + '...' : username;
                     tr.innerHTML = `
-                        <td><strong>${username}</strong></td>
+                        <td><strong title="${username}">${displayUser}</strong></td>
                         <td><span class="role-badge role-${info.role}">${info.role}</span></td>
                         <td>${joined}</td>
                         <td>${info.quizzes_taken || 0}</td>
