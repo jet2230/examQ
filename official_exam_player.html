@@ -29,9 +29,11 @@
             align-items: center;
             background: var(--main-gradient);
             color: white;
-            z-index: 100;
+            z-index: 1000;
             box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            position: relative;
         }
+        .nav-links { display: flex; align-items: center; }
         .navbar a {
             text-decoration: none;
             color: white;
@@ -42,6 +44,42 @@
             transition: opacity 0.2s;
         }
         .navbar a:hover { opacity: 1; }
+
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            cursor: pointer;
+            padding: 5px;
+        }
+        .hamburger div {
+            width: 25px;
+            height: 3px;
+            background-color: white;
+            border-radius: 2px;
+        }
+
+        @media (max-width: 900px) {
+            .hamburger { display: flex; }
+            .navbar > div:first-child {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            .nav-links {
+                display: none;
+                width: 100%;
+                flex-direction: column;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                background: var(--main-gradient);
+                padding: 20px;
+                box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+                z-index: 1000;
+            }
+            .nav-links.active { display: flex; }
+            .nav-links a { margin: 10px 0; font-size: 1.1em; width: 100%; text-align: center; }
+        }
         
         .main-container {
             display: flex;
@@ -238,6 +276,136 @@
             width: 100%;
         }
         
+        /* Graph Styling */
+        .graph-container {
+            border: 2px solid #eee;
+            border-radius: 12px;
+            padding: 20px;
+            background: #fff;
+            margin: 15px 0;
+        }
+        .graph-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .graph-canvas-wrapper {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1/1;
+            max-width: 500px;
+            margin: 0 auto;
+            border: 2px solid #333;
+            background-image: 
+                linear-gradient(#ccc 1px, transparent 1px),
+                linear-gradient(90deg, #ccc 1px, transparent 1px),
+                linear-gradient(#eee 1px, transparent 1px),
+                linear-gradient(90deg, #eee 1px, transparent 1px);
+            background-size: 50px 50px, 50px 50px, 10px 10px, 10px 10px;
+            cursor: crosshair;
+        }
+        .graph-point {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: red;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+        .graph-point.set-2 { background: blue; }
+        .graph-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        .axis-label-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+        .line-toggle {
+            padding: 8px 15px;
+            border-radius: 20px;
+            border: 2px solid #ddd;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        .line-toggle.active.set-1 { background: #fee2e2; border-color: red; color: red; }
+        .line-toggle.active.set-2 { background: #dbeafe; border-color: blue; color: blue; }
+
+        /* Drawing Canvas Styling */
+        .canvas-container {
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            background: white;
+            margin: 15px 0;
+            padding: 10px;
+        }
+        .canvas-wrapper {
+            position: relative;
+            width: 100%;
+            background: #fff;
+            border: 1px solid #eee;
+            touch-action: none;
+            cursor: crosshair;
+        }
+        .canvas-wrapper[data-tool="text"] { cursor: text; }
+        .canvas-wrapper[data-tool="brush"] { cursor: crosshair; }
+        .canvas-wrapper[data-tool="line"] { cursor: crosshair; }
+        .canvas-wrapper canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+        .canvas-text-input {
+            position: absolute;
+            border: 1px solid #1e3c72;
+            background: rgba(255,255,255,0.9);
+            padding: 2px 5px;
+            font-family: sans-serif;
+            outline: none;
+            z-index: 10;
+            display: none;
+        }
+        .canvas-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .tool-btn {
+            padding: 5px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #f8f9fa;
+            cursor: pointer;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+        .tool-btn.active {
+            background: #1e3c72;
+            color: white;
+            border-color: #1e3c72;
+        }
+        .color-picker {
+            width: 30px;
+            height: 30px;
+            padding: 0;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
         .feedback-zone {
             margin-top: 20px;
             padding: 15px;
@@ -301,7 +469,7 @@
             <div style="display: flex; justify-content: space-between; margin-top: auto; padding-top: 20px; gap: 10px;">
                 <button class="control-btn btn-prev" id="prevBtn" onclick="changeQuestion(-1)">← Previous</button>
                 <button class="control-btn btn-next" id="nextBtn" onclick="changeQuestion(1)">Next →</button>
-                <button class="control-btn" id="finishBtn" onclick="submitFullExam()" style="display:none; background: linear-gradient(135deg, #28a745 0%, #218838 100%); color: white; flex: 1;">Finish & Submit Exam</button>
+                <button class="control-btn" id="finishBtn" onclick="submitFullExam(this)" style="display:none; background: linear-gradient(135deg, #28a745 0%, #218838 100%); color: white; flex: 1;">Finish & Submit Exam</button>
             </div>
         </div>
     </div>
@@ -595,28 +763,40 @@
             render();
         }
 
-        function render() {
+        function render(preserveScroll = false) {
             const list = document.getElementById('questionList');
             const paper = document.getElementById('paperPanel');
-            list.innerHTML = '';
-            paper.innerHTML = '';
+            const panel = document.getElementById('answerPanel');
+            
+            // If preserving scroll, we only want to update the answer list UI
+            // but we don't want to blow away the paper images or reset positions
+            if (!preserveScroll) {
+                list.innerHTML = '';
+                paper.innerHTML = '';
+                panel.scrollTop = 0;
+                paper.scrollTop = 0;
+            }
 
             // Sync the dropdown
             document.getElementById('questionJump').value = currentGroupIdx;
 
             const group = pageGroups[currentGroupIdx];
-            
-            // Load all pages relevant to this group
             const allPages = [...new Set(group.questions.flatMap(q => q.sub_questions.flatMap(sq => sq.qp_pages)))].sort((a,b)=>a-b);
-            allPages.forEach(pNum => {
-                const img = document.createElement('img');
-                img.id = 'page_' + pNum;
-                img.src = `${examData.qp_img_dir}page_${pNum.toString().padStart(2, '0')}.png`;
-                img.className = 'paper-page';
-                paper.appendChild(img);
-            });
+            
+            // Load all pages relevant to this group (Only if not preserving scroll)
+            if (!preserveScroll) {
+                allPages.forEach(pNum => {
+                    const img = document.createElement('img');
+                    img.id = 'page_' + pNum;
+                    img.src = `${examData.qp_img_dir}page_${pNum.toString().padStart(2, '0')}.png`;
+                    img.className = 'paper-page';
+                    paper.appendChild(img);
+                });
+            }
 
-            const panel = document.getElementById('answerPanel');
+            // We always need to refresh the list content because toggle state changes
+            list.innerHTML = ''; 
+            
             panel.onscroll = () => {
                 if (isManualJumping) return;
                 const active = document.activeElement;
@@ -672,30 +852,151 @@
                     const div = document.createElement('div');
                     div.className = 'sub-question-item';
                     div.setAttribute('data-page', sq.qp_pages[0]);
-                    
-                    const saved = savedAnswers[sq.sub_id] || {};
-                    
-                    // Dynamic height based on marks
-                    let height = 120;
-                    if (sq.max_marks >= 30) height = 600;
-                    else if (sq.max_marks >= 10) height = 400;
-                    else if (sq.max_marks >= 5) height = 250;
 
-                    div.innerHTML = `
+                    const saved = savedAnswers[sq.sub_id] || {};
+
+                    // Header
+                    let html = `
                         <div class="sub-header">
                             <span style="font-weight:800; color:#1e3c72;">Question ${sq.sub_id}</span>
                             <span class="mark-badge">${sq.max_marks} Marks</span>
                         </div>
-                        <textarea id="ans_${sq.sub_id}" oninput="updateAnswer('${sq.sub_id}')" 
-                            style="height: ${height}px;"
-                            placeholder="Type your answer here...">${saved.answer || ''}</textarea>
-                        <button class="control-btn btn-grade" onclick="grade('${sq.sub_id}', '${sq.type}')">Submit & Grade</button>
+                    `;
+
+                    // Answer Input
+                    if (sq.type === 'mcq') {
+                        html += `<div class="mcq-options" style="margin: 15px 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">`;
+                        (sq.options || ['A', 'B', 'C', 'D']).forEach(opt => {
+                            const isChecked = saved.answer === opt ? 'checked' : '';
+                            html += `
+                                <label style="display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; background: ${isChecked ? '#e3f2fd' : 'white'};">
+                                    <input type="radio" name="ans_${sq.sub_id}" value="${opt}" ${isChecked} onchange="updateMcqAnswer('${sq.sub_id}', '${opt}')">
+                                    <span style="font-weight: bold;">${opt}</span>
+                                </label>
+                            `;
+                        });
+                        html += `</div>`;
+                    } else if (sq.type === 'calculation') {
+                        const currentAnswers = saved.answer ? saved.answer.split('\n---\n') : ['', ''];
+                        html += `
+                            <div class="calculation-input" id="ans_${sq.sub_id}">
+                                <div style="margin-bottom: 10px;">
+                                    <label style="display: block; font-size: 0.85em; font-weight: bold; color: #666; margin-bottom: 5px;">WORKING OUT:</label>
+                                    <textarea class="calc-working" oninput="updateCalculationAnswer('${sq.sub_id}')"
+                                        style="width: 100%; height: 100px; padding: 10px; border: 1px solid #ddd; border-radius: 8px; outline: none; font-family: monospace;"
+                                        placeholder="Show your working here...">${currentAnswers[0] || ''}</textarea>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <label style="font-weight: bold; color: #1e3c72;">${sq.final_label || 'Answer'}:</label>
+                                    <input type="text" class="calc-answer" value="${currentAnswers[1] || ''}" 
+                                        oninput="updateCalculationAnswer('${sq.sub_id}')"
+                                        style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; outline: none; font-weight: bold;">
+                                    ${sq.final_unit ? `<span style="font-weight: bold; color: #666;">${sq.final_unit}</span>` : ''}
+                                </div>
+                            </div>
+                        `;
+                    } else if (sq.type === 'list') {
+                        const currentAnswers = saved.answer ? saved.answer.split('\n---\n') : [];
+                        html += `<div class="multi-line-input" id="ans_${sq.sub_id}" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px;">`;
+                        for (let i = 0; i < sq.max_marks; i++) {
+                            const val = currentAnswers[i] || '';
+                            html += `
+                                <div style="display: flex; flex-direction: column; gap: 5px;">
+                                    <span style="color: #666; font-weight: bold; font-size: 0.8em;">PART ${i+1}:</span>
+                                    <textarea class="line-input" data-idx="${i}" 
+                                        oninput="updateMultiLineAnswer('${sq.sub_id}')"
+                                        style="width: 100%; height: 60px; padding: 8px; border: 1px solid #ddd; border-radius: 8px; outline: none; resize: vertical;"
+                                        placeholder="Enter part ${i+1} of your answer...">${val}</textarea>
+                                </div>
+                            `;
+                        }
+                        html += `</div>`;
+                    } else if (sq.type === 'graph') {
+                        let graphData = { points1: [], points2: [], xAxis: '', yAxis: '', currentSet: 1 };
+                        try { if (saved.answer) graphData = JSON.parse(saved.answer); } catch(e) {}
+                        
+                        html += `
+                            <div class="graph-container" id="ans_${sq.sub_id}">
+                                <input type="text" class="axis-label-input y-axis" placeholder="Y-axis Label (e.g. Time taken in seconds)" 
+                                    oninput="updateGraphData('${sq.sub_id}')" value="${graphData.yAxis || ''}">
+                                
+                                <div class="graph-controls">
+                                    <button class="line-toggle set-1 ${graphData.currentSet === 1 ? 'active' : ''}" 
+                                        onclick="toggleGraphSet('${sq.sub_id}', 1)">Line 1 (Red)</button>
+                                    <button class="line-toggle set-2 ${graphData.currentSet === 2 ? 'active' : ''}" 
+                                        onclick="toggleGraphSet('${sq.sub_id}', 2)">Line 2 (Blue)</button>
+                                    <button class="control-btn" style="background:#666; margin-left:auto;" 
+                                        onclick="clearGraph('${sq.sub_id}')">Clear Current Line</button>
+                                </div>
+
+                                <div class="graph-canvas-wrapper" onclick="plotPoint(event, '${sq.sub_id}')">
+                                    <svg class="graph-svg" id="svg_${sq.sub_id}" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
+                                    <div id="points_${sq.sub_id}"></div>
+                                </div>
+
+                                <input type="text" class="axis-label-input x-axis" placeholder="X-axis Label (e.g. Distance in cm)" 
+                                    style="margin-top:10px;" oninput="updateGraphData('${sq.sub_id}')" value="${graphData.xAxis || ''}">
+                                
+                                <p style="font-size:0.8em; color:#666; margin-top:10px;">
+                                    Tip: Click on the grid to plot points. They will be joined by straight lines automatically.
+                                </p>
+                            </div>
+                        `;
+                        setTimeout(() => redrawGraph(sq.sub_id), 100);
+                    } else if (sq.type === 'draw') {
+                        html += `
+                            <div class="canvas-container" id="ans_${sq.sub_id}">
+                                <div class="canvas-wrapper">
+                                    <canvas id="canvas_${sq.sub_id}" width="800" height="400" style="background:white;"></canvas>
+                                    <input type="text" id="text_input_${sq.sub_id}" class="canvas-text-input">
+                                </div>
+                                <div class="canvas-controls">
+                                    <div style="display:flex; gap:5px; margin-right:10px;">
+                                        <button class="tool-btn active" id="btn_brush_${sq.sub_id}" onclick="setDrawTool('${sq.sub_id}', 'brush')">🖌️ Brush</button>
+                                        <button class="tool-btn" id="btn_line_${sq.sub_id}" onclick="setDrawTool('${sq.sub_id}', 'line')">📏 Line</button>
+                                        <button class="tool-btn" id="btn_text_${sq.sub_id}" onclick="setDrawTool('${sq.sub_id}', 'text')">🔤 Text</button>
+                                    </div>
+                                    <input type="color" class="color-picker" id="color_${sq.sub_id}" value="#000000">
+                                    <input type="range" min="1" max="10" value="2" id="size_${sq.sub_id}" style="width: 80px;">
+                                    <button class="control-btn" style="background:#666; font-size:0.8em; padding:5px 10px;" 
+                                        onclick="clearCanvas('${sq.sub_id}')">Clear</button>
+                                </div>
+                            </div>
+                        `;
+                        setTimeout(() => initCanvas(sq.sub_id), 100);
+                    } else {
+                        // Use textarea if marks > 1 OR if the paper explicitly provides multiple lines
+                        if (sq.max_marks === 1 && (!sq.lines_provided || sq.lines_provided <= 1)) {
+                            html += `
+                                <input type="text" id="ans_${sq.sub_id}" oninput="updateAnswer('${sq.sub_id}')"
+                                    style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; outline: none; font-size: 1em;"
+                                    placeholder="Type your answer here..." value="${saved.answer || ''}">
+                            `;
+                        } else {
+                            // Dynamic height based on marks or provided lines
+                            let height = 120;
+                            if (sq.lines_provided) height = Math.max(60, sq.lines_provided * 35);
+                            else if (sq.max_marks >= 30) height = 600;
+                            else if (sq.max_marks >= 10) height = 400;
+                            else if (sq.max_marks >= 5) height = 250;
+
+                            html += `
+                                <textarea id="ans_${sq.sub_id}" oninput="updateAnswer('${sq.sub_id}')"
+                                    style="height: ${height}px;"
+                                    placeholder="Type your answer here...">${saved.answer || ''}</textarea>
+                            `;
+                        }
+                    }
+
+                    html += `
+                        <button class="control-btn btn-grade" onclick="grade('${sq.sub_id}', '${sq.type}', this)">Submit & Grade</button>
                         <div id="fb_${sq.sub_id}" class="feedback-zone ${saved.feedback ? 'show' : ''}">${saved.feedback || ''}</div>
                     `;
+
+                    div.innerHTML = html;
                     list.appendChild(div);
                 });
-            });
-            
+            });            
             // Button Visibility
             document.getElementById('prevBtn').style.visibility = currentGroupIdx === 0 ? 'hidden' : 'visible';
             if (currentGroupIdx === pageGroups.length - 1) {
@@ -706,8 +1007,10 @@
                 document.getElementById('finishBtn').style.display = 'none';
             }
 
-            // Jump to first page of group
-            setTimeout(() => jump(group.page), 100);
+            // Jump to first page of group only if NOT preserving scroll
+            if (!preserveScroll) {
+                setTimeout(() => jump(group.page), 100);
+            }
         }
 
         function updateAnswer(id) {
@@ -716,10 +1019,295 @@
             saveProgress();
         }
 
+        function updateMcqAnswer(sqId, val) {
+            if (!savedAnswers[sqId]) savedAnswers[sqId] = {};
+            savedAnswers[sqId].answer = val;
+            render(); 
+            saveProgress();
+        }
+
+        function updateMultiLineAnswer(sqId) {
+            if (!savedAnswers[sqId]) savedAnswers[sqId] = {};
+            const container = document.getElementById('ans_' + sqId);
+            const inputs = Array.from(container.querySelectorAll('.line-input'));
+            const fullAnswer = inputs.map(input => input.value).join('\n---\n');
+            savedAnswers[sqId].answer = fullAnswer;
+            saveProgress();
+        }
+
+        function updateCalculationAnswer(sqId) {
+            if (!savedAnswers[sqId]) savedAnswers[sqId] = {};
+            const container = document.getElementById('ans_' + sqId);
+            const working = container.querySelector('.calc-working').value;
+            const final = container.querySelector('.calc-answer').value;
+            savedAnswers[sqId].answer = working + '\n---\n' + final;
+            saveProgress();
+        }
+
         function jump(pageNum) {
             const img = document.getElementById('page_' + pageNum);
             if (img) img.scrollIntoView({ behavior: 'smooth', block: 'start' });
             lastJumpedPage = pageNum;
+        }
+
+        // --- GRAPH FUNCTIONS ---
+        function toggleGraphSet(sqId, setNum) {
+            let data = getGraphData(sqId);
+            data.currentSet = setNum;
+            savedAnswers[sqId].answer = JSON.stringify(data);
+            render(true); // Preserve scroll position
+        }
+
+        function getGraphData(sqId) {
+            if (!savedAnswers[sqId]) savedAnswers[sqId] = {};
+            if (!savedAnswers[sqId].answer) return { points1: [], points2: [], xAxis: '', yAxis: '', currentSet: 1 };
+            try { return JSON.parse(savedAnswers[sqId].answer); } catch(e) { return { points1: [], points2: [], xAxis: '', yAxis: '', currentSet: 1 }; }
+        }
+
+        function updateGraphData(sqId) {
+            const container = document.getElementById('ans_' + sqId);
+            const data = getGraphData(sqId);
+            data.xAxis = container.querySelector('.x-axis').value;
+            data.yAxis = container.querySelector('.y-axis').value;
+            savedAnswers[sqId].answer = JSON.stringify(data);
+            saveProgress();
+        }
+
+        function plotPoint(event, sqId) {
+            const wrapper = event.currentTarget;
+            const rect = wrapper.getBoundingClientRect();
+            const x = ((event.clientX - rect.left) / rect.width) * 100;
+            const y = ((event.clientY - rect.top) / rect.height) * 100;
+            
+            const data = getGraphData(sqId);
+            const point = { x, y };
+            
+            if (data.currentSet === 1) data.points1.push(point);
+            else data.points2.push(point);
+            
+            // Sort points by X for easier line drawing
+            data.points1.sort((a,b) => a.x - b.x);
+            data.points2.sort((a,b) => a.x - b.x);
+            
+            savedAnswers[sqId].answer = JSON.stringify(data);
+            redrawGraph(sqId);
+            saveProgress();
+        }
+
+        function redrawGraph(sqId) {
+            const data = getGraphData(sqId);
+            const pointsDiv = document.getElementById('points_' + sqId);
+            const svg = document.getElementById('svg_' + sqId);
+            if (!pointsDiv || !svg) return;
+
+            pointsDiv.innerHTML = '';
+            svg.innerHTML = '';
+
+            const drawSet = (pts, className, color) => {
+                let pathD = '';
+                pts.forEach((p, i) => {
+                    const dot = document.createElement('div');
+                    dot.className = 'graph-point ' + className;
+                    dot.style.left = p.x + '%';
+                    dot.style.top = p.y + '%';
+                    pointsDiv.appendChild(dot);
+
+                    if (i === 0) pathD += `M ${p.x} ${p.y}`;
+                    else pathD += ` L ${p.x} ${p.y}`;
+                });
+
+                if (pathD) {
+                    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    path.setAttribute('d', pathD);
+                    path.setAttribute('stroke', color);
+                    path.setAttribute('stroke-width', '2');
+                    path.setAttribute('fill', 'none');
+                    svg.appendChild(path);
+                }
+            };
+
+            drawSet(data.points1, '', 'red');
+            drawSet(data.points2, 'set-2', 'blue');
+        }
+
+        function clearGraph(sqId) {
+            const data = getGraphData(sqId);
+            if (data.currentSet === 1) data.points1 = [];
+            else data.points2 = [];
+            savedAnswers[sqId].answer = JSON.stringify(data);
+            redrawGraph(sqId);
+            saveProgress();
+        }
+
+        // --- DRAWING FUNCTIONS ---
+        let canvasTools = {}; // Tracks current tool per sqId
+
+        function setDrawTool(sqId, tool) {
+            canvasTools[sqId] = tool;
+            const container = document.getElementById('ans_' + sqId);
+            if (container) {
+                container.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+                const btn = document.getElementById(`btn_${tool}_${sqId}`);
+                if (btn) btn.classList.add('active');
+                
+                const wrapper = container.querySelector('.canvas-wrapper');
+                if (wrapper) {
+                    wrapper.setAttribute('data-tool', tool);
+                }
+            }
+        }
+
+        function initCanvas(sqId) {
+            const canvas = document.getElementById('canvas_' + sqId);
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const colorPicker = document.getElementById('color_' + sqId);
+            const sizePicker = document.getElementById('size_' + sqId);
+            
+            if (!canvasTools[sqId]) canvasTools[sqId] = 'brush';
+            setDrawTool(sqId, canvasTools[sqId]);
+            
+            let drawing = false;
+            let startPos = null;
+            let canvasBuffer = null; // Used for "ghost" lines
+
+            // Load saved image if exists
+            if (savedAnswers[sqId] && savedAnswers[sqId].answer && savedAnswers[sqId].answer.startsWith('data:image')) {
+                const img = new Image();
+                img.onload = () => ctx.drawImage(img, 0, 0);
+                img.src = savedAnswers[sqId].answer;
+            }
+
+            const getPos = (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                return {
+                    x: (clientX - rect.left) * scaleX,
+                    y: (clientY - rect.top) * scaleY
+                };
+            };
+
+            const start = (e) => {
+                const tool = canvasTools[sqId];
+                const pos = getPos(e);
+                const rect = canvas.getBoundingClientRect();
+                const textInput = document.getElementById('text_input_' + sqId);
+                
+                // If we are clicking on the text input itself, don't restart
+                if (e.target === textInput) return;
+
+                if (tool === 'text') {
+                    // Position the inline input
+                    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                    const wrapperRect = canvas.parentElement.getBoundingClientRect();
+                    
+                    textInput.style.left = (clientX - wrapperRect.left) + 'px';
+                    textInput.style.top = (clientY - wrapperRect.top - 10) + 'px';
+                    textInput.style.display = 'block';
+                    textInput.style.color = colorPicker.value;
+                    const fontSize = parseInt(sizePicker.value) * 5 + 12;
+                    textInput.style.fontSize = fontSize + 'px';
+                    textInput.value = '';
+                    
+                    setTimeout(() => textInput.focus(), 10);
+
+                    const handleKey = (ke) => {
+                        if (ke.key === 'Enter') {
+                            textInput.blur(); // Triggers commitText
+                        }
+                        if (ke.key === 'Escape') {
+                            textInput.value = '';
+                            textInput.blur();
+                        }
+                    };
+
+                    const commitText = () => {
+                        const txt = textInput.value;
+                        if (txt) {
+                            ctx.fillStyle = colorPicker.value;
+                            ctx.font = `${fontSize}px sans-serif`;
+                            const commitPos = {
+                                x: (parseFloat(textInput.style.left) * (canvas.width / wrapperRect.width)),
+                                y: (parseFloat(textInput.style.top) + 10) * (canvas.height / wrapperRect.height)
+                            };
+                            ctx.fillText(txt, commitPos.x, commitPos.y);
+                            stop(); // Save state
+                        }
+                        textInput.style.display = 'none';
+                        textInput.removeEventListener('keydown', handleKey);
+                    };
+
+                    textInput.addEventListener('keydown', handleKey);
+                    textInput.addEventListener('blur', commitText, {once: true});
+                    return;
+                }
+
+                drawing = true;
+                startPos = pos;
+                
+                if (tool === 'line') {
+                    // Create a buffer of the current canvas to restore during "ghosting"
+                    canvasBuffer = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                }
+
+                ctx.beginPath();
+                ctx.moveTo(pos.x, pos.y);
+                if (e.type === 'mousedown') e.preventDefault();
+            };
+
+            const move = (e) => {
+                if (!drawing) return;
+                const tool = canvasTools[sqId];
+                const pos = getPos(e);
+                
+                ctx.strokeStyle = colorPicker.value;
+                ctx.lineWidth = sizePicker.value;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+
+                if (tool === 'brush') {
+                    ctx.lineTo(pos.x, pos.y);
+                    ctx.stroke();
+                } else if (tool === 'line') {
+                    // Restore original state and draw ghost line
+                    ctx.putImageData(canvasBuffer, 0, 0);
+                    ctx.beginPath();
+                    ctx.moveTo(startPos.x, startPos.y);
+                    ctx.lineTo(pos.x, pos.y);
+                    ctx.stroke();
+                }
+                if (e.type === 'mousemove') e.preventDefault();
+            };
+
+            const stop = () => {
+                if (!drawing && canvasTools[sqId] !== 'text') return;
+                drawing = false;
+                // Save as data URL
+                if (!savedAnswers[sqId]) savedAnswers[sqId] = {};
+                savedAnswers[sqId].answer = canvas.toDataURL();
+                saveProgress();
+            };
+
+            canvas.addEventListener('mousedown', start);
+            canvas.addEventListener('mousemove', move);
+            window.addEventListener('mouseup', stop);
+            
+            canvas.addEventListener('touchstart', start, {passive: false});
+            canvas.addEventListener('touchmove', move, {passive: false});
+            canvas.addEventListener('touchend', stop);
+        }
+
+        function clearCanvas(sqId) {
+            const canvas = document.getElementById('canvas_' + sqId);
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (!savedAnswers[sqId]) savedAnswers[sqId] = {};
+            savedAnswers[sqId].answer = canvas.toDataURL();
+            saveProgress();
         }
 
         let extractMode = 'image'; // 'image' or 'text'
@@ -836,20 +1424,32 @@
             }, 3000);
         }
 
-        async function grade(subId, type) {
+        async function grade(subId, type, btn) {
             if (isReviewMode) return;
-            const val = document.getElementById('ans_' + subId).value;
-            const btn = event.target;
-            const fbDiv = document.getElementById('fb_' + subId);
             
-            if (!val.trim()) { 
-                showLineAlert("Please type an answer first.", "error"); 
-                return; 
+            // Get value from savedAnswers
+            let val = (savedAnswers[subId] && savedAnswers[subId].answer) ? savedAnswers[subId].answer : '';
+            const fbDiv = document.getElementById('fb_' + subId);
+
+            if (!val || !val.trim()) {
+                showLineAlert("Please provide an answer first.", "error");
+                return;
             }
 
-            btn.disabled = true;
-            btn.innerHTML = `<span class="spinner"></span> Grading...`;
+            // Format for AI if it's a special type
+            let displayVal = val;
+            if (type === 'calculation') {
+                const parts = val.split('\n---\n');
+                displayVal = `[WORKING_START]\n${parts[0] || ''}\n[WORKING_END]\n[FINAL_ANSWER_START]\n${parts[1] || ''}\n[FINAL_ANSWER_END]`;
+            } else if (val.includes('\n---\n')) {
+                const parts = val.split('\n---\n');
+                displayVal = parts.map((p, i) => `[PART ${i+1}]: ${p}`).join('\n');
+            }
 
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<span class="spinner"></span> Grading...`;
+            }
             try {
                 const res = await fetch('/api/official-exams/grade', {
                     method: 'POST',
@@ -858,7 +1458,8 @@
                         username: localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username'),
                         paper_id: examData.paper_id,
                         sub_id: subId,
-                        user_answer: val,
+                        user_answer: displayVal,
+                        type: type,
                         max_marks: examData.questions.flatMap(q=>q.sub_questions).find(s=>s.sub_id===subId).max_marks,
                         mark_scheme: examData.questions.flatMap(q=>q.sub_questions).find(s=>s.sub_id===subId).ms_text
                     })
@@ -866,12 +1467,19 @@
                 const data = await res.json();
                 const score = data.marks_awarded !== undefined ? data.marks_awarded : 0;
                 const total = data.max_marks || examData.questions.flatMap(q=>q.sub_questions).find(s=>s.sub_id===subId).max_marks;
-                
-                const html = `<div style="font-weight:800; color:#28a745; margin-bottom:10px;">Score: ${score} / ${total}</div><div>${data.feedback}</div>`;
+
+                let scoreColor = '#28a745'; // Default green
+                if (score === 0) scoreColor = '#dc3545'; // Red
+                else if (score < total) scoreColor = '#fd7e14'; // Orange for partial
+
+                // Clean AI feedback from internal tags like [WORKING_START], [FINAL_ANSWER_START], [PART 1]
+                let cleanedFeedback = (data.feedback || '').replace(/\[WORKING_START\]|\[WORKING_END\]|\[FINAL_ANSWER_START\]|\[FINAL_ANSWER_END\]|\[PART \d+\]/g, '').replace(/:\s*:/g, ':').trim();
+
+                const html = `<div style="font-weight:800; color:${scoreColor}; margin-bottom:10px;">Score: ${score} / ${total}</div><div>${cleanedFeedback}</div>`;
                 fbDiv.innerHTML = html;
-                fbDiv.classList.add('show');
-                
-                if (!savedAnswers[subId]) savedAnswers[subId] = { answer: val };
+                fbDiv.classList.add('show');                
+                if (!savedAnswers[subId]) savedAnswers[subId] = {};
+                savedAnswers[subId].answer = val; // Use original unformatted value
                 savedAnswers[subId].feedback = html;
                 savedAnswers[subId].marks_awarded = score;
                 savedAnswers[subId].max_marks = total;
@@ -888,13 +1496,13 @@
             }
         }
 
-        async function submitFullExam() {
+        async function submitFullExam(btn) {
             const username = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
-            
+
             // Calculate total score from saved graded results
             let totalMarks = 0;
             let awardedMarks = 0;
-            
+
             Object.values(savedAnswers).forEach(ans => {
                 if (ans.max_marks !== undefined) {
                     totalMarks += ans.max_marks;
@@ -909,8 +1517,11 @@
 
             if (!confirm(`Are you sure you want to finish and submit? Final Score: ${awardedMarks} / ${totalMarks}`)) return;
 
-            try {
-                const res = await fetch('/api/official-exams/submit', {
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<span class="spinner"></span> Submitting...`;
+            }
+            try {                const res = await fetch('/api/official-exams/submit', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
@@ -937,6 +1548,11 @@
             } catch (e) {
                 console.error(e);
                 showLineAlert("Server error during submission", "error");
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = "Finish & Submit Exam";
+                }
             }
         }
 
@@ -947,6 +1563,10 @@
                 render();
                 saveProgress();
             }
+        }
+
+        function toggleMenu() {
+            document.getElementById('navLinks').classList.toggle('active');
         }
 
         function logout() {

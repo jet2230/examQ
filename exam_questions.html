@@ -43,9 +43,45 @@
             align-items: center;
             border-bottom: 1px solid #eee;
             background: white;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
         }
         .nav-brand { font-weight: 800; color: var(--primary-color); font-size: 1.2em; }
+        .nav-links { display: flex; align-items: center; }
         .nav-links a { text-decoration: none; color: var(--primary-color); font-weight: 600; margin-left: 20px; }
+        
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            cursor: pointer;
+            padding: 5px;
+        }
+        .hamburger div {
+            width: 25px;
+            height: 3px;
+            background-color: var(--primary-color);
+            border-radius: 2px;
+        }
+
+        @media (max-width: 850px) {
+            .hamburger { display: flex; }
+            .nav-links {
+                display: none;
+                width: 100%;
+                flex-direction: column;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                background: white;
+                padding: 20px;
+                box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+                border-bottom: 1px solid #eee;
+            }
+            .nav-links.active { display: flex; }
+            .nav-links a { margin: 10px 0; font-size: 1.1em; }
+        }
 
         .subject-grid {
             display: grid;
@@ -213,7 +249,12 @@
     <div class="container">
         <div class="navbar">
             <div class="nav-brand">🎓 ExamQ Exam Library</div>
-            <div class="nav-links">
+            <div class="hamburger" onclick="toggleMenu()">
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+            <div class="nav-links" id="navLinks">
                 <span id="welcomeUser" style="margin-right: 15px; font-weight: 600; color: var(--primary-color);"></span>
                 <a href="/admin_users.html" id="usersLink" class="admin-only" style="display:none; color:#d63384;">⚙️ Users</a>
                 <a href="/admin_exams.html" id="adminLink" class="admin-only" style="display:none; color:#d63384;">⚙️ Exams</a>
@@ -252,6 +293,9 @@
     </div>
 
     <script>
+        function toggleMenu() {
+            document.getElementById('navLinks').classList.toggle('active');
+        }
         let allExams = [];
         let allProgress = {};
         let currentSubject = null;

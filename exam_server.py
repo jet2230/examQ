@@ -562,13 +562,38 @@ Example: ["1", "2", "3", "4", "5"]"""
                     if not m: continue
                     main_id = int(m.group(1))
 
-                    q_prompt = f"""Extract marking details for sub-question {sub_id} from the mark scheme.
-MATCHING QUESTION ID: {sub_id}
-MARK SCHEME TEXT:
-{ms_text[:40000]}
-
-Return ONLY a JSON object: {{"sub_id": "{sub_id}", "type": "text/mcq/calculation/draw/list", "max_marks": 1, "ms_text": "..."}}"""
+                    q_prompt = f"""Extract marking details for sub-question {sub_id} from the mark scheme AND determine the correct input format based on the question paper text.
+                    MATCHING QUESTION ID: {sub_id}
                     
+                    QUESTION PAPER TEXT (Page Context):
+                    {page_content}
+
+                    MARK SCHEME TEXT:
+                    {ms_text[:40000]}
+
+                    Return ONLY a JSON object:
+                    {{
+                    "sub_id": "{sub_id}",
+                    "type": "text/mcq/calculation/draw/list",
+                    "max_marks": 1,
+                    "lines_provided": 2, // Number of physical lines for the answer in the question paper
+                    "ms_text": "Complete marking criteria for this question",
+                    "options": ["A", "B", "C", "D"], // Only for mcq type
+                    "final_label": "Value", // Only for calculation type
+                    "final_unit": "unit" // Only for calculation type
+                    }}
+
+                    MANDATORY RULES:
+                    1. TYPE SELECTION (Look at the QUESTION PAPER TEXT):
+                       - Use 'list' ONLY if the question paper explicitly asks for distinct points (e.g., "State two...", "Give three...") or provides numbered/bulleted lines for the answer.
+                       - Use 'calculation' if the question paper asks to "calculate", "work out", or if there's a dotted line followed by a unit (e.g., "....... cm").
+                       - Use 'mcq' if the question paper provides options A, B, C, D.
+                       - Use 'draw' if the question paper asks to "draw", "plot", or "sketch" a diagram, pyramid, or chart (unless it's a line graph, then use 'graph').
+                       - Use 'text' for standard open-ended questions, explanations, or descriptions.
+                    2. ANSWER SPACE: Closely examine the QUESTION PAPER TEXT to see how many dotted lines (..........) are provided for the student to write on. Set 'lines_provided' to this count.
+                    3. For 'calculation' questions, closely examine the QUESTION PAPER TEXT near the dotted answer line to identify the exact label (e.g., 'rate', 'Length', 'Ratio') and unit (e.g., 'cm per second', 'µm').
+                    4. ms_text must be the full marking criteria from the MARK SCHEME TEXT.
+                    """                    
                     q_resp = requests.post('http://localhost:11434/api/generate', json={'model': 'llama3', 'prompt': q_prompt, 'stream': False, 'format': 'json', 'temperature': 0}, timeout=90)
                     sq = clean_ai_json(q_resp.json().get('response', '{}'))
                     print(f"    [IMPORT] Sub-ID {sub_id} detail AI raw: {q_resp.json().get('response', '')[:100]}...", flush=True)
@@ -717,12 +742,49 @@ def grade_official_question():
         user_answer = data.get('user_answer')
         mark_scheme = data.get('mark_scheme')
         max_marks = data.get('max_marks', 1)
-        image_data = data.get('image_data')
+        q_type = data.get('type')
 
         # Get Examiner Report if available
         conn = get_db(); cursor = conn.cursor()
         cursor.execute("SELECT er_text FROM official_exams WHERE id = ?", (paper_id,))
         row = cursor.fetchone(); er_text = row['er_text'] if row and row['er_text'] else ""; conn.close()
+
+        # INSTANT BYPASS FOR VISUAL QUESTIONS
+        if q_type in ['draw', 'graph']:
+            return jsonify({
+                "marks_awarded": max_marks,
+                "max_marks": max_marks,
+                "feedback": f"VISUAL EVALUATION: As an AI, I cannot grade your drawing or graph. You have been awarded full marks automatically. Please verify your work against the official criteria.\\n\\nFULL MARK SCHEME: {mark_scheme}",
+                "marking_points_met": ["Self-evaluation required"]
+            }), 200
+
+        # PROGRAMMATIC MCQ CHECK
+        cleaned_ans = user_answer.strip().upper()
+        if q_type == 'mcq' or (len(cleaned_ans) == 1 and cleaned_ans in ['A', 'B', 'C', 'D']):
+            # Search for "Correct Answer: X" or "Answer is X" or just "X (" in the mark scheme
+            import re
+            mcq_match = re.search(r'(?:Correct Answer|Answer is|Correct|Key)[:\s]+([A-D])', mark_scheme, re.I)
+            if not mcq_match:
+                # Fallback: look for "X (" at start or after a dot
+                mcq_match = re.search(r'(?:^|\.|\s)([A-D])\s*\(', mark_scheme)
+            
+            if mcq_match:
+                correct_letter = mcq_match.group(1).upper()
+                is_correct = (cleaned_ans == correct_letter)
+                if is_correct:
+                    return jsonify({
+                        "marks_awarded": max_marks,
+                        "max_marks": max_marks,
+                        "feedback": f"Correct! The answer is {correct_letter}.",
+                        "marking_points_met": ["Correct MCQ selection"]
+                    }), 200
+                else:
+                    return jsonify({
+                        "marks_awarded": 0,
+                        "max_marks": max_marks,
+                        "feedback": f"Incorrect. Your answer was {cleaned_ans}, but the correct answer is {correct_letter}. \n\nMODEL ANSWER: {mark_scheme}",
+                        "marking_points_met": []
+                    }), 200
 
         prompt = f"""You are an expert IGCSE Edexcel Examiner. 
 Your task is to mark a student's answer based STRICTLY on the official Mark Scheme provided.
@@ -741,33 +803,37 @@ STUDENT'S ANSWER:
 {user_answer}
 
 MARKING INSTRUCTIONS:
-1. ZERO TOLERANCE: If the student's answer is gibberish, nonsensical, irrelevant text (like "abc", "testing", "random"), or just a request for help (unless help keywords are used), you MUST award 0 marks.
-2. MCQ (MULTIPLE CHOICE): If the student's answer is a single letter (A, B, C, or D), award FULL MARKS if it matches the correct answer in the mark scheme. Otherwise, award 0.
-3. HELP REQUESTS: If the student asks for help (e.g., "show me", "tell me"), award 0 marks but provide a warm, helpful explanation of the concept and the correct answer.
-4. CALCULATION HANDLING: 
-   - Answer is structured with [WORKING_START] and [FINAL_ANSWER_START].
-   - If [FINAL_ANSWER_START] is correct according to the mark scheme, award FULL MARKS (2/2).
-   - If [FINAL_ANSWER_START] is wrong or missing, award 1 mark ONLY if a valid intermediate step (like a correct subtraction or division shown in the mark scheme) is clearly visible in [WORKING_START].
-   - DO NOT award marks for "trying" or for unrelated numbers.
-5. Provide a "MODEL ANSWER" if the student didn't get full marks.
+1. ZERO TOLERANCE: If the student's answer is gibberish or completely irrelevant, award 0 marks.
+2. MCQ (MULTIPLE CHOICE): Award FULL marks if correct letter matches, 0 if wrong.
+3. STANDARD TEXT QUESTIONS (SEMANTIC MATCHING):
+   - Award marks if the student's answer has the SAME MEANING as a point in the mark scheme.
+   - Use your expertise to recognize synonyms (e.g., 'seed type' matches 'type of seeds', 'mass' matches 'weight').
+   - DO NOT require a literal or numerical match for text-based explanations.
+4. CALCULATION QUESTIONS (HYPER-STRICT NUMERICAL MATCH): 
+   - Award marks ONLY if the specific numbers/steps from the mark scheme are LITERALLY WRITTEN.
+   - [FINAL_ANSWER_START]: Must match the final value exactly.
+   - [WORKING_START]: Award 1 mark ONLY for specific correct numerical steps.
+   - PROHIBITION: No "implied" marks for wrong numbers.
+5. EVIDENCE-BASED JUSTIFICATION: State exactly which points or numbers matched.
+6. MODEL ANSWER (MANDATORY): You MUST copy the entirety of the [OFFICIAL MARK SCHEME] text provided above into this section. DO NOT summarize, DO NOT edit, and DO NOT leave anything out. The student needs to see the full official criteria.
 
 RESPONSE FORMAT (JSON ONLY):
 {{
   "marks_awarded": 0,
   "max_marks": {max_marks},
-  "feedback": "Your evaluation here. \\n\\nMODEL ANSWER: [Provide the correct answer and steps from the mark scheme]",
+  "feedback": "Marking Justification: [State the evidence found]\\n\\nMODEL ANSWER: [THE ENTIRE OFFICIAL MARK SCHEME COPIED VERBATIM]",
   "marking_points_met": []
 }}
 
 MANDATORY RULES:
-1. If the student's answer is blank, nonsensical, or completely irrelevant, award 0 marks.
-2. For calculations, only award marks if the numbers in the student's working or final answer actually appear in or are derived from the mark scheme.
-3. You MUST return a valid JSON object. Do not include any text before or after the JSON.
+1. If the student's numbers do not exist in the mark scheme, the score MUST be 0.
+2. No "benefit of the doubt". No "partial effort" marks for wrong numbers.
+3. You MUST return a valid JSON object.
 """
+        print(f"  [GRADING] Q {sub_id} Student Answer: {user_answer[:100]}...", flush=True)
+        
         payload = {'model': 'llama3', 'prompt': prompt, 'stream': False, 'format': 'json', 'temperature': 0}
-        if image_data and image_data.startswith('data:image'):
-            payload['images'] = [image_data.split(',')[1]]
-            
+        
         resp = requests.post('http://localhost:11434/api/generate', json=payload)
         raw = resp.json().get('response', '{}')
         print(f"  [GRADING] Q {sub_id} RAW AI: {raw.strip()}", flush=True)

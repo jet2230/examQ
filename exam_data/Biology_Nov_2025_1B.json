@@ -11,18 +11,20 @@
         { "sub_id": "1(a)(i)", "type": "mcq", "options": ["A", "B", "C", "D"], "qp_pages": [2], "max_marks": 1, "ms_text": "Correct Answer: D (S). A is not the answer as P is a vacuole. B is not the answer as Q is the cytoplasm. C is not the answer as R is the cell membrane." },
         { "sub_id": "1(a)(ii)", "type": "mcq", "options": ["A", "B", "C", "D"], "qp_pages": [2], "max_marks": 1, "ms_text": "Correct Answer: B (Q). A is not the answer as P is a vacuole. C is not the answer as R is the cell membrane. D is not the answer as S is the nucleus." },
         { "sub_id": "1(a)(iii)", "type": "mcq", "options": ["A", "B", "C", "D"], "qp_pages": [2], "max_marks": 1, "ms_text": "Correct Answer: D (S). A is not the answer as P is the vacuole. B is not the answer as Q is the cytoplasm. C is not the answer as R is the cell membrane." },
-        { "sub_id": "1(a)(iv)", "type": "calculation", "qp_pages": [3], "max_marks": 2, "ms_text": "2 marks for 660 (um). 1 mark for correct length 43 to 44 mm (or 4.3 to 4.4 cm) OR for dividing by 65. (Calculation: 43000 / 65 = 661.5)" },
-        { "sub_id": "1(b)", "type": "text", "qp_pages": [3], "max_marks": 3, "ms_text": "Any three from: 1. Amoeba larger (1). 2. Amoeba has nucleus (1). 3. Amoeba has cytoplasm (1). 4. Amoeba has organelles / mitochondrion / vacuole / ribosomes (1). 5. Amoeba has cell membrane (1). 6. Virus has protein coat / capsid / envelope (1). 7. Amoeba has chromosomes / DNA and RNA / virus has DNA or RNA (1)." }
+        { "sub_id": "1(a)(iv)", "type": "calculation", "final_label": "Length", "final_unit": "µm", "qp_pages": [3], "max_marks": 2, "ms_text": "2 marks for 660 (um). 1 mark for correct length 43 to 44 mm (or 4.3 to 4.4 cm) OR for dividing by 65. (Calculation: 43000 / 65 = 661.5)" },
+        { "sub_id": "1(b)", "type": "list", "qp_pages": [3], "max_marks": 3, "ms_text": "Any three from: 1. Amoeba larger (1). 2. Amoeba has nucleus (1). 3. Amoeba has cytoplasm (1). 4. Amoeba has organelles / mitochondrion / vacuole / ribosomes (1). 5. Amoeba has cell membrane (1). 6. Virus has protein coat / capsid / envelope (1). 7. Amoeba has chromosomes / DNA and RNA / virus has DNA or RNA (1)." }
       ]
     },
     {
       "id": 2,
       "sub_questions": [
-        { "sub_id": "2(a)", "type": "text", "qp_pages": [4], "max_marks": 3, "ms_text": "Any three from: 1. lipid(s) / fat(s) / oil(s) (1). 2. water (1). 3. fibre(s) / cellulose (1)." },
-        { "sub_id": "2(b)", "type": "text", "qp_pages": [5], "max_marks": 1, "ms_text": "peristalsis / peristaltic (movement) (1)." },
-        { "sub_id": "2(c)", "type": "text", "qp_pages": [5], "max_marks": 1, "ms_text": "Any one from: 1. large surface area / large SA/V ratio (1). 2. folded (walls) (1). 3. long (1). 4. good blood supply / lacteals (1). 5. Villi / thin villus walls / microvilli (1)." },
-        { "sub_id": "2(d)(i)", "type": "text", "qp_pages": [6], "max_marks": 1, "ms_text": "rectum (1). Ignore faeces / large intestine." },
-        { "sub_id": "2(d)(ii)", "type": "text", "qp_pages": [6], "max_marks": 2, "ms_text": "One pair from: 1. large surface area / large SA/V ratio (1). 2. absorbs water / prevents dehydration (1). OR 3. to absorb salts/minerals (1). OR 4. contains bacteria so that fibre/cellulose is digested (1)." }
+        { "sub_id": "2(a)", "type": "text", "qp_pages": [4], "max_marks": 1, "lines_provided": 3, "ms_text": "Movement of molecules/particles (1). From an area of high concentration to an area of low concentration (1). Down a concentration gradient (1)." },
+        { "sub_id": "2(b)(i)", "type": "text", "qp_pages": [5], "max_marks": 1, "lines_provided": 1, "ms_text": "Time (taken for litmus paper to change colour) (1)." },
+        { "sub_id": "2(b)(ii)", "type": "graph", "qp_pages": [5], "max_marks": 6, "ms_text": "Graph marking criteria: 1. X-axis labeled with distance (cm). 2. Y-axis labeled with time taken (seconds). 3. Correct scale used. 4. Points plotted accurately for 1 drop. 5. Points plotted accurately for 3 drops. 6. Separate lines drawn and correctly connected." },
+        { "sub_id": "2(b)(iii)", "type": "text", "qp_pages": [6], "max_marks": 2, "lines_provided": 6, "ms_text": "1. Increasing drops increases the concentration of ammonia (1). 2. Steeper concentration gradient (1). 3. Faster rate of diffusion (1). 4. Shorter time taken for litmus to change colour (1)." },
+        { "sub_id": "2(b)(iv)", "type": "calculation", "final_label": "rate", "final_unit": "cm per second", "qp_pages": [6], "max_marks": 2, "ms_text": "Calculate mean rate between 4 cm and 24 cm. Distance = 20 cm. Time = 38 - 8 = 30s. Rate = 20 / 30 = 0.67 cm/s. 2 marks for 0.67. 1 mark for correct distance (20) or dividing by time." },
+        { "sub_id": "2(b)(v)", "type": "text", "qp_pages": [6], "max_marks": 1, "lines_provided": 2, "ms_text": "Repeat the investigation (and find a mean) (1)." },
+        { "sub_id": "2(c)", "type": "text", "qp_pages": [7], "max_marks": 3, "lines_provided": 9, "ms_text": "1. Use a water bath or incubator to vary temperature (1). 2. Keep the number of drops of ammonia constant (1). 3. Record time for litmus to change colour at different temperatures (1). 4. Keep distance intervals constant (1)." }
       ]
     },
     {
@@ -38,9 +40,9 @@
     {
       "id": 4,
       "sub_questions": [
-        { "sub_id": "4(a)", "type": "text", "qp_pages": [12], "max_marks": 2, "ms_text": "glucose ———> ethanol + carbon dioxide. 1 mark for each side. Allow correct formula. No credit for oxygen on LHS." },
+        { "sub_id": "4(a)", "type": "text", "qp_pages": [12], "max_marks": 2, "ms_text": "glucose \u2014\u2014\u2014> ethanol + carbon dioxide. 1 mark for each side. Allow correct formula. No credit for oxygen on LHS." },
         { "sub_id": "4(b)(i)", "type": "text", "qp_pages": [12], "max_marks": 1, "ms_text": "Mass of seeds / volume of seeds / species of seeds / type of seeds / age of seeds (1)." },
-        { "sub_id": "4(b)(ii)", "type": "calculation", "final_label": "Rate", "qp_pages": [12], "max_marks": 2, "ms_text": "3.0 or 3.02 ppm/s. (Calculation: 1108 - 564 = 544; 544 / 180 = 3.02). Allow 1 mark for 544 or for dividing by 180." },
+        { "sub_id": "4(b)(ii)", "type": "calculation", "final_label": "Rate", "final_unit": "ppm per s", "qp_pages": [12], "max_marks": 2, "ms_text": "3.0 or 3.02 ppm/s. (Calculation: 1108 - 564 = 544; 544 / 180 = 3.02). Allow 1 mark for 544 or for dividing by 180." },
         { "sub_id": "4(b)(iii)", "type": "text", "qp_pages": [13], "max_marks": 5, "ms_text": "An answer that makes reference to five of the following: 1. high CO2 produced in respiring seeds (1). 2. low CO2 produced in dry seeds (1). 3. no change in CO2 in normal air (1). 4. dry seeds are not respiring / respiring very slowly (1). 5. enzymes are not active / less active in dry seeds (1). 6. no water for chemical reactions in dry seeds (1). 7. experiment not repeated / not reliable (1). 8. only done for short period (1). 9. temperature not controlled (1). 10. could be aerobic or anaerobic respiration (1)." }
       ]
     },
@@ -57,84 +59,48 @@
     {
       "id": 6,
       "sub_questions": [
-        { "sub_id": "6(a)(i)", "type": "mcq", "options": ["A", "B", "C", "D"], "qp_pages": [16], "max_marks": 1, "ms_text": "Correct Answer: A (contains chlorophyll for photosynthesis). B is incorrect because X is a chloroplast not a mitochondrion. C is incorrect because structure X is not the nucleus. D is incorrect because the vacuole, not X, stores water." },
-        { "sub_id": "6(a)(ii)", "type": "text", "qp_pages": [16], "max_marks": 1, "ms_text": "cellulose (1). Accept phonetic spelling but reject cellulase. Accept beta cellulose or polymer of glucose. Ignore cell wall / carbohydrate." },
-        { "sub_id": "6(a)(iii)", "type": "mcq", "options": ["A", "B", "C", "D"], "qp_pages": [16], "max_marks": 1, "ms_text": "Correct Answer: B (water enters the cell by osmosis). A is incorrect because water does not enter by active transport. C and D are incorrect because water has not left the cell." },
-        { "sub_id": "6(b)", "type": "mcq", "options": ["A", "B", "C", "D"], "qp_pages": [16], "max_marks": 1, "ms_text": "Correct Answer: D (sugar solution). A is incorrect because the cell wall is fully permeable and the sugar solution enters by diffusion. B is incorrect because cytoplasm remains within the boundaries. C is incorrect because the cell is immersed." },
-        { "sub_id": "6(c)(i)", "type": "text", "qp_pages": [17], "max_marks": 1, "ms_text": "chlorophyll (1). Ignore chloroplasts. Accept phonetic spelling." },
-        { "sub_id": "6(c)(ii)", "type": "text", "qp_pages": [17], "max_marks": 6, "ms_text": "CORMS Investigation: 1. C: two glasshouses/plots, one with normal soil and one with added magnesium sulfate (1). 2. O: same species / type / age of plants / seeds (1). 3. R: repeats for each field / plot and find means (1). 4. M1: method to measure yield e.g. mass of seeds / number of seeds / plant height (1). 5. M2: suitable stated time e.g. 2 months to 1 season (1). 6. S1: same light intensity / same exposure to light (1). 7. S2: same carbon dioxide / temperature / water / humidity / pH (1)." }
+        { "sub_id": "6(a)", "type": "mcq", "options": ["A", "B", "C", "D"], "qp_pages": [16], "max_marks": 1, "ms_text": "Correct Answer: C (mackerel). Phytoplankton (producer) -> krill (primary) -> mackerel (secondary) -> cod (tertiary) -> seal (quaternary)." },
+        { "sub_id": "6(b)", "type": "draw", "qp_pages": [16], "max_marks": 2, "lines_provided": 4, "ms_text": "Pyramid of biomass showing: 1. Pyramid shape with labels (1). 2. Correct order: phytoplankton at base, then krill, mackerel, cod, seal (1)." },
+        { "sub_id": "6(c)", "type": "text", "qp_pages": [16], "max_marks": 2, "lines_provided": 4, "ms_text": "Explanation including two of: 1. Pyramid of numbers shows total number of organisms at each level (1). 2. Numbers can be higher at higher levels if producer is large (e.g. tree) or parasites exist (1). 3. Biomass shows the dry mass of living material at each level (1)." },
+        { "sub_id": "6(d)", "type": "text", "qp_pages": [17], "max_marks": 4, "lines_provided": 12, "ms_text": "Explanation including four of: 1. Seasonal changes in light intensity / day length (1). 2. Seasonal changes in temperature (1). 3. Affects rate of photosynthesis / growth of phytoplankton (1). 4. Population of consumers (krill) follows availability of producers (1). 5. Migration patterns of larger animals (1)." },
+        { "sub_id": "6(e)", "type": "text", "qp_pages": [17], "max_marks": 2, "lines_provided": 6, "ms_text": "Explanation including two of: 1. Oceans absorb large amounts of heat and CO2 (1). 2. Leads to coral bleaching / ocean acidification (1). 3. Marine organisms are often more sensitive to small temperature changes (narrow range) (1)." }
       ]
     },
     {
       "id": 7,
       "sub_questions": [
-        { "sub_id": "7(a)", "type": "text", "qp_pages": [18, 19, 20], "max_marks": 4, "ms_text": "1. (tube A) respiration only - indicator turns yellow (1). 2. (tube B) photosynthesis is greater than respiration - indicator turns purple (1). 3. (tube C) respiration only - indicator turns yellow (1). 4. (tube D) respiration from both plant and animal, no photosynthesis - indicator turns yellow (1)." }
+        { "sub_id": "7(a)", "type": "list", "qp_pages": [18, 19, 20], "max_marks": 4, "ms_text": "1. (tube A) respiration only - indicator turns yellow (1). 2. (tube B) photosynthesis is greater than respiration - indicator turns purple (1). 3. (tube C) respiration only - indicator turns yellow (1). 4. (tube D) respiration from both plant and animal, no photosynthesis - indicator turns yellow (1)." },
+        { "sub_id": "7(b)", "type": "text", "qp_pages": [21], "max_marks": 1, "ms_text": "indicator solution only with no living organisms in the light (or in the dark) (1). Used as a control." }
       ]
     },
     {
       "id": 8,
       "sub_questions": [
-        { "sub_id": "7(b)", "type": "text", "qp_pages": [21], "max_marks": 1, "ms_text": "indicator solution only with no living organisms in the light (or in the dark) (1). Used as a control." }
+        { "sub_id": "8(a)", "type": "text", "qp_pages": [20], "max_marks": 1, "lines_provided": 2, "ms_text": "Response to a stimulus (1). In a particular direction (1)." },
+        { "sub_id": "8(b)", "type": "text", "qp_pages": [20], "max_marks": 2, "lines_provided": 6, "ms_text": "1. Auxin produced in tip (1). 2. Moves to shaded side (1). 3. Stimulates cell elongation (1). 4. Causes stem to bend towards light (1)." },
+        { "sub_id": "8(c)(i)", "type": "text", "qp_pages": [21], "max_marks": 5, "lines_provided": 17, "ms_text": "Pot A: Upright growth (1), negative geotropism (1). Pot B: Bends upwards (1), auxin accumulates on lower side stimulating elongation (1). Pot C: Straight growth (1), rotation neutralizes gravity effect so auxin distributed evenly (1)." },
+        { "sub_id": "8(c)(ii)", "type": "text", "qp_pages": [22], "max_marks": 2, "lines_provided": 6, "ms_text": "1. Place plants so roots are visible (e.g. transparent agar) (1). 2. Observe direction of root growth (downwards) (1). 3. Use clinostat to show effect of neutralizing gravity (1)." }
       ]
     },
     {
       "id": 9,
       "sub_questions": [
-        { "sub_id": "8(a)", "type": "mcq", "options": ["A", "B", "C", "D"], "qp_pages": [22], "max_marks": 1, "ms_text": "Correct Answer: C (organ tissue cell organelle). A, B, and D are incorrect because the order of organization is incorrect." }
+        { "sub_id": "9(a)", "type": "mcq", "options": ["A", "B", "C", "D"], "qp_pages": [24], "max_marks": 1, "ms_text": "Correct Answer: A (one X chromosome and 22 other chromosomes). Gametes are haploid (23 chromosomes)." },
+        { "sub_id": "9(b)(i)", "type": "list", "qp_pages": [24], "max_marks": 3, "ms_text": "Genetic diagram showing: 1. Parental genotypes: XX and XY (1). 2. Gametes: X, X and X, Y (1). 3. Offspring genotypes: XX, XY, XX, XY / sex ratio 1:1 (1)." },
+        { "sub_id": "9(b)(ii)", "type": "calculation", "qp_pages": [24], "max_marks": 2, "ms_text": "1/16 or 0.0625 (2 marks). (Calculation: 0.5^4 = 0.0625). Allow 1 mark for 0.5^4 or 1/2 * 1/2 * 1/2 * 1/2." },
+        { "sub_id": "9(c)", "type": "calculation", "final_label": "ratio", "qp_pages": [25], "max_marks": 2, "ms_text": "1.05 : 1 (2 marks). (Calculation: 320122 / 304706 = 1.05059). Allow 1 mark for correct division." },
+        { "sub_id": "9(d)", "type": "text", "qp_pages": [25], "max_marks": 3, "ms_text": "An explanation that includes three of the following: 1. produces genetically identical cells (1). 2. used in asexual reproduction (1). 3. produces clones (1). 4. rapid increase in population (1)." }
       ]
     },
     {
       "id": 10,
       "sub_questions": [
-        { "sub_id": "8(b)(i)", "type": "text", "qp_pages": [22], "max_marks": 1, "ms_text": "specialized / specialised / specialisation (1). Accept phonetic spelling. Ignore specific / special." },
-        { "sub_id": "8(b)(ii)", "type": "text", "qp_pages": [22], "max_marks": 2, "ms_text": "An explanation that makes reference to two from the following: 1. so different types of cells can each perform specific functions / jobs (1). 2. so all body processes can occur / division of labour (1). 3. so they can form tissues / organs (1). 4. so they can replace dead cells / repair tissues (1)." }
-      ]
-    },
-    {
-      "id": 11,
-      "sub_questions": [
-        { "sub_id": "8(c)", "type": "text", "qp_pages": [22, 23], "max_marks": 8, "ms_text": "A discussion that makes reference to any eight of the following: 1. both can divide/specialise to repair tissues (1). 2. both can be used to test new drugs/develop treatments (1). 3. adult SC may be painful to extract; embryonic usually from spare IVF embryos (1). 4. both may increase risk of cancer/tumours (1). 5. embryonic are totipotent / can produce all types of cells; adult produce fewer types (1). 6. embryonic can treat more diseases (1). 7. ethical objections with using embryos, not with adult SC (1). 8. problems with unregulated clinics (1). 9. greater rejection risk with embryonic SC (1). 10. embryo cells easier to culture; adult cells more difficult (1). 11. could be contaminated with virus/pathogen (1). 12. examples: heart failure, leukemia, Parkinson's, diabetes (up to 2 marks)." }
-      ]
-    },
-    {
-      "id": 12,
-      "sub_questions": [
-        { "sub_id": "9(a)", "type": "mcq", "options": ["A", "B", "C", "D"], "qp_pages": [24], "max_marks": 1, "ms_text": "Correct Answer: A (one X chromosome and 22 other chromosomes). Gametes are haploid (23 chromosomes)." }
-      ]
-    },
-    {
-      "id": 13,
-      "sub_questions": [
-        { "sub_id": "9(b)(i)", "type": "draw", "qp_pages": [24], "max_marks": 3, "ms_text": "Genetic diagram showing: 1. Parental genotypes: XX and XY (1). 2. Gametes: X, X and X, Y (1). 3. Offspring genotypes: XX, XY, XX, XY / sex ratio 1:1 (1)." },
-        { "sub_id": "9(b)(ii)", "type": "calculation", "qp_pages": [24], "max_marks": 2, "ms_text": "1/16 or 0.0625 (2 marks). (Calculation: 0.5^4 = 0.0625). Allow 1 mark for 0.5^4 or 1/2 * 1/2 * 1/2 * 1/2." }
-      ]
-    },
-    {
-      "id": 14,
-      "sub_questions": [
-        { "sub_id": "9(c)", "type": "calculation", "final_label": "ratio", "qp_pages": [25], "max_marks": 2, "ms_text": "1.05 : 1 (2 marks). (Calculation: 320122 / 304706 = 1.05059). Allow 1 mark for correct division." }
-      ]
-    },
-    {
-      "id": 15,
-      "sub_questions": [
-        { "sub_id": "9(d)", "type": "text", "qp_pages": [25], "max_marks": 3, "ms_text": "An explanation that includes three of the following: 1. produces genetically identical cells (1). 2. used in asexual reproduction (1). 3. produces clones (1). 4. rapid increase in population (1)." }
-      ]
-    },
-    {
-      "id": 16,
-      "sub_questions": [
-        { "sub_id": "10(a)", "type": "text", "qp_pages": [26], "max_marks": 3, "ms_text": "An explanation that includes three of the following: 1. sulfur dioxide dissolves in water in clouds (1). 2. forms sulfuric acid / acid rain (1). 3. lowers pH of lakes / kills aquatic life (1). 4. leaches minerals from soil / damages leaves (1)." }
-      ]
-    },
-    {
-      "id": 17,
-      "sub_questions": [
+        { "sub_id": "10(a)", "type": "text", "qp_pages": [26], "max_marks": 3, "ms_text": "An explanation that includes three of the following: 1. sulfur dioxide dissolves in water in clouds (1). 2. forms sulfuric acid / acid rain (1). 3. lowers pH of lakes / kills aquatic life (1). 4. leaches minerals from soil / damages leaves (1)." },
         { "sub_id": "10(b)", "type": "text", "qp_pages": [27], "max_marks": 3, "ms_text": "An explanation that includes three of the following: 1. electric cars do not produce exhaust fumes (1). 2. reduces CO2 emissions / greenhouse effect (1). 3. reduces sulfur dioxide / nitrogen oxides / acid rain (1). 4. reduces soot / particulate matter (1)." }
       ]
     },
     {
-      "id": 18,
+      "id": 11,
       "sub_questions": [
         { "sub_id": "11", "type": "text", "qp_pages": [28], "max_marks": 6, "ms_text": "CORMS Investigation: 1. C: change wind speed e.g. using a fan at different settings (1). 2. O: same species / type / size of plant (1). 3. R: repeat the investigation and find mean for each wind speed (1). 4. M1: measure pollen count e.g. using sticky tape / slides (1). 5. M2: suitable stated time e.g. 1 hour (1). 6. S: same temperature / same humidity / same distance from fan (1)." }
       ]
