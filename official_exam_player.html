@@ -734,12 +734,20 @@
             }
 
             examData = await examRes.json();
-            const prog = await progRes.json();
             
+            if (!examRes.ok) {
+                alert("Error loading exam paper: " + (examData.error || "Unknown error"));
+                return;
+            }
+
+            // Progress check
+            const prog = await progRes.json();
             if (prog.success) {
                 savedAnswers = prog.answers || {};
                 currentGroupIdx = prog.current_question_idx || 0;
                 selectedQuestionInGroup = savedAnswers._selections || {};
+            } else {
+                console.log("No previous progress found for this paper.");
             }
 
             document.getElementById('paperTitle').textContent = examData.title;
@@ -758,10 +766,12 @@
 
             // Group questions by their first page
             const groupsByPage = {};
+            const isEnglish = (examData.subject || "").toLowerCase().includes('english');
             const sectionCQuestions = [];
             
             examData.questions.forEach(q => {
-                if (q.id >= 9) {
+                // Only English papers use the Q9-Q11 choice block logic
+                if (isEnglish && q.id >= 9) {
                     sectionCQuestions.push(q);
                 } else {
                     const firstPage = q.sub_questions[0].qp_pages[0];
@@ -777,8 +787,13 @@
             
             pageGroups = Object.values(groupsByPage).sort((a, b) => a.page - b.page);
             
-            // Add Section C as a single group if it exists
-            if (sectionCQuestions.length > 0) {
+            // Ensure questions within each group are also sorted numerically by ID
+            pageGroups.forEach(group => {
+                group.questions.sort((a, b) => a.id - b.id);
+            });
+            
+            // Add Section C as a single group if it exists (English only)
+            if (isEnglish && sectionCQuestions.length > 0) {
                 pageGroups.push({
                     page: sectionCQuestions[0].sub_questions[0].qp_pages[0],
                     questions: sectionCQuestions,

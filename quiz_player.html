@@ -70,6 +70,7 @@
             margin-bottom: 30px;
             text-align: center;
             box-shadow: 0 10px 30px rgba(30, 60, 114, 0.2);
+            position: relative;
         }
         .header h1 { font-size: 2.2em; font-weight: 800; margin-bottom: 10px; }
         
@@ -80,9 +81,21 @@
             margin-bottom: 25px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.05);
             border: 1px solid #eee;
+            position: relative;
+            transition: border-color 0.3s;
         }
         .question-text { font-size: 1.2em; font-weight: 700; margin-bottom: 20px; color: #1e3c72; }
         
+        .edit-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-family: inherit;
+            font-size: 1em;
+        }
+
         .options-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
         .option-btn {
             padding: 15px 20px;
@@ -139,6 +152,31 @@
             margin-top: 30px;
         }
         .score-value { font-size: 4em; font-weight: 900; color: #28a745; margin: 10px 0; }
+
+        .edit-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .btn-edit {
+            padding: 8px 15px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            background: #f8f9fa;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+        .btn-edit.danger { color: #dc3545; border-color: #f5c6cb; }
+        
+        .edited-stamp {
+            font-size: 0.75em;
+            color: #999;
+            font-style: italic;
+            margin-top: 15px;
+            display: block;
+            text-align: right;
+        }
     </style>
 </head>
 <body>
@@ -165,6 +203,11 @@
 
         <div class="content">
             <div id="questionsContainer"></div>
+            
+            <div id="editGlobalActions" style="margin-bottom: 40px; text-align: center;">
+                <button class="tool-btn" style="background: #1e3c72; color: white; padding: 10px 25px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer;" onclick="addQuestion()">➕ Add New Question</button>
+            </div>
+
             <button id="submitBtn" class="btn-submit" onclick="submitQuiz()">Submit Quiz for Grading</button>
 
             <div id="results">
@@ -183,6 +226,9 @@
         let quizData = null;
         let currentQuestions = [];
         let userAnswers = {};
+        let editModes = {}; // Track by qIdx
+        let hasUnsavedChanges = {}; // Track by qIdx
+        let originalStates = {}; // Keep the TRUE original before edits started
         const quizId = window.location.pathname.match(/quiz_(\d+)\.html/)[1];
 
         function showLineAlert(msg, type='info') {
@@ -214,23 +260,19 @@
             if (!username) { window.location.href = 'login.html'; return; }
             const welcomeEl = document.getElementById('welcomeUser');
             const displayUser = username.length > 6 ? username.substring(0, 6) + '...' : username;
-            welcomeEl.textContent = '👤 ' + displayUser;
-            welcomeEl.title = username;
+            if (welcomeEl) {
+                welcomeEl.textContent = '👤 ' + displayUser;
+                welcomeEl.title = username;
+            }
 
             try {
                 const res = await fetch(`/api/quiz/${quizId}`);
                 const data = await res.json();
                 if (data.success) {
                     quizData = data.quiz;
-                    // Robustly handle if questions is nested or direct
-                    if (Array.isArray(quizData.questions)) {
-                        currentQuestions = quizData.questions;
-                    } else if (typeof quizData.questions === 'object' && quizData.questions !== null) {
-                        currentQuestions = Object.values(quizData.questions).find(v => Array.isArray(v)) || [];
-                    }
-                    
+                    currentQuestions = quizData.questions || [];
                     if (currentQuestions.length === 0) {
-                        showLineAlert("Invalid quiz data format", "error");
+                        showLineAlert("This quiz has no questions.", "error");
                     } else {
                         renderQuiz();
                     }
@@ -238,38 +280,264 @@
                     showLineAlert("Quiz not found", "error");
                 }
             } catch (e) {
-                showLineAlert("Error loading quiz", "error");
+                console.error("Quiz Load Error:", e);
+                showLineAlert("Error loading quiz data", "error");
             }
+        }
+
+        function toggleEditMode(qIdx) {
+            editModes[qIdx] = !editModes[qIdx];
+            if (editModes[qIdx] && !originalStates[qIdx]) {
+                // Store the REAL original state before any typing happened
+                originalStates[qIdx] = JSON.parse(JSON.stringify(currentQuestions[qIdx]));
+            }
+            renderQuiz();
         }
 
         function renderQuiz() {
             document.getElementById('quizTopic').textContent = quizData.topic;
+            if (quizData.created_by) {
+                document.getElementById('quizMeta').textContent = `Created by: ${quizData.created_by}`;
+            }
             const container = document.getElementById('questionsContainer');
             container.innerHTML = '';
 
             currentQuestions.forEach((q, qIdx) => {
                 const card = document.createElement('div');
                 card.className = 'question-card';
-                card.innerHTML = `
-                    <div class="question-text">${qIdx + 1}. ${q.question}</div>
-                    <div class="options-grid">
+                if (hasUnsavedChanges[qIdx]) {
+                    card.style.borderColor = '#1e3c72';
+                    card.style.borderWidth = '2px';
+                }
+                
+                if (editModes[qIdx]) {
+                    card.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                            <label style="font-weight:bold; font-size:0.85em; color:#1e3c72;">EDITING QUESTION ${qIdx + 1}</label>
+                            <span style="cursor:pointer; font-size:1.2em;" onclick="toggleEditMode(${qIdx})" title="Cancel Editing">✖️</span>
+                        </div>
+                        
+                        <textarea class="edit-input" style="height:80px;" oninput="updateQuestionText(${qIdx}, this.value)">${q.question}</textarea>
+                        
+                        <label style="font-weight:bold; font-size:0.8em; color:#666; margin-top:10px; display:block;">OPTIONS (Select correct one)</label>
                         ${q.options.map((opt, oIdx) => {
                             const label = String.fromCharCode(65 + oIdx);
                             return `
-                                <div class="option-btn" onclick="selectOption(${qIdx}, '${label}')" id="q${qIdx}_opt${label}">
-                                    <div class="badge">${label}</div>
-                                    <span>${opt}</span>
+                                <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+                                    <input type="radio" name="correct_${qIdx}" ${q.answer === label ? 'checked' : ''} onchange="updateCorrectAnswer(${qIdx}, '${label}')">
+                                    <input type="text" class="edit-input" style="margin-bottom:0; flex:1;" value="${opt}" oninput="updateOptionText(${qIdx}, ${oIdx}, this.value)">
+                                    <button onclick="removeOption(${qIdx}, ${oIdx})" style="background:none; border:none; color:#dc3545; cursor:pointer; font-size:1.2em;" title="Remove Option">×</button>
                                 </div>
                             `;
                         }).join('')}
-                    </div>
-                `;
+                        <button class="btn-edit" style="font-size:0.8em; margin-bottom:10px;" onclick="addOption(${qIdx})">➕ Add Option</button>
+                        
+                        <div class="edit-actions" style="justify-content: space-between;">
+                            <button class="btn-edit danger" onclick="removeQuestion(${qIdx})">🗑️ Remove</button>
+                            <button class="btn-edit" style="background:#1e3c72; color:white; border:none; padding:8px 25px;" 
+                                id="save_btn_${qIdx}" onclick="saveIndividualQuestion(${qIdx})">💾 Save Changes</button>
+                        </div>
+                    `;
+                } else {
+                    let historyHtml = '';
+                    if (q.edit_history && q.edit_history.length > 0) {
+                        historyHtml = `
+                            <div id="history_${qIdx}" style="display:none; margin-top:10px; padding:15px; background:#f1f4f9; border-radius:8px; font-size:0.8em; color:#666; width:100%;">
+                                <div style="font-weight:700; margin-bottom:10px; border-bottom:1px solid #ddd; color:#1e3c72;">Edit History Archive:</div>
+                                ${q.edit_history.map(h => `
+                                    <div style="margin-bottom:15px; border-left:3px solid #ccc; padding-left:10px;">
+                                        <div style="font-weight:bold; color:#333;">${h.user} (${formatLastAccessed(h.timestamp)}) changed it from:</div>
+                                        <div style="font-style:italic; margin:5px 0;">"${h.prev_text || '...'}"</div>
+                                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px; font-size:0.9em; margin-top:5px;">
+                                            ${(h.prev_options || []).map((o,i) => {
+                                                const label = String.fromCharCode(65+i);
+                                                const isCorrect = h.prev_answer === label;
+                                                return `<div style="${isCorrect ? 'color:#28a745; font-weight:800;' : ''}">${label}. ${o} ${isCorrect ? '✓' : ''}</div>`;
+                                            }).join('')}
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <span onclick="toggleHistory(${qIdx})" style="font-size:0.75em; color:var(--primary-color); cursor:pointer; text-decoration:underline; margin-left:10px;">View all changes (${q.edit_history.length})</span>
+                        `;
+                    }
+
+                    card.innerHTML = `
+                        <div style="position:absolute; top:20px; right:20px; display:flex; gap:10px;">
+                            <span style="cursor:pointer; font-size:1.1em; opacity:0.6; transition:opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'" onclick="toggleEditMode(${qIdx})" title="Edit Question">✏️</span>
+                        </div>
+                        <div class="question-text">${qIdx + 1}. ${q.question}</div>
+                        <div class="options-grid">
+                            ${q.options.map((opt, oIdx) => {
+                                const label = String.fromCharCode(65 + oIdx);
+                                return `
+                                    <div class="option-btn" onclick="selectOption(${qIdx}, '${label}')" id="q${qIdx}_opt${label}">
+                                        <div class="badge">${label}</div>
+                                        <span>${opt}</span>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                        <div style="display:flex; align-items:center; justify-content:flex-end; margin-top:15px; flex-wrap:wrap;">
+                            ${q.edited_by ? `<span class="edited-stamp">✏️ Latest edit by <strong>${q.edited_by}</strong> ${q.last_edited_at ? '(' + formatLastAccessed(q.last_edited_at) + ')' : ''}</span>` : ''}
+                            ${historyHtml}
+                        </div>
+                    `;
+                }
                 container.appendChild(card);
             });
         }
 
+        function toggleHistory(idx) {
+            const el = document.getElementById('history_' + idx);
+            el.style.display = el.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function formatLastAccessed(isoStr) {
+            if (!isoStr) return '';
+            const date = new Date(isoStr.replace(' ', 'T') + (isoStr.includes('Z') ? '' : 'Z'));
+            if (isNaN(date.getTime())) return '';
+            const now = new Date();
+            const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            if (date.toDateString() === now.toDateString()) return `Today, ${timeStr}`;
+            return `${date.toLocaleDateString([], { day: 'numeric', month: 'short' })}, ${timeStr}`;
+        }
+
+        // --- Edit Logic ---
+        function updateQuestionText(idx, val) {
+            currentQuestions[idx].question = val;
+            hasUnsavedChanges[idx] = true;
+        }
+        function updateOptionText(qIdx, oIdx, val) {
+            currentQuestions[qIdx].options[oIdx] = val;
+            hasUnsavedChanges[qIdx] = true;
+        }
+        function updateCorrectAnswer(qIdx, label) {
+            currentQuestions[qIdx].answer = label;
+            hasUnsavedChanges[qIdx] = true;
+            renderQuiz(); 
+        }
+        
+        function addOption(qIdx) {
+            currentQuestions[qIdx].options.push("New Option");
+            hasUnsavedChanges[qIdx] = true;
+            renderQuiz();
+        }
+
+        function removeOption(qIdx, oIdx) {
+            if (currentQuestions[qIdx].options.length <= 2) {
+                showLineAlert("Questions must have at least 2 options.", "error");
+                return;
+            }
+            const removedLabel = String.fromCharCode(65 + oIdx);
+            currentQuestions[qIdx].options.splice(oIdx, 1);
+            
+            // If we removed the correct answer, reset it to A
+            if (currentQuestions[qIdx].answer === removedLabel) {
+                currentQuestions[qIdx].answer = 'A';
+            } else if (currentQuestions[qIdx].answer > removedLabel) {
+                // Shift the answer letter back by one
+                const charCode = currentQuestions[qIdx].answer.charCodeAt(0);
+                currentQuestions[qIdx].answer = String.fromCharCode(charCode - 1);
+            }
+            
+            hasUnsavedChanges[qIdx] = true;
+            renderQuiz();
+        }
+        
+        async function saveIndividualQuestion(idx) {
+            const username = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
+            const btn = document.getElementById(`save_btn_${idx}`);
+            const now = new Date().toISOString();
+            
+            const currentQ = currentQuestions[idx];
+            const originalQ = originalStates[idx]; // This is the state when they clicked Edit
+
+            if (!currentQ.edit_history) currentQ.edit_history = [];
+            
+            if (originalQ) {
+                // Check if anything actually changed during THIS edit session
+                const textChanged = originalQ.question !== currentQ.question;
+                const optionsChanged = JSON.stringify(originalQ.options) !== JSON.stringify(currentQ.options);
+                const answerChanged = originalQ.answer !== currentQ.answer;
+
+                if (textChanged || optionsChanged || answerChanged) {
+                    const historyEntry = {
+                        user: originalQ.edited_by || quizData.created_by || 'Original AI',
+                        timestamp: originalQ.last_edited_at || quizData.created_at || new Date().toISOString(),
+                        prev_text: originalQ.question, // The text BEFORE current edits
+                        prev_options: [...originalQ.options], // The options BEFORE current edits
+                        prev_answer: originalQ.answer // The answer BEFORE current edits
+                    };
+                    currentQ.edit_history.unshift(historyEntry);
+                }
+            }
+
+            currentQ.edited_by = username;
+            currentQ.last_edited_at = now;
+            delete originalStates[idx];
+            
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = "Saving...";
+            }
+
+            try {
+                const res = await fetch('/api/quiz/update', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ quiz_id: quizId, username: username, questions: currentQuestions })
+                });
+                if ((await res.json()).success) {
+                    delete hasUnsavedChanges[idx];
+                    editModes[idx] = false;
+                    showLineAlert(`Question ${idx + 1} updated!`, "success");
+                    renderQuiz();
+                }
+            } catch (e) { 
+                showLineAlert("Failed to save changes", "error"); 
+                if (btn) { btn.disabled = false; btn.textContent = "💾 Save Changes"; }
+            }
+        }
+
+        function addQuestion() {
+            const username = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
+            const newIdx = currentQuestions.length;
+            currentQuestions.push({
+                question: "New Question Text",
+                options: ["Option A", "Option B", "Option C", "Option D"],
+                answer: "A",
+                edited_by: username
+            });
+            editModes[newIdx] = true;
+            hasUnsavedChanges[newIdx] = true;
+            renderQuiz();
+        }
+
+        function removeQuestion(idx) {
+            if (confirm("Delete this question?")) {
+                currentQuestions.splice(idx, 1);
+                hasUnsavedChanges = {}; 
+                editModes = {};
+                saveQuizChangesSilently();
+            }
+        }
+
+        async function saveQuizChangesSilently() {
+            const username = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
+            try {
+                await fetch('/api/quiz/update', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ quiz_id: quizId, username: username, questions: currentQuestions })
+                });
+                renderQuiz();
+            } catch (e) {}
+        }
+
         function selectOption(qIdx, label) {
             if (document.getElementById('results').style.display === 'block') return;
+            if (editModes[qIdx]) return;
             ['A','B','C','D'].forEach(l => {
                 const el = document.getElementById(`q${qIdx}_opt${l}`);
                 if (el) el.classList.remove('selected');
@@ -281,13 +549,10 @@
         async function submitQuiz() {
             let score = 0;
             const total = currentQuestions.length;
-            
-            // Validation
             if (Object.keys(userAnswers).length < total) {
                 showLineAlert("Please answer all questions first.", "error");
                 return;
             }
-
             currentQuestions.forEach((q, qIdx) => {
                 const userAns = userAnswers[qIdx];
                 const correctAns = q.answer;
@@ -301,39 +566,28 @@
                     if (correctEl) correctEl.classList.add('correct');
                 }
             });
-
             document.getElementById('submitBtn').style.display = 'none';
             document.getElementById('results').style.display = 'block';
             document.getElementById('scoreDisplay').textContent = `${score} / ${total}`;
-            
             const pct = Math.round((score/total)*100);
             let msg = "Good try! Keep practicing.";
             if (pct >= 80) msg = "Excellent! You've mastered this topic.";
             else if (pct >= 50) msg = "Well done! A solid performance.";
             document.getElementById('feedbackText').textContent = msg;
-
             const username = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
             try {
                 await fetch('/api/submit-quiz', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
-                        username,
-                        topic: quizData.topic,
-                        score: `${score} / ${total}`,
-                        percentage: `${pct}%`,
-                        questions: currentQuestions.map((q, idx) => ({
-                            ...q,
-                            user_answer: userAnswers[idx],
-                            is_correct: userAnswers[idx] === q.answer
-                        }))
+                        username, topic: quizData.topic, score: `${score} / ${total}`,
+                        percentage: `${pct}%`, questions: currentQuestions.map((q, idx) => ({ ...q, user_answer: userAnswers[idx], is_correct: userAnswers[idx] === q.answer }))
                     })
                 });
                 showLineAlert("Results saved!", "success");
             } catch (e) { console.error("Failed to save results", e); }
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
-
         init();
     </script>
 </body>

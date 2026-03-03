@@ -26,7 +26,7 @@ CORS(app)
 DATABASE = 'quizzes.db'
 QUIZ_RESULTS_DIR = 'results'
 RESOURCES_BASE = '/home/obo/playground/examQ/resources/igcse_edxcel_exampapers'
-OLLAMA_API = "http://127.0.0.1:11434/api/generate"
+OLLAMA_API = "http://localhost:11434/api/generate"
 
 # Global state for background import jobs
 import_jobs = {}
@@ -39,7 +39,6 @@ def get_db():
 def init_db():
     conn = get_db()
     cursor = conn.cursor()
-    
     # Check current columns in users table
     cursor.execute("PRAGMA table_info(users)")
     columns = [row['name'] for row in cursor.fetchall()]
@@ -148,68 +147,54 @@ def load_users():
 
 def clean_ai_json(text):
     """Robustly extract JSON from AI response"""
-    if not text: return None
-    
-    # 0. Basic cleaning
-    text = text.strip()
-    text = re.sub(r'```json\s*', '', text)
-    text = re.sub(r'```\s*', '', text)
-
     try:
-        # 1. Direct parse
+        # 1. Try to find any JSON list
+        match = re.search(r'\[\s*\{.*\}\s*\]', text, re.DOTALL)
+        if match: return json.loads(match.group(0))
+
+        # 2. Try to find any JSON object
+        match = re.search(r'\{\s*".*"\s*:.*\}', text, re.DOTALL)
+        if match: return json.loads(match.group(0))
+
+        # 3. Simple list of strings match
+        match = re.search(r'\[\s*".*"\s*\]', text, re.DOTALL)
+        if match: return json.loads(match.group(0))
+
         return json.loads(text)
     except:
-        # 2. Try to find largest matching block
-        # Look for [ ... ]
-        list_match = re.findall(r'\[.*\]', text, re.DOTALL)
-        if list_match:
-            # Sort by length descending to find the most complete JSON
-            list_match.sort(key=len, reverse=True)
-            for m in list_match:
-                try: return json.loads(m)
-                except: continue
-
-        # 3. Look for { ... }
-        obj_match = re.findall(r'\{.*\}', text, re.DOTALL)
-        if obj_match:
-            obj_match.sort(key=len, reverse=True)
-            for m in obj_match:
-                try: return json.loads(m)
-                except: continue
-        
-        # 4. Final attempt: deep cleaning of common AI escape issues
-        try:
-            # Sometimes AI adds comments or trailing commas
-            cleaned = re.sub(r'//.*', '', text) # Remove single line comments
-            cleaned = re.sub(r',\s*([\]\}])', r'\1', cleaned) # Remove trailing commas
-            return json.loads(cleaned)
-        except:
-            return None
+        return None
 
 # --- API ROUTES ---
+
+@app.route('/api/login', methods=['POST'])
+def login():
+    data = request.json
+    users = load_users()
+    u, p = data.get('username'), data.get('password')
+    if u in users and users[u]['password'] == p:
+        conn = get_db(); cursor = conn.cursor(); cursor.execute("UPDATE users SET last_online = CURRENT_TIMESTAMP WHERE username = ?", (u,))
+        conn.commit(); conn.close()
+        return jsonify({'success': True, 'username': u, 'role': users[u].get('role', 'student')}), 200
+    return jsonify({'success': False, 'message': 'Invalid credentials'}), 401
 
 @app.route('/api/user/heartbeat', methods=['POST'])
 def user_heartbeat():
     try:
-        data = request.json
-        u = data.get('username')
+        data = request.json; u = data.get('username')
         if not u: return jsonify({'error': 'Missing username'}), 400
         conn = get_db(); cursor = conn.cursor()
         cursor.execute("UPDATE users SET last_online = CURRENT_TIMESTAMP WHERE username = ?", (u,))
-        conn.commit(); conn.close()
-        return jsonify({'success': True}), 200
+        conn.commit(); conn.close(); return jsonify({'success': True}), 200
     except Exception as e: return jsonify({'error': str(e)}), 500
 
 @app.route('/api/users/all')
 def get_all_users_status():
     try:
         conn = get_db(); cursor = conn.cursor()
-        # Get all users and their status (online if seen in last 2 mins)
         cursor.execute("""
             SELECT username, role, last_online,
             CASE WHEN last_online > datetime('now', '-2 minutes') THEN 1 ELSE 0 END as is_online
-            FROM users
-            ORDER BY is_online DESC, username ASC
+            FROM users ORDER BY is_online DESC, username ASC
         """)
         rows = cursor.fetchall(); conn.close()
         users = [{'username': r['username'], 'role': r['role'], 'is_online': bool(r['is_online']), 'last_online': r['last_online']} for r in rows]
@@ -219,79 +204,43 @@ def get_all_users_status():
 @app.route('/api/messages/send', methods=['POST'])
 def send_message():
     try:
-        data = request.json
-        s, r, m = data.get('sender'), data.get('recipient'), data.get('message')
+        data = request.json; s, r, m = data.get('sender'), data.get('recipient'), data.get('message')
         if not s or not r or not m: return jsonify({'error': 'Missing fields'}), 400
         conn = get_db(); cursor = conn.cursor()
         cursor.execute("INSERT INTO messages (sender, recipient, message) VALUES (?, ?, ?)", (s, r, m))
-        conn.commit(); conn.close()
-        return jsonify({'success': True}), 201
+        conn.commit(); conn.close(); return jsonify({'success': True}), 201
     except Exception as e: return jsonify({'error': str(e)}), 500
 
 @app.route('/api/messages/get')
 def get_messages():
     try:
-        u = request.args.get('username')
-        other = request.args.get('other')
+        u, other = request.args.get('username'), request.args.get('other')
         if not u: return jsonify({'error': 'Missing username'}), 400
         conn = get_db(); cursor = conn.cursor()
-        if other:
-            # Get conversation with specific user
-            cursor.execute("""
-                SELECT * FROM messages 
-                WHERE (sender = ? AND recipient = ?) OR (sender = ? AND recipient = ?)
-                ORDER BY timestamp ASC
-            """, (u, other, other, u))
-        else:
-            # Get all recent messages for user
-            cursor.execute("SELECT * FROM messages WHERE recipient = ? OR sender = ? ORDER BY timestamp DESC LIMIT 50", (u, u))
-        
-        rows = cursor.fetchall(); conn.close()
-        results = [dict(r) for r in rows]
-        return jsonify({'success': True, 'messages': results}), 200
+        if other: cursor.execute("SELECT * FROM messages WHERE (sender = ? AND recipient = ?) OR (sender = ? AND recipient = ?) ORDER BY timestamp ASC", (u, other, other, u))
+        else: cursor.execute("SELECT * FROM messages WHERE recipient = ? OR sender = ? ORDER BY timestamp DESC LIMIT 50", (u, u))
+        rows = cursor.fetchall(); conn.close(); return jsonify({'success': True, 'messages': [dict(r) for r in rows]}), 200
     except Exception as e: return jsonify({'error': str(e)}), 500
 
 @app.route('/api/messages/read', methods=['POST'])
 def mark_messages_read():
     try:
-        data = request.json
-        u, other = data.get('username'), data.get('other')
-        if not u or not other: return jsonify({'error': 'Missing fields'}), 400
+        data = request.json; u, other = data.get('username'), data.get('other')
         conn = get_db(); cursor = conn.cursor()
         cursor.execute("UPDATE messages SET is_read = 1 WHERE recipient = ? AND sender = ?", (u, other))
-        conn.commit(); conn.close()
-        return jsonify({'success': True}), 200
+        conn.commit(); conn.close(); return jsonify({'success': True}), 200
     except Exception as e: return jsonify({'error': str(e)}), 500
 
 @app.route('/api/messages/unread-count')
 def get_unread_count():
     try:
-        u = request.args.get('username')
-        conn = get_db(); cursor = conn.cursor()
-        # Total unread count
+        u = request.args.get('username'); conn = get_db(); cursor = conn.cursor()
         cursor.execute("SELECT COUNT(*) as count FROM messages WHERE recipient = ? AND is_read = 0", (u,))
         total = cursor.fetchone()['count']
-        
-        # Breakdown by sender
         cursor.execute("SELECT sender, COUNT(*) as count FROM messages WHERE recipient = ? AND is_read = 0 GROUP BY sender", (u,))
         rows = cursor.fetchall(); conn.close()
-        by_sender = {r['sender']: r['count'] for r in rows}
-        
-        return jsonify({'success': True, 'count': total, 'by_sender': by_sender}), 200
+        return jsonify({'success': True, 'count': total, 'by_sender': {r['sender']: r['count'] for r in rows}}), 200
     except Exception as e: return jsonify({'error': str(e)}), 500
-
-@app.route('/api/login', methods=['POST'])
-def login():
-    data = request.json
-    users = load_users()
-    u, p = data.get('username'), data.get('password')
-    if u in users and users[u]['password'] == p:
-        # Update last online on login
-        conn = get_db(); cursor = conn.cursor()
-        cursor.execute("UPDATE users SET last_online = CURRENT_TIMESTAMP WHERE username = ?", (u,))
-        conn.commit(); conn.close()
-        return jsonify({'success': True, 'username': u, 'role': users[u].get('role', 'student')}), 200
-    return jsonify({'success': False, 'message': 'Invalid credentials'}), 401
 
 @app.route('/health')
 def health_check():
@@ -304,7 +253,7 @@ def register():
     if not u or not p: return jsonify({'success': False}), 400
     try:
         conn = get_db(); cursor = conn.cursor()
-        cursor.execute("INSERT INTO users (username, password, created_at, last_online) VALUES (?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)", (u, p))
+        cursor.execute("INSERT INTO users (username, password, created_at) VALUES (?, ?, CURRENT_TIMESTAMP)", (u, p))
         conn.commit(); conn.close(); return jsonify({'success': True}), 201
     except: return jsonify({'success': False}), 400
 
@@ -321,44 +270,90 @@ def verify_admin():
 def admin_get_users():
     data = request.json
     admin_username = data.get('admin_username')
+    
+    # Simple check for admin role
     users_data = load_users()
     if admin_username not in users_data or users_data[admin_username].get('role') != 'admin':
         return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+
     try:
-        conn = get_db(); cursor = conn.cursor()
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        # Get all users with their quiz count
         cursor.execute('''
             SELECT u.username, u.role, u.created_at, 
                    (SELECT COUNT(*) FROM quiz_results r WHERE r.username = u.username) as quizzes_taken
             FROM users u
             ORDER BY u.created_at DESC
         ''')
-        users_list = {row['username']: {'role': row['role'], 'created_at': row['created_at'], 'quizzes_taken': row['quizzes_taken']} for row in cursor.fetchall()}
+        
+        users_list = {}
+        for row in cursor.fetchall():
+            users_list[row['username']] = {
+                'role': row['role'],
+                'created_at': row['created_at'],
+                'quizzes_taken': row['quizzes_taken']
+            }
+        
         conn.close()
         return jsonify({'success': True, 'users': users_list})
-    except Exception as e: return jsonify({'success': False, 'message': str(e)}), 500
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 @app.route('/api/admin/update-user', methods=['POST'])
 def admin_update_user():
     data = request.json
     admin_username = data.get('admin_username')
+    
+    # Simple check for admin role
     users_data = load_users()
     if admin_username not in users_data or users_data[admin_username].get('role') != 'admin':
         return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+    
     old_username = data.get('old_username')
     new_username = data.get('new_username')
     new_password = data.get('new_password')
+    
+    if not old_username:
+        return jsonify({'success': False, 'message': 'Missing old_username'}), 400
+    
     try:
-        conn = get_db(); cursor = conn.cursor()
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        # Check if user exists
+        cursor.execute("SELECT * FROM users WHERE username = ?", (old_username,))
+        if not cursor.fetchone():
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+        
+        # Update username if provided
         if new_username and new_username != old_username:
+            # Check if new username already exists
+            cursor.execute("SELECT * FROM users WHERE username = ?", (new_username,))
+            if cursor.fetchone():
+                return jsonify({'success': False, 'message': 'New username already exists'}), 400
+            
             cursor.execute("UPDATE users SET username = ? WHERE username = ?", (new_username, old_username))
+            # Also update quiz results and exam progress to maintain consistency
             cursor.execute("UPDATE quiz_results SET username = ? WHERE username = ?", (new_username, old_username))
             cursor.execute("UPDATE exam_progress SET username = ? WHERE username = ?", (new_username, old_username))
             cursor.execute("UPDATE saved_quizzes SET created_by = ? WHERE created_by = ?", (new_username, old_username))
+            
+            # Use new_username for password update if also provided
             target_username = new_username
-        else: target_username = old_username
-        if new_password: cursor.execute("UPDATE users SET password = ? WHERE username = ?", (new_password, target_username))
-        conn.commit(); conn.close(); return jsonify({'success': True})
-    except Exception as e: return jsonify({'success': False, 'message': str(e)}), 500
+        else:
+            target_username = old_username
+            
+        # Update password if provided
+        if new_password:
+            cursor.execute("UPDATE users SET password = ? WHERE username = ?", (new_password, target_username))
+            
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 @app.route('/api/admin/list-folders')
 def list_resource_folders():
@@ -395,111 +390,563 @@ def get_import_progress():
 
 @app.route('/api/generate-quiz', methods=['POST'])
 def generate_quiz_api():
+    """Generate a quiz using Ollama and save it"""
     try:
-        data = request.json; topic = data.get('topic'); num = data.get('num_questions', 10); username = data.get('username')
-        prompt = f"""Create a multiple-choice quiz about: {topic}. Number of questions: {num}.
-For each question: 1. Provide a clear, challenging question. 2. Provide 4 unique, descriptive options. 
-3. CRITICAL: Exactly ONE option must be correct. The other THREE options must be definitively INCORRECT distractors.
-4. DO NOT create questions where multiple options could be considered correct. 5. DO NOT use letters like 'A', 'B', 'C', 'D' as the option text. 
-6. Identify the correct answer letter (A, B, C, or D). Return ONLY a JSON list."""
-        response = requests.post(OLLAMA_API, json={'model': 'llama3', 'prompt': prompt, 'stream': False, 'format': 'json'}, timeout=120)
-        questions = clean_ai_json(response.json().get('response', '[]'))
-        if not questions: return jsonify({'success': False, 'error': 'Failed to parse AI response'}), 500
-        conn = get_db(); cursor = conn.cursor()
-        cursor.execute("INSERT INTO saved_quizzes (topic, quiz_json, created_by) VALUES (?, ?, ?)", (topic, json.dumps(questions), username))
-        quiz_id = cursor.lastrowid; conn.commit(); conn.close()
+        data = request.json
+        topic = data.get('topic')
+        num = data.get('num_questions', 10)
+        username = data.get('username')
+
+        prompt = f"""Create a multiple-choice quiz about: {topic}.
+Number of questions: {num}.
+For each question, provide 4 options (A, B, C, D) and identify the correct letter.
+
+Return ONLY a JSON list of objects:
+[
+  {{
+    "question": "...",
+    "options": ["option 1", "option 2", "option 3", "option 4"],
+    "answer": "A/B/C/D"
+  }}
+]"""
+
+        # Call Ollama
+        response = requests.post(OLLAMA_API, json={
+            'model': 'llama3',
+            'prompt': prompt,
+            'stream': False,
+            'format': 'json'
+        }, timeout=120)
+        
+        if response.status_code != 200:
+            return jsonify({'success': False, 'error': 'AI model failed'}), 500
+            
+        quiz_json_raw = response.json().get('response', '[]')
+        questions = clean_ai_json(quiz_json_raw)
+        
+        if not questions:
+            return jsonify({'success': False, 'error': 'Failed to parse AI response'}), 500
+
+        # Save to database
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO saved_quizzes (topic, quiz_json, created_by) VALUES (?, ?, ?)",
+            (topic, json.dumps(questions), username)
+        )
+        quiz_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+
         return jsonify({'success': True, 'quiz_id': quiz_id})
-    except Exception as e: return jsonify({'success': False, 'error': str(e)}), 500
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/save-quiz', methods=['POST'])
+def save_quiz():
+    """Save an AI generated quiz to the database"""
+    try:
+        data = request.json
+        topic = data.get('topic')
+        questions = data.get('questions')
+        created_by = data.get('created_by')
+        
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO saved_quizzes (topic, quiz_json, created_by) VALUES (?, ?, ?)",
+            (topic, json.dumps(questions), created_by)
+        )
+        quiz_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True, 'quiz_id': quiz_id}), 201
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 @app.route('/api/my-quizzes')
 def get_my_quizzes():
+    """Get list of quizzes created by a user"""
     try:
-        conn = get_db(); cursor = conn.cursor()
-        cursor.execute("SELECT id, topic, created_at, created_by FROM saved_quizzes ORDER BY created_at DESC")
-        rows = cursor.fetchall(); quizzes = [dict(r) for r in rows]; conn.close()
+        username = request.args.get('username')
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT id, topic, created_at FROM saved_quizzes WHERE created_by = ? ORDER BY created_at DESC",
+            (username,)
+        )
+        rows = cursor.fetchall()
+        quizzes = [dict(r) for r in rows]
+        conn.close()
         return jsonify({'success': True, 'quizzes': quizzes})
-    except Exception as e: return jsonify({'success': False, 'message': str(e)}), 500
-
-@app.route('/api/admin/delete-quiz', methods=['POST'])
-def delete_quiz():
-    try:
-        data = request.json; admin_u = data.get('admin_username'); quiz_id = data.get('quiz_id')
-        users = load_users()
-        if not admin_u in users or users[admin_u].get('role') != 'admin': return jsonify({'error': 'Unauthorized'}), 403
-        conn = get_db(); cursor = conn.cursor(); cursor.execute("DELETE FROM saved_quizzes WHERE id = ?", (quiz_id,))
-        conn.commit(); conn.close(); return jsonify({'success': True}), 200
-    except Exception as e: return jsonify({'error': str(e)}), 500
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 @app.route('/api/quiz/<int:quiz_id>')
 def get_single_quiz(quiz_id):
+    """Fetch a single AI-generated quiz by its ID"""
     try:
-        conn = get_db(); cursor = conn.cursor(); cursor.execute("SELECT id, topic, quiz_json FROM saved_quizzes WHERE id = ?", (quiz_id,))
-        row = cursor.fetchone(); conn.close()
-        if row: return jsonify({'success': True, 'quiz': {'id': row['id'], 'topic': row['topic'], 'questions': json.loads(row['quiz_json'])}})
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, topic, quiz_json FROM saved_quizzes WHERE id = ?", (quiz_id,))
+        row = cursor.fetchone()
+        conn.close()
+        if row:
+            return jsonify({
+                'success': True, 
+                'quiz': {
+                    'id': row['id'], 
+                    'topic': row['topic'], 
+                    'questions': json.loads(row['quiz_json'])
+                }
+            })
         return jsonify({'success': False, 'message': 'Quiz not found'}), 404
-    except Exception as e: return jsonify({'success': False, 'message': str(e)}), 500
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 @app.route('/quiz_<int:quiz_id>.html')
-def serve_quiz_player(quiz_id): return send_from_directory('.', 'quiz_player.html')
+def serve_quiz_player(quiz_id):
+    """Serve the dynamic quiz player for any quiz ID"""
+    return send_from_directory('.', 'quiz_player.html')
 
 @app.route('/api/official-exams/submit', methods=['POST'])
 def submit_official_exam():
     try:
-        data = request.json; u = data.get('username'); paper_id = data.get('paper_id'); topic = data.get('topic'); score = data.get('score'); total = data.get('total_marks'); answers = data.get('answers')
+        data = request.json
+        u = data.get('username')
+        paper_id = data.get('paper_id')
+        topic = data.get('topic')
+        score = data.get('score')
+        total = data.get('total_marks')
+        answers = data.get('answers')
+        
         if not u or not paper_id: return jsonify({'error': 'Missing data'}), 400
-        quiz_summary = {'paper_id': paper_id, 'title': topic, 'topic': topic, 'is_official': True}
+        
+        # Structure the quiz_data_json to match AI quiz expectations for the dashboard
+        quiz_summary = {
+            'paper_id': paper_id,
+            'title': topic,
+            'topic': topic,
+            'is_official': True
+        }
+        
         conn = get_db(); cursor = conn.cursor()
-        cursor.execute("INSERT INTO quiz_results (username, quiz_data_json, answers_json, score, total_marks) VALUES (?, ?, ?, ?, ?)", (u, json.dumps(quiz_summary), json.dumps(answers), score, total))
-        conn.commit(); conn.close(); return jsonify({'success': True})
+        cursor.execute(
+            "INSERT INTO quiz_results (username, quiz_data_json, answers_json, score, total_marks) VALUES (?, ?, ?, ?, ?)",
+            (u, json.dumps(quiz_summary), json.dumps(answers), score, total)
+        )
+        conn.commit(); conn.close()
+        return jsonify({'success': True})
     except Exception as e: return jsonify({'error': str(e)}), 500
 
 @app.route('/api/submit-quiz', methods=['POST'])
-def submit_quiz_api():
+def submit_quiz():
+    """Save the results of a taken AI quiz from the generator"""
     try:
-        data = request.json; username = data.get('username'); topic = data.get('topic'); score_str = data.get('score'); questions_results = data.get('questions')
+        data = request.json
+        username = data.get('username')
+        topic = data.get('topic')
+        score_str = data.get('score') # Format: "X / Y"
+        percentage = data.get('percentage')
+        questions_results = data.get('questions')
+        
+        # Parse score
         try:
-            parts = score_str.split(' / '); score, total = int(parts[0]), int(parts[1])
-        except: score, total = 0, 0
-        quiz_data = {'topic': topic, 'questions': questions_results}
+            score_parts = score_str.split(' / ')
+            score = int(score_parts[0])
+            total = int(score_parts[1])
+        except:
+            score = 0
+            total = 0
+
+        # Construct quiz_data_json to match results dashboard expectation
+        quiz_data = {
+            'topic': topic,
+            'questions': questions_results
+        }
+        
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO quiz_results (username, quiz_data_json, answers_json, score, total_marks) VALUES (?, ?, ?, ?, ?)",
+            (username, json.dumps(quiz_data), json.dumps(questions_results), score, total)
+        )
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True}), 201
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/quiz-results/save', methods=['POST'])
+def save_quiz_results():
+    """Save the results of a taken quiz"""
+    try:
+        data = request.json
+        username = data.get('username')
+        quiz_data = data.get('quiz_data') # Original quiz
+        answers = data.get('answers') # Student answers
+        score = data.get('score')
+        total = data.get('total')
+        
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO quiz_results (username, quiz_data_json, answers_json, score, total_marks) VALUES (?, ?, ?, ?, ?)",
+            (username, json.dumps(quiz_data), json.dumps(answers), score, total)
+        )
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True}), 201
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+# --- BACKGROUND IMPORT LOGIC ---
+
+def run_import_background(job_id, qp_path, ms_path, er_path, metadata):
+    try:
+        import_jobs[job_id]['status'] = 'extracting_text'
+        qp_text = extract_pdf_text(qp_path); ms_text = extract_pdf_text(ms_path)
+        er_text = extract_pdf_text(er_path) if er_path and os.path.exists(er_path) else ""
+        qp_pages = qp_text.split('\n---PAGE BREAK---\n'); all_questions_map = {}; total_pages = len(qp_pages)
+        
+        for i, page_content in enumerate(qp_pages):
+            page_num = i + 1
+            import_jobs[job_id].update({'status': 'mapping', 'current_page': page_num, 'total_pages': total_pages, 'questions_found': len(all_questions_map)})
+            if not page_content.strip(): continue
+
+            # Robust ID Identification
+            id_prompt = f"""Analyze this IGCSE exam page text. Identify ALL question and sub-question IDs (e.g. 1, 1(a), 1(b)(i), 2(c), 10) that appear.
+Note: In English Language papers, questions might just be a number followed by text (e.g. "1 In lines 7-14..."). 
+Look for bold numbers or labels at the start of paragraphs.
+
+TEXT:
+{page_content}
+
+Return a JSON list of strings only.
+Example: ["1", "2", "3", "4", "5"]"""
+            
+            try:
+                resp = requests.post('http://localhost:11434/api/generate', json={'model': 'llama3', 'prompt': id_prompt, 'stream': False, 'format': 'json', 'temperature': 0}, timeout=45)
+                found_data = clean_ai_json(resp.json().get('response', '[]'))
+                
+                # Fallback: Use regex if AI returns nothing
+                if not found_data or not isinstance(found_data, list):
+                    found_data = re.findall(r'Question\s+(\d+)', page_content, re.IGNORECASE)
+                    # Also look for English-style single numbers at start of lines
+                    more = re.findall(r'^\s*(\d+)\s+[A-Z]', page_content, re.MULTILINE)
+                    found_data = list(set(found_data + more))
+                
+                print(f"  [IMPORT] Page {page_num} found IDs: {found_data}", flush=True)
+
+                if not found_data: continue
+
+                for sub_id in sorted(found_data):
+                    m = re.search(r'(\d+)', str(sub_id))
+                    if not m: continue
+                    main_id = int(m.group(1))
+
+                    q_prompt = f"""Extract marking details for sub-question {sub_id} from the mark scheme AND determine the correct input format based on the question paper text.
+                    MATCHING QUESTION ID: {sub_id}
+                    
+                    QUESTION PAPER TEXT (Page Context):
+                    {page_content}
+
+                    MARK SCHEME TEXT:
+                    {ms_text[:40000]}
+
+                    Return ONLY a JSON object:
+                    {{
+                    "sub_id": "{sub_id}",
+                    "type": "text/mcq/calculation/draw/list",
+                    "max_marks": 1,
+                    "lines_provided": 2, // Number of physical lines for the answer in the question paper
+                    "ms_text": "Complete marking criteria for this question",
+                    "options": ["A", "B", "C", "D"], // Only for mcq type
+                    "final_label": "Value", // Only for calculation type
+                    "final_unit": "unit" // Only for calculation type
+                    }}
+
+                    MANDATORY RULES:
+                    1. TYPE SELECTION (Look at the QUESTION PAPER TEXT):
+                       - Use 'list' ONLY if the question paper explicitly asks for distinct points (e.g., "State two...", "Give three...") or provides numbered/bulleted lines for the answer.
+                       - Use 'calculation' if the question paper asks to "calculate", "work out", or if there's a dotted line followed by a unit (e.g., "....... cm").
+                       - Use 'mcq' if the question paper provides options A, B, C, D.
+                       - Use 'draw' if the question paper asks to "draw", "plot", or "sketch" a diagram, pyramid, or chart (unless it's a line graph, then use 'graph').
+                       - Use 'text' for standard open-ended questions, explanations, or descriptions.
+                    2. ANSWER SPACE: Closely examine the QUESTION PAPER TEXT to see how many dotted lines (..........) are provided for the student to write on. Set 'lines_provided' to this count.
+                    3. For 'calculation' questions, closely examine the QUESTION PAPER TEXT near the dotted answer line to identify the exact label (e.g., 'rate', 'Length', 'Ratio') and unit (e.g., 'cm per second', 'µm').
+                    4. ms_text must be the full marking criteria from the MARK SCHEME TEXT.
+                    """                    
+                    q_resp = requests.post('http://localhost:11434/api/generate', json={'model': 'llama3', 'prompt': q_prompt, 'stream': False, 'format': 'json', 'temperature': 0}, timeout=90)
+                    sq = clean_ai_json(q_resp.json().get('response', '{}'))
+                    print(f"    [IMPORT] Sub-ID {sub_id} detail AI raw: {q_resp.json().get('response', '')[:100]}...", flush=True)
+                    if not sq or not sq.get('sub_id'): continue
+                    
+                    if main_id not in all_questions_map: all_questions_map[main_id] = {"id": main_id, "sub_questions": []}
+                    existing = next((s for s in all_questions_map[main_id]['sub_questions'] if s['sub_id'] == sq['sub_id']), None)
+                    if not existing:
+                        sq['qp_pages'] = [page_num]
+                        all_questions_map[main_id]['sub_questions'].append(sq)
+                    else:
+                        if page_num not in existing.get('qp_pages', []): existing.setdefault('qp_pages', []).append(page_num)
+                        if len(str(sq.get('ms_text', ''))) > len(str(existing.get('ms_text', ''))): existing['ms_text'] = sq['ms_text']
+            except: pass
+
+        import_jobs[job_id]['status'] = 'images'
+        qp_img_dir = f"static/exams/{metadata['id']}/qp"; os.makedirs(qp_img_dir, exist_ok=True)
+        images = convert_from_path(qp_path, dpi=150)
+        for i, img in enumerate(images): img.save(os.path.join(qp_img_dir, f"page_{i+1:02d}.png"), 'PNG')
+        
+        final_data = {"paper_id": metadata['id'], "title": metadata['title'], "subject": metadata['subject'], "qp_img_dir": f"/{qp_img_dir}/", "er_text": er_text, "questions": sorted(all_questions_map.values(), key=lambda q: q['id']), "extract_pages": []}
+        json_path = f"exam_data/{metadata['id']}.json"
+        with open(json_path, 'w') as f: json.dump(final_data, f, indent=2)
+        conn = sqlite3.connect(DATABASE); cursor = conn.cursor()
+        cursor.execute('INSERT OR REPLACE INTO official_exams (id, title, subject, paper, date, data_json_path, er_text, source_path) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', (metadata['id'], metadata['title'], metadata['subject'], metadata['paper'], metadata['date'], json_path, er_text, os.path.abspath(qp_path)))
+        conn.commit(); conn.close(); import_jobs[job_id]['status'] = 'completed'
+    except Exception as e: import_jobs[job_id].update({'status': 'failed', 'error': str(e)})
+
+@app.route('/api/admin/process-exam', methods=['POST'])
+def process_official_exam():
+    try:
+        data = request.json; qp_path = data.get('qp_path')
+        if not qp_path: return jsonify({'success': False}), 400
+        qp_snippet = extract_pdf_text(qp_path)[:3000]
+        meta_prompt = f"Return JSON metadata (title, subject, paper, date) for: {qp_snippet}"
+        try:
+            resp = requests.post('http://localhost:11434/api/generate', json={'model': 'llama3', 'prompt': meta_prompt, 'stream': False, 'format': 'json'}, timeout=40)
+            metadata = clean_ai_json(resp.json().get('response', '{}'))
+        except: metadata = {}
+        
+        # Regex Fallback for Date
+        if not metadata.get('date') or metadata['date'] == 'Unknown':
+            date_match = re.search(r'(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4}', qp_snippet, re.I)
+            if date_match: metadata['date'] = date_match.group(0)
+            else:
+                year_match = re.search(r'20\d{2}', qp_snippet)
+                if year_match: metadata['date'] = year_match.group(0)
+
+        metadata['title'] = metadata.get('title') or os.path.basename(qp_path).replace('.pdf', '')
+        if 'biology' in qp_path.lower(): metadata['subject'] = 'Biology'
+        elif 'english' in qp_path.lower(): metadata['subject'] = 'English'
+        metadata['paper'] = metadata.get('paper') or 'Paper'; metadata['date'] = metadata.get('date') or 'Unknown'
+        metadata['id'] = data.get('id') or str(uuid.uuid4())[:8]
+        job_id = str(uuid.uuid4())
+        import_jobs[job_id] = {'status': 'starting', 'paper_id': metadata['id'], 'title': metadata['title'], 'current_page': 0, 'total_pages': 0, 'questions_found': 0}
+        threading.Thread(target=run_import_background, args=(job_id, qp_path, data.get('ms_path'), data.get('er_path'), metadata)).start()
+        return jsonify({'success': True, 'job_id': job_id}), 202
+    except Exception as e: return jsonify({'error': str(e)}), 500
+
+@app.route('/api/admin/delete-exam', methods=['POST'])
+def delete_official_exam():
+    try:
+        data = request.json; paper_id = data.get('paper_id')
         conn = get_db(); cursor = conn.cursor()
-        cursor.execute("INSERT INTO quiz_results (username, quiz_data_json, answers_json, score, total_marks) VALUES (?, ?, ?, ?, ?)", (username, json.dumps(quiz_data), json.dumps(questions_results), score, total))
-        conn.commit(); conn.close(); return jsonify({'success': True}), 201
+        cursor.execute("SELECT data_json_path FROM official_exams WHERE id = ?", (paper_id,))
+        row = cursor.fetchone()
+        if row:
+            if os.path.exists(row['data_json_path']): os.remove(row['data_json_path'])
+            static_dir = f"static/exams/{paper_id}"
+            if os.path.exists(static_dir): shutil.rmtree(static_dir)
+        cursor.execute("DELETE FROM official_exams WHERE id = ?", (paper_id,))
+        conn.commit(); conn.close(); return jsonify({'success': True}), 200
+    except Exception as e: return jsonify({'error': str(e)}), 500
+
+@app.route('/api/official-exams/list')
+def list_official_exams():
+    try:
+        conn = get_db(); cursor = conn.cursor()
+        cursor.execute("SELECT id, title, subject, paper, date, data_json_path FROM official_exams ORDER BY created_at DESC")
+        exams = [dict(e) for e in cursor.fetchall()]; conn.close()
+        for e in exams:
+            try:
+                with open(e['data_json_path'], 'r') as f: e['total_questions'] = len(json.load(f).get('questions', []))
+            except: e['total_questions'] = 0
+        return jsonify({'success': True, 'exams': exams}), 200
+    except Exception as e: return jsonify({'error': str(e)}), 500
+
+@app.route('/api/official-exams/check/<paper_id>')
+def check_exam_exists(paper_id):
+    conn = get_db(); cursor = conn.cursor()
+    cursor.execute("SELECT id FROM official_exams WHERE id = ?", (paper_id,))
+    exists = cursor.fetchone() is not None
+    conn.close()
+    return jsonify({'exists': exists})
+
+@app.route('/api/official-exams/<paper_id>')
+def get_official_exam(paper_id):
+    path = f'exam_data/{paper_id}.json'
+    if not os.path.exists(path): return jsonify({'error': 'Not found'}), 404
+    with open(path, 'r') as f: return jsonify(json.load(f))
+
+@app.route('/api/official-exams/<paper_id>/page-count')
+def get_exam_page_count(paper_id):
+    try:
+        with open(f'exam_data/{paper_id}.json', 'r') as f: data = json.load(f)
+        full_path = os.path.join(os.getcwd(), data['qp_img_dir'].lstrip('/'))
+        return jsonify({'count': len([f for f in os.listdir(full_path) if f.endswith('.png')])})
+    except: return jsonify({'count': 0})
+
+@app.route('/api/official-exams/<paper_id>/extracts-text')
+def get_extracts_text(paper_id):
+    try:
+        conn = get_db(); cursor = conn.cursor()
+        cursor.execute("SELECT source_path, data_json_path FROM official_exams WHERE id = ?", (paper_id,))
+        row = cursor.fetchone()
+        if not row: return jsonify({'error': 'Not found'}), 404
+        
+        source_path = row['source_path']
+        with open(row['data_json_path'], 'r') as f:
+            extract_pages = json.load(f).get('extract_pages', [])
+        
+        if not extract_pages: return jsonify({'success': True, 'texts': []})
+
+        # Extract text using pdftotext
+        res = subprocess.run(['pdftotext', '-layout', source_path, '-'], capture_output=True, text=True)
+        if res.returncode != 0: return jsonify({'error': 'PDF extraction failed'}), 500
+        
+        all_pages = res.stdout.split('\f')
+        extract_texts = []
+        for p_num in extract_pages:
+            if 0 < p_num <= len(all_pages):
+                extract_texts.append({
+                    'page': p_num,
+                    'text': all_pages[p_num-1].strip()
+                })
+        
+        return jsonify({'success': True, 'texts': extract_texts})
     except Exception as e: return jsonify({'error': str(e)}), 500
 
 @app.route('/api/official-exams/grade', methods=['POST'])
 def grade_official_question():
     try:
-        data = request.json; paper_id = data.get('paper_id'); sub_id = data.get('sub_id'); user_answer = data.get('user_answer'); mark_scheme = data.get('mark_scheme'); max_marks = data.get('max_marks', 1); q_type = data.get('type')
-        conn = get_db(); cursor = conn.cursor(); cursor.execute("SELECT er_text FROM official_exams WHERE id = ?", (paper_id,))
+        data = request.json
+        paper_id = data.get('paper_id')
+        sub_id = data.get('sub_id')
+        user_answer = data.get('user_answer')
+        mark_scheme = data.get('mark_scheme')
+        max_marks = data.get('max_marks', 1)
+        q_type = data.get('type')
+
+        # Get Examiner Report if available
+        conn = get_db(); cursor = conn.cursor()
+        cursor.execute("SELECT er_text FROM official_exams WHERE id = ?", (paper_id,))
         row = cursor.fetchone(); er_text = row['er_text'] if row and row['er_text'] else ""; conn.close()
+
+        # INSTANT BYPASS FOR VISUAL QUESTIONS
         if q_type in ['draw', 'graph']:
-            return jsonify({"marks_awarded": max_marks, "max_marks": max_marks, "feedback": f"VISUAL EVALUATION: As an AI, I cannot grade your drawing or graph. You have been awarded full marks automatically. Please verify your work against the official criteria.\n\nFULL MARK SCHEME: {mark_scheme}", "marking_points_met": ["Self-evaluation required"]}), 200
+            return jsonify({
+                "marks_awarded": max_marks,
+                "max_marks": max_marks,
+                "feedback": f"VISUAL EVALUATION: As an AI, I cannot grade your drawing or graph. You have been awarded full marks automatically. Please verify your work against the official criteria.\\n\\nFULL MARK SCHEME: {mark_scheme}",
+                "marking_points_met": ["Self-evaluation required"]
+            }), 200
+
+        # PROGRAMMATIC MCQ CHECK
         cleaned_ans = user_answer.strip().upper()
         if q_type == 'mcq' or (len(cleaned_ans) == 1 and cleaned_ans in ['A', 'B', 'C', 'D']):
+            # Search for "Correct Answer: X" or "Answer is X" or just "X (" in the mark scheme
+            import re
             mcq_match = re.search(r'(?:Correct Answer|Answer is|Correct|Key)[:\s]+([A-D])', mark_scheme, re.I)
-            if not mcq_match: mcq_match = re.search(r'(?:^|\.|\s)([A-D])\s*\(', mark_scheme)
+            if not mcq_match:
+                # Fallback: look for "X (" at start or after a dot
+                mcq_match = re.search(r'(?:^|\.|\s)([A-D])\s*\(', mark_scheme)
+            
             if mcq_match:
                 correct_letter = mcq_match.group(1).upper()
-                if cleaned_ans == correct_letter: return jsonify({"marks_awarded": max_marks, "max_marks": max_marks, "feedback": f"Correct! The answer is {correct_letter}.", "marking_points_met": ["Correct MCQ selection"]}), 200
-                else: return jsonify({"marks_awarded": 0, "max_marks": max_marks, "feedback": f"Incorrect. Your answer was {cleaned_ans}, but the correct answer is {correct_letter}. \n\nMODEL ANSWER: {mark_scheme}", "marking_points_met": []}), 200
-        prompt = f"""You are an expert IGCSE Edexcel Examiner. [OFFICIAL MARK SCHEME] {mark_scheme} [STUDENT ANSWER] {user_answer} [TASK] 1. Compare answer to scheme. 2. Score out of {max_marks}. 3. For text, mark semantically. 4. For math, exact numbers required. [OUTPUT JSON] {{"marks_awarded": integer, "max_marks": {max_marks}, "feedback": "JUSTIFICATION: ...\n\nFULL MARK SCHEME: {mark_scheme.replace('"',"'")}"}}"""
-        resp = requests.post(OLLAMA_API, json={'model': 'llama3', 'prompt': prompt, 'stream': False, 'format': 'json', 'temperature': 0})
-        result = clean_ai_json(resp.json().get('response', '{}')) or {"marks_awarded": 0, "feedback": "AI Parsing Error"}
+                is_correct = (cleaned_ans == correct_letter)
+                if is_correct:
+                    return jsonify({
+                        "marks_awarded": max_marks,
+                        "max_marks": max_marks,
+                        "feedback": f"Correct! The answer is {correct_letter}.",
+                        "marking_points_met": ["Correct MCQ selection"]
+                    }), 200
+                else:
+                    return jsonify({
+                        "marks_awarded": 0,
+                        "max_marks": max_marks,
+                        "feedback": f"Incorrect. Your answer was {cleaned_ans}, but the correct answer is {correct_letter}. \n\nMODEL ANSWER: {mark_scheme}",
+                        "marking_points_met": []
+                    }), 200
+
+        prompt = f"""You are an expert IGCSE Edexcel Examiner. 
+Your task is to mark a student's answer based STRICTLY on the official Mark Scheme provided.
+
+PAPER ID: {paper_id}
+QUESTION: {sub_id}
+MAX MARKS: {max_marks}
+
+OFFICIAL MARK SCHEME:
+{mark_scheme}
+
+EXAMINER REPORT:
+{er_text[:3000]}
+
+STUDENT'S ANSWER:
+{user_answer}
+
+MARKING INSTRUCTIONS:
+1. ZERO TOLERANCE: If the student's answer is gibberish, irrelevant, or a REQUEST FOR HELP (e.g. "tell me", "I don't know", "what is the answer?"), you MUST award 0 marks. Do not attempt to find a match.
+2. MCQ (MULTIPLE CHOICE): Award FULL marks if correct letter matches, 0 if wrong.
+3. STANDARD TEXT QUESTIONS (SEMANTIC MATCHING):
+   - Award marks ONLY if the student is actually attempting to answer the question.
+   - Use semantic matching for genuine attempts (e.g. 'seed type' matches 'type of seeds').
+   - PROHIBITION: Do not award "pity marks" for irrelevant text or help requests.
+4. CALCULATION QUESTIONS (HYPER-STRICT NUMERICAL MATCH): 
+   - Award marks ONLY if the specific numbers/steps from the mark scheme are LITERALLY WRITTEN.
+   - [FINAL_ANSWER_START]: Must match the final value exactly.
+   - [WORKING_START]: Award 1 mark ONLY for specific correct numerical steps.
+   - PROHIBITION: No "implied" marks for wrong numbers.
+5. EVIDENCE-BASED JUSTIFICATION: State exactly which points or numbers matched.
+6. MODEL ANSWER (MANDATORY): You MUST copy the entirety of the [OFFICIAL MARK SCHEME] text provided above into this section. DO NOT summarize, DO NOT edit, and DO NOT leave anything out. The student needs to see the full official criteria.
+
+RESPONSE FORMAT (JSON ONLY):
+{{
+  "marks_awarded": (integer),
+  "max_marks": {max_marks},
+  "feedback": "MARKING JUSTIFICATION: [Your explanation]\\n\\nFULL MARK SCHEME: [THE ENTIRE OFFICIAL MARK SCHEME COPIED VERBATIM]",
+  "marking_points_met": []
+}}
+
+MANDATORY RULES:
+1. If the student's numbers do not exist in the mark scheme, the score MUST be 0.
+2. No "benefit of the doubt". No "partial effort" marks for wrong numbers.
+3. You MUST return a valid JSON object.
+"""
+        print(f"  [GRADING] Q {sub_id} Student Answer: {user_answer[:100]}...", flush=True)
+        
+        payload = {'model': 'llama3', 'prompt': prompt, 'stream': False, 'format': 'json', 'temperature': 0}
+        
+        resp = requests.post('http://localhost:11434/api/generate', json=payload)
+        raw = resp.json().get('response', '{}')
+        print(f"  [GRADING] Q {sub_id} RAW AI: {raw.strip()}", flush=True)
+        result = clean_ai_json(raw) or {"marks_awarded": 0, "feedback": "AI Parsing Error"}
+        
+        # MANUALLY ENSURE MODEL ANSWER IS PRESENT
+        # If the AI forgot to copy the mark scheme, we force it here.
+        feedback = result.get('feedback', 'No justification provided.')
+        if "FULL MARK SCHEME" not in feedback and "MODEL ANSWER" not in feedback:
+            result['feedback'] = f"{feedback}\n\nMODEL ANSWER: {mark_scheme}"
+        elif "FULL MARK SCHEME" in feedback:
+            result['feedback'] = feedback.replace("FULL MARK SCHEME", "MODEL ANSWER")
+            
         return jsonify(result), 200
     except Exception as e: return jsonify({'error': str(e)}), 500
 
 @app.route('/api/student/exam-progress/save', methods=['POST'])
 def save_exam_progress():
     try:
-        data = request.json; conn = get_db(); cursor = conn.cursor()
+        data = request.json
+        conn = get_db(); cursor = conn.cursor()
         cursor.execute("INSERT OR REPLACE INTO exam_progress (username, paper_id, current_question_idx, answers_json, last_updated) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)", (data.get('username'), data.get('paper_id'), data.get('current_question_idx', 0), json.dumps(data.get('answers', {}))))
-        conn.commit(); conn.close(); return jsonify({'success': True})
+        conn.commit(); conn.close(); return jsonify({'success': True}), 200
     except Exception as e: return jsonify({'error': str(e)}), 500
 
 @app.route('/api/student/exam-progress/get')
 def get_exam_progress():
     try:
-        conn = get_db(); cursor = conn.cursor(); cursor.execute("SELECT * FROM exam_progress WHERE username = ? AND paper_id = ?", (request.args.get('username'), request.args.get('paper_id')))
+        conn = get_db(); cursor = conn.cursor()
+        cursor.execute("SELECT * FROM exam_progress WHERE username = ? AND paper_id = ?", (request.args.get('username'), request.args.get('paper_id')))
         row = cursor.fetchone(); conn.close()
         if row: return jsonify({'success': True, 'current_question_idx': row['current_question_idx'], 'answers': json.loads(row['answers_json']), 'status': row['status']}), 200
         return jsonify({'success': False}), 404
@@ -507,60 +954,108 @@ def get_exam_progress():
 
 @app.route('/api/results/detail')
 def get_result_detail():
-    u = request.args.get('username'); paper_id = request.args.get('paper_id')
-    conn = get_db(); cursor = conn.cursor(); cursor.execute("SELECT * FROM quiz_results WHERE username = ? AND quiz_data_json LIKE ? ORDER BY timestamp DESC LIMIT 1", (u, f'%"{paper_id}"%'))
+    u = request.args.get('username')
+    paper_id = request.args.get('paper_id')
+    if not u or not paper_id: return jsonify({'error': 'Missing params'}), 400
+    
+    conn = get_db(); cursor = conn.cursor()
+    # Find the most recent result for this student and paper
+    cursor.execute("""
+        SELECT * FROM quiz_results 
+        WHERE username = ? AND quiz_data_json LIKE ? 
+        ORDER BY timestamp DESC LIMIT 1
+    """, (u, f'%"{paper_id}"%'))
     row = cursor.fetchone(); conn.close()
-    if row: return jsonify({'success': True, 'answers': json.loads(row['answers_json']), 'score': row['score'], 'total_marks': row['total_marks'], 'timestamp': row['timestamp']})
+    
+    if row:
+        return jsonify({
+            'success': True,
+            'answers': json.loads(row['answers_json']),
+            'score': row['score'],
+            'total_marks': row['total_marks'],
+            'timestamp': row['timestamp']
+        })
     return jsonify({'success': False, 'message': 'Result not found'}), 404
 
 @app.route('/api/results')
 def get_results_api():
-    try:
-        conn = get_db(); cursor = conn.cursor(); cursor.execute("SELECT * FROM quiz_results ORDER BY timestamp DESC")
-        rows = cursor.fetchall(); results = []
-        for r in rows:
-            try: qd = json.loads(r['quiz_data_json']); topic = qd.get('topic') or qd.get('title') or 'Official Paper'
-            except: topic = 'Quiz'
-            results.append({'id': r['id'], 'username': r['username'], 'topic': topic, 'score': r['score'], 'total_marks': r['total_marks'], 'timestamp': r['timestamp'], 'answers': json.loads(r['answers_json']), 'quiz_data': json.loads(r['quiz_data_json'])})
-        conn.close(); return jsonify({'success': True, 'results': results})
-    except Exception as e: return jsonify({'error': str(e)}), 500
+    u = request.args.get('username'); conn = get_db(); cursor = conn.cursor()
+    users = load_users(); is_admin = u in users and users[u].get('role') == 'admin'
+    if is_admin: cursor.execute("SELECT * FROM quiz_results ORDER BY timestamp DESC")
+    else: cursor.execute("SELECT * FROM quiz_results WHERE username = ? ORDER BY timestamp DESC", (u,))
+    rows = cursor.fetchall(); results = []
+    for row in rows:
+        try:
+            quiz_data = json.loads(row['quiz_data_json'])
+            topic = quiz_data.get('topic') or quiz_data.get('title') or 'Official Paper'
+        except:
+            topic = 'Quiz'
+            
+        results.append({
+            'id': row['id'], 
+            'username': row['username'], 
+            'topic': topic, 
+            'score': row['score'], 
+            'total_marks': row['total_marks'],
+            'timestamp': row['timestamp'],
+            'answers': json.loads(row['answers_json']) if row['answers_json'] else [],
+            'quiz_data': json.loads(row['quiz_data_json']) if row['quiz_data_json'] else {}
+        })
+    conn.close(); return jsonify({'success': True, 'results': results})
 
 @app.route('/api/student/exam-progress/list')
 def list_student_progress():
     try:
-        u = request.args.get('username'); conn = get_db(); cursor = conn.cursor(); cursor.execute("SELECT paper_id, status, last_updated FROM exam_progress WHERE username = ?", (u,))
+        u = request.args.get('username'); conn = get_db(); cursor = conn.cursor()
+        cursor.execute("SELECT paper_id, status, last_updated FROM exam_progress WHERE username = ?", (u,))
         rows = cursor.fetchall(); conn.close()
         return jsonify({'success': True, 'progress': {r['paper_id']: {'status': r['status'], 'last_updated': r['last_updated']} for r in rows}}), 200
     except Exception as e: return jsonify({'error': str(e)}), 500
 
-@app.route('/api/admin/all-progress')
-def list_all_progress():
-    try:
-        u = request.args.get('username'); users = load_users()
-        if not u in users or users[u].get('role') != 'admin': return jsonify({'error': 'Unauthorized'}), 403
-        conn = get_db(); cursor = conn.cursor(); cursor.execute("SELECT p.username, p.paper_id, p.status, p.last_updated, e.title FROM exam_progress p LEFT JOIN official_exams e ON p.paper_id = e.id ORDER BY p.last_updated DESC")
-        rows = cursor.fetchall(); conn.close()
-        results = [{'username': r['username'], 'paper_id': r['paper_id'], 'title': r['title'] or r['paper_id'], 'status': r['status'], 'last_updated': r['last_updated']} for r in rows]
-        return jsonify({'success': True, 'all_progress': results}), 200
-    except Exception as e: return jsonify({'error': str(e)}), 500
+# --- USER PREFERENCES API ---
 
 @app.route('/api/user/preferences/get')
 def get_user_preferences():
     try:
-        u = request.args.get('username'); conn = get_db(); cursor = conn.cursor(); cursor.execute("SELECT theme_json, ui_state_json FROM user_preferences WHERE username = ?", (u,))
+        u = request.args.get('username')
+        if not u: return jsonify({'error': 'Missing username'}), 400
+        conn = get_db(); cursor = conn.cursor()
+        cursor.execute("SELECT theme_json, ui_state_json FROM user_preferences WHERE username = ?", (u,))
         row = cursor.fetchone(); conn.close()
-        if row: return jsonify({'success': True, 'theme': json.loads(row['theme_json']) if row['theme_json'] else None, 'ui_state': json.loads(row['ui_state_json']) if row['ui_state_json'] else None})
+        if row:
+            return jsonify({
+                'success': True,
+                'theme': json.loads(row['theme_json']) if row['theme_json'] else None,
+                'ui_state': json.loads(row['ui_state_json']) if row['ui_state_json'] else None
+            })
         return jsonify({'success': True, 'theme': None, 'ui_state': None})
     except Exception as e: return jsonify({'error': str(e)}), 500
 
 @app.route('/api/user/preferences/save', methods=['POST'])
 def save_user_preferences():
     try:
-        data = request.json; u = data.get('username'); conn = get_db(); cursor = conn.cursor()
-        if 'theme' in data: cursor.execute("INSERT INTO user_preferences (username, theme_json) VALUES (?, ?) ON CONFLICT(username) DO UPDATE SET theme_json = excluded.theme_json, updated_at = CURRENT_TIMESTAMP", (u, json.dumps(data['theme'])))
-        if 'ui_state' in data: cursor.execute("INSERT INTO user_preferences (username, ui_state_json) VALUES (?, ?) ON CONFLICT(username) DO UPDATE SET ui_state_json = excluded.ui_state_json, updated_at = CURRENT_TIMESTAMP", (u, json.dumps(data['ui_state'])))
-        conn.commit(); conn.close(); return jsonify({'success': True})
+        data = request.json
+        u = data.get('username')
+        if not u: return jsonify({'error': 'Missing username'}), 400
+        
+        conn = get_db(); cursor = conn.cursor()
+        if 'theme' in data:
+            cursor.execute('''
+                INSERT INTO user_preferences (username, theme_json) VALUES (?, ?)
+                ON CONFLICT(username) DO UPDATE SET theme_json = excluded.theme_json, updated_at = CURRENT_TIMESTAMP
+            ''', (u, json.dumps(data['theme'])))
+            
+        if 'ui_state' in data:
+            cursor.execute('''
+                INSERT INTO user_preferences (username, ui_state_json) VALUES (?, ?)
+                ON CONFLICT(username) DO UPDATE SET ui_state_json = excluded.ui_state_json, updated_at = CURRENT_TIMESTAMP
+            ''', (u, json.dumps(data['ui_state'])))
+            
+        conn.commit(); conn.close()
+        return jsonify({'success': True})
     except Exception as e: return jsonify({'error': str(e)}), 500
+
+# --- PAGE ROUTES ---
 
 @app.route('/')
 def home_page(): return send_from_directory('.', 'exam_generator_v2.html')
@@ -568,30 +1063,42 @@ def home_page(): return send_from_directory('.', 'exam_generator_v2.html')
 @app.route('/api/student/exam-progress/delete', methods=['POST'])
 def delete_exam_progress():
     try:
-        data = request.json; u, paper_id = data.get('username'), data.get('paper_id')
-        conn = get_db(); cursor = conn.cursor(); cursor.execute("DELETE FROM exam_progress WHERE username = ? AND paper_id = ?", (u, paper_id))
-        conn.commit(); conn.close(); return jsonify({'success': True})
+        data = request.json
+        u, paper_id = data.get('username'), data.get('paper_id')
+        if not u or not paper_id: return jsonify({'success': False}), 400
+        conn = get_db(); cursor = conn.cursor()
+        cursor.execute("DELETE FROM exam_progress WHERE username = ? AND paper_id = ?", (u, paper_id))
+        conn.commit(); conn.close()
+        return jsonify({'success': True})
     except Exception as e: return jsonify({'error': str(e)}), 500
 
 @app.route('/results')
 def results_dashboard_page(): return send_from_directory('.', 'results_dashboard.html')
+
 @app.route('/admin_exams.html')
 def admin_exams_manager_page(): return send_from_directory('.', 'admin_exams.html')
+
 @app.route('/admin_users.html')
 def admin_users_manager_page(): return send_from_directory('.', 'admin_users.html')
+
 @app.route('/login.html')
 def auth_login_page(): return send_from_directory('.', 'login.html')
+
 @app.route('/register.html')
 def auth_register_page(): return send_from_directory('.', 'register.html')
+
 @app.route('/exam_questions.html')
 def paper_gallery_page(): return send_from_directory('.', 'exam_questions.html')
+
 @app.route('/official_exam_player.html')
 def exam_player_screen_page(): return send_from_directory('.', 'official_exam_player.html')
+
 @app.route('/static/<path:path>')
 def serve_static_assets(path): return send_from_directory('static', path)
+
 @app.route('/<path:path>')
 def serve_everything_else(path): return send_from_directory('.', path)
 
 if __name__ == '__main__':
     init_db()
-    app.run(host='0.0.0.0', port=5001, debug=True, use_reloader=True)
+    app.run(host='0.0.0.0', port=5001, debug=True, use_reloader=False)

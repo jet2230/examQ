@@ -276,6 +276,7 @@
         </div>
 
         <div class="content">
+            <!-- 1. Resume Section -->
             <div id="resumeView" style="display:none; margin-bottom: 40px;">
                 <h2 style="color: var(--primary-color); margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
                     ⏳ Continue Your Progress
@@ -284,9 +285,17 @@
                 <div style="margin-top: 30px; border-bottom: 2px solid #eee;"></div>
             </div>
 
+            <!-- 2. Subjects Grid (The core content) -->
             <div id="subjectView" class="subject-grid"></div>
             
-            <div id="adminProgressView" style="display:none; margin-top: 50px;">
+            <!-- 3. Papers View (Hidden by default) -->
+            <div id="paperView" style="display:none;">
+                <span class="back-btn" onclick="showSubjects()">← Back to Subjects</span>
+                <div id="examContent"></div>
+            </div>
+
+            <!-- 4. Student Progress (Admin Only - BOTTOM of page) -->
+            <div id="adminProgressView" style="display:none; margin-top: 60px; border-top: 2px solid #eee; padding-top: 40px;">
                 <h2 style="color: #d63384; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
                     📈 Student Progress (Admin Only)
                 </h2>
@@ -304,11 +313,6 @@
                         <tbody id="adminProgressTable"></tbody>
                     </table>
                 </div>
-            </div>
-            
-            <div id="paperView" style="display:none;">
-                <span class="back-btn" onclick="showSubjects()">← Back to Subjects</span>
-                <div id="examContent"></div>
             </div>
         </div>
     </div>
@@ -342,6 +346,7 @@
                     const ul = document.getElementById('usersLink');
                     if (al) al.style.display = 'inline';
                     if (ul) ul.style.display = 'inline';
+                    // We call this but its display depends on showSubjects
                     loadAdminProgress();
                 }
             }
@@ -358,13 +363,15 @@
 
         async function loadAdminProgress() {
             const adminUser = localStorage.getItem('quiz_admin_username');
+            if (!adminUser) return;
             try {
                 const res = await fetch(`/api/admin/all-progress?username=${adminUser}`);
                 const data = await res.json();
                 if (data.success && data.all_progress.length > 0) {
                     const view = document.getElementById('adminProgressView');
                     const table = document.getElementById('adminProgressTable');
-                    view.style.display = 'block';
+                    // Only show if we're on the subjects view
+                    if (!currentSubject) view.style.display = 'block';
                     table.innerHTML = data.all_progress.map(p => `
                         <tr style="border-bottom: 1px solid #eee;">
                             <td style="padding: 12px 15px;"><strong>${p.username}</strong></td>
@@ -389,7 +396,15 @@
             document.getElementById('paperView').style.display = 'none';
             document.getElementById('searchContainer').style.display = 'none';
             document.getElementById('mainTitle').textContent = "Official Exam Library";
+            document.getElementById('mainSubtitle').textContent = "Select a subject to browse available papers";
             
+            // Handle admin view visibility
+            const isAdmin = !!localStorage.getItem('quiz_admin_username');
+            if (isAdmin) {
+                document.getElementById('adminProgressView').style.display = 'block';
+                loadAdminProgress();
+            }
+
             const resumeContainer = document.getElementById('resumeView');
             const resumeGrid = document.getElementById('resumeGrid');
             const inProgress = allExams.filter(e => allProgress[e.id] && allProgress[e.id].status === 'in_progress');
@@ -432,7 +447,7 @@
                 const card = document.createElement('div');
                 card.className = 'subject-card';
                 card.onclick = () => selectSubject(s);
-                card.innerHTML = `<div class="subject-icon">${icon}</div><div class="subject-name">${s}</div><div style="color: #666;">${count} Exam Library Available</div>`;
+                card.innerHTML = `<div class="subject-icon">${icon}</div><div class="subject-name">${s}</div><div style="color: #666;">${count} Exam Papers Available</div>`;
                 grid.appendChild(card);
             });
         }
@@ -449,7 +464,11 @@
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ username, paper_id: paperId })
                 });
-                if ((await res.json()).success) loadExams();
+                if ((await res.json()).success) {
+                    // Update the local cache and re-render
+                    delete allProgress[paperId];
+                    showSubjects();
+                }
             } else {
                 btn.setAttribute('data-confirm', 'true');
                 btn.style.background = '#dc3545';
@@ -468,9 +487,11 @@
         function selectSubject(s) {
             currentSubject = s;
             document.getElementById('subjectView').style.display = 'none';
+            document.getElementById('adminProgressView').style.display = 'none'; // Hide at the bottom when in subject view
             document.getElementById('paperView').style.display = 'block';
             document.getElementById('searchContainer').style.display = 'block';
             document.getElementById('mainTitle').textContent = s + " Exam Library";
+            document.getElementById('mainSubtitle').textContent = "Showing all available " + s + " papers";
             filterExams();
         }
 
@@ -501,7 +522,7 @@
             const d = new Date(iso.replace(' ', 'T') + (iso.includes('Z') ? '' : 'Z'));
             if (isNaN(d.getTime())) return '';
             const now = new Date(), t = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            return (d.toDateString() === now.toDateString()) ? `Last accessed: Today, ${t}` : `Last accessed: ${d.toLocaleDateString([], { day: 'numeric', month: 'short' })}, ${t}`;
+            return (d.toDateString() === now.toDateString()) ? `Today, ${t}` : `${d.toLocaleDateString([], { day: 'numeric', month: 'short' })}, ${t}`;
         }
 
         function renderExams(exams) {
@@ -521,7 +542,7 @@
                     else { 
                         statusClass = 'status-started'; 
                         let left = Math.max(0, (exam.total_questions || 0) - (prog.current_question_idx || 0));
-                        statusText = left > 0 ? `Resume (${left} questions left)` : 'Resume';
+                        statusText = left > 0 ? `Resume (${left} left)` : 'Resume';
                         btnText = 'Continue';
                     }
                 }

@@ -91,7 +91,9 @@
     window.openChat = function(targetUser) {
         if (targetUser === username) return;
         activeChatUser = targetUser;
-        document.getElementById('chatTitle').textContent = 'Chat with ' + targetUser;
+        const displayUser = targetUser.length > 10 ? targetUser.substring(0, 10) + '...' : targetUser;
+        document.getElementById('chatTitle').textContent = 'Chat with ' + displayUser;
+        document.getElementById('chatTitle').title = targetUser; // Full name on hover
         document.getElementById('chatWindow').style.display = 'flex';
         document.getElementById('chatMessages').innerHTML = '';
         fetchMessages();
@@ -105,6 +107,13 @@
         if (pollInterval) clearInterval(pollInterval);
     };
 
+    function linkify(text) {
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        return text.replace(urlRegex, function(url) {
+            return `<a href="${url}" target="_blank" style="color: inherit; text-decoration: underline;">${url}</a>`;
+        });
+    }
+
     async function fetchMessages() {
         if (!activeChatUser) return;
         try {
@@ -115,8 +124,8 @@
                 const html = data.messages.map(m => {
                     const isMe = m.sender === username;
                     return `
-                        <div style="align-self: ${isMe ? 'flex-end' : 'flex-start'}; background: ${isMe ? '#1e3c72' : '#e9e9e9'}; color: ${isMe ? 'white' : 'black'}; padding: 8px 12px; border-radius: 12px; max-width: 80%; font-size: 0.9em; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-                            ${m.message}
+                        <div style="align-self: ${isMe ? 'flex-end' : 'flex-start'}; background: ${isMe ? '#1e3c72' : '#e9e9e9'}; color: ${isMe ? 'white' : 'black'}; padding: 8px 12px; border-radius: 12px; max-width: 80%; font-size: 0.9em; box-shadow: 0 2px 5px rgba(0,0,0,0.05); word-break: break-word;">
+                            ${linkify(m.message)}
                         </div>
                     `;
                 }).join('');

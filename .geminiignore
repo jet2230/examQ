@@ -1,0 +1,8 @@
+static/exams/
+resources/
+results/
+quizzes.db
+__pycache__/
+.claude/
+.git/
+node_modules/
