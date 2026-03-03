@@ -3,30 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ExamQ - Practice Quiz</title>
+    <title>Quiz Player | ExamQ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="/static/online_status.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            min-height: 100vh;
-            padding: 20px;
+        :root {
+            --primary-color: #1e3c72;
+            --secondary-color: #2a5298;
+            --main-gradient: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
         }
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-            overflow: hidden;
-        }
-        .header {
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            color: white;
-            padding: 40px;
-            text-align: center;
-        }
-        .header h1 { font-size: 2em; margin-bottom: 10px; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background: #f4f7f9; color: #333; line-height: 1.6; }
+        .container { max-width: 900px; margin: 0 auto; padding: 20px; }
         
         .navbar {
             padding: 15px 40px;
@@ -40,12 +28,7 @@
             z-index: 1000;
         }
         .nav-links { display: flex; align-items: center; }
-        .nav-links a {
-            text-decoration: none;
-            color: #1e3c72;
-            font-weight: 600;
-            margin-left: 20px;
-        }
+        .nav-links a { text-decoration: none; color: #1e3c72; font-weight: 600; margin-left: 20px; }
         
         .hamburger {
             display: none;
@@ -78,43 +61,46 @@
             .nav-links.active { display: flex; }
             .nav-links a { margin: 10px 0; font-size: 1.1em; }
         }
-        .content { padding: 40px; }
 
+        .header {
+            background: var(--main-gradient);
+            color: white;
+            padding: 40px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(30, 60, 114, 0.2);
+        }
+        .header h1 { font-size: 2.2em; font-weight: 800; margin-bottom: 10px; }
+        
         .question-card {
-            background: #f8f9fa;
+            background: white;
+            padding: 30px;
             border-radius: 15px;
-            padding: 25px;
             margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
             border: 1px solid #eee;
         }
-        .question-text {
-            font-size: 1.2em;
-            font-weight: 700;
-            color: #333;
-            margin-bottom: 20px;
-        }
-        .options-grid {
-            display: grid;
-            gap: 10px;
-        }
+        .question-text { font-size: 1.2em; font-weight: 700; margin-bottom: 20px; color: #1e3c72; }
+        
+        .options-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
         .option-btn {
-            background: white;
-            border: 2px solid #eee;
             padding: 15px 20px;
+            border: 2px solid #eee;
             border-radius: 10px;
             cursor: pointer;
-            text-align: left;
-            font-size: 1em;
             transition: all 0.2s;
             display: flex;
             align-items: center;
             gap: 15px;
+            font-weight: 600;
         }
-        .option-btn:hover { border-color: #1e3c72; background: #f0f4f8; }
-        .option-btn.selected { border-color: #1e3c72; background: #e1e7ff; font-weight: 700; }
-        .option-btn.correct { background: #d4edda; border-color: #28a745; color: #155724; }
-        .option-btn.wrong { background: #f8d7da; border-color: #dc3545; color: #721c24; }
-
+        .option-btn:hover { border-color: #2a5298; background: #f8faff; }
+        .option-btn.selected { border-color: #1e3c72; background: #eef2ff; color: #1e3c72; }
+        
+        .option-btn.correct { background: #d4edda !important; border-color: #28a745 !important; color: #155724; }
+        .option-btn.wrong { background: #f8d7da !important; border-color: #dc3545 !important; color: #721c24; }
+        
         .badge {
             width: 30px;
             height: 30px;
@@ -123,12 +109,12 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 800;
-            flex-shrink: 0;
+            font-size: 0.9em;
         }
         .selected .badge { background: #1e3c72; color: white; }
 
         .btn-submit {
+            display: block;
             width: 100%;
             padding: 18px;
             background: linear-gradient(135deg, #28a745 0%, #218838 100%);
@@ -195,6 +181,7 @@
             document.getElementById('navLinks').classList.toggle('active');
         }
         let quizData = null;
+        let currentQuestions = [];
         let userAnswers = {};
         const quizId = window.location.pathname.match(/quiz_(\d+)\.html/)[1];
 
@@ -235,7 +222,18 @@
                 const data = await res.json();
                 if (data.success) {
                     quizData = data.quiz;
-                    renderQuiz();
+                    // Robustly handle if questions is nested or direct
+                    if (Array.isArray(quizData.questions)) {
+                        currentQuestions = quizData.questions;
+                    } else if (typeof quizData.questions === 'object' && quizData.questions !== null) {
+                        currentQuestions = Object.values(quizData.questions).find(v => Array.isArray(v)) || [];
+                    }
+                    
+                    if (currentQuestions.length === 0) {
+                        showLineAlert("Invalid quiz data format", "error");
+                    } else {
+                        renderQuiz();
+                    }
                 } else {
                     showLineAlert("Quiz not found", "error");
                 }
@@ -249,7 +247,7 @@
             const container = document.getElementById('questionsContainer');
             container.innerHTML = '';
 
-            quizData.questions.forEach((q, qIdx) => {
+            currentQuestions.forEach((q, qIdx) => {
                 const card = document.createElement('div');
                 card.className = 'question-card';
                 card.innerHTML = `
@@ -282,7 +280,7 @@
 
         async function submitQuiz() {
             let score = 0;
-            const total = quizData.questions.length;
+            const total = currentQuestions.length;
             
             // Validation
             if (Object.keys(userAnswers).length < total) {
@@ -290,7 +288,7 @@
                 return;
             }
 
-            quizData.questions.forEach((q, qIdx) => {
+            currentQuestions.forEach((q, qIdx) => {
                 const userAns = userAnswers[qIdx];
                 const correctAns = q.answer;
                 const userEl = document.getElementById(`q${qIdx}_opt${userAns}`);
@@ -324,7 +322,7 @@
                         topic: quizData.topic,
                         score: `${score} / ${total}`,
                         percentage: `${pct}%`,
-                        questions: quizData.questions.map((q, idx) => ({
+                        questions: currentQuestions.map((q, idx) => ({
                             ...q,
                             user_answer: userAnswers[idx],
                             is_correct: userAnswers[idx] === q.answer

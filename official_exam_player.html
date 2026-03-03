@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Official IGCSE Exam Module</title>
     <script src="/static/theme_manager.js"></script>
+    <script src="/static/online_status.js"></script>
     <style>
         :root {
             --primary-color: #1e3c72;
@@ -901,8 +902,8 @@
                         (sq.options || ['A', 'B', 'C', 'D']).forEach(opt => {
                             const isChecked = saved.answer === opt ? 'checked' : '';
                             html += `
-                                <label style="display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; background: ${isChecked ? '#e3f2fd' : 'white'};">
-                                    <input type="radio" name="ans_${sq.sub_id}" value="${opt}" ${isChecked} onchange="updateMcqAnswer('${sq.sub_id}', '${opt}')">
+                                <label style="display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid #ddd; border-radius: 8px; cursor: ${isReviewMode ? 'default' : 'pointer'}; background: ${isChecked ? '#e3f2fd' : 'white'}; opacity: ${isReviewMode && !isChecked ? '0.7' : '1'};">
+                                    <input type="radio" name="ans_${sq.sub_id}" value="${opt}" ${isChecked} ${isReviewMode ? 'disabled' : ''} onchange="updateMcqAnswer('${sq.sub_id}', '${opt}')">
                                     <span style="font-weight: bold;">${opt}</span>
                                 </label>
                             `;
@@ -916,13 +917,13 @@
                                     <label style="display: block; font-size: 0.85em; font-weight: bold; color: #666; margin-bottom: 5px;">WORKING OUT:</label>
                                     <textarea class="calc-working" oninput="updateCalculationAnswer('${sq.sub_id}')"
                                         style="width: 100%; height: 100px; padding: 10px; border: 1px solid #ddd; border-radius: 8px; outline: none; font-family: monospace;"
-                                        placeholder="Show your working here...">${currentAnswers[0] || ''}</textarea>
+                                        placeholder="Show your working here..." ${isReviewMode ? 'disabled' : ''}>${currentAnswers[0] || ''}</textarea>
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 10px;">
                                     <label style="font-weight: bold; color: #1e3c72;">${sq.final_label || 'Answer'}:</label>
                                     <input type="text" class="calc-answer" value="${currentAnswers[1] || ''}" 
                                         oninput="updateCalculationAnswer('${sq.sub_id}')"
-                                        style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; outline: none; font-weight: bold;">
+                                        style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; outline: none; font-weight: bold;" ${isReviewMode ? 'disabled' : ''}>
                                     ${sq.final_unit ? `<span style="font-weight: bold; color: #666;">${sq.final_unit}</span>` : ''}
                                 </div>
                             </div>
@@ -938,7 +939,7 @@
                                     <textarea class="line-input" data-idx="${i}" 
                                         oninput="updateMultiLineAnswer('${sq.sub_id}')"
                                         style="width: 100%; height: 60px; padding: 8px; border: 1px solid #ddd; border-radius: 8px; outline: none; resize: vertical;"
-                                        placeholder="Enter part ${i+1} of your answer...">${val}</textarea>
+                                        placeholder="Enter part ${i+1} of your answer..." ${isReviewMode ? 'disabled' : ''}>${val}</textarea>
                                 </div>
                             `;
                         }
@@ -950,28 +951,28 @@
                         html += `
                             <div class="graph-container" id="ans_${sq.sub_id}">
                                 <input type="text" class="axis-label-input y-axis" placeholder="Y-axis Label (e.g. Time taken in seconds)" 
-                                    oninput="updateGraphData('${sq.sub_id}')" value="${graphData.yAxis || ''}">
+                                    oninput="updateGraphData('${sq.sub_id}')" value="${graphData.yAxis || ''}" ${isReviewMode ? 'disabled' : ''}>
                                 
                                 <div class="graph-controls">
                                     <button class="line-toggle set-1 ${graphData.currentSet === 1 ? 'active' : ''}" 
                                         onclick="toggleGraphSet('${sq.sub_id}', 1)">Line 1 (Red)</button>
                                     <button class="line-toggle set-2 ${graphData.currentSet === 2 ? 'active' : ''}" 
                                         onclick="toggleGraphSet('${sq.sub_id}', 2)">Line 2 (Blue)</button>
-                                    <button class="control-btn" style="background:#666; margin-left:auto;" 
-                                        onclick="clearGraph('${sq.sub_id}')">Clear Current Line</button>
+                                    ${isReviewMode ? '' : `<button class="control-btn" style="background:#666; margin-left:auto;" onclick="clearGraph('${sq.sub_id}')">Clear Current Line</button>`}
                                 </div>
 
-                                <div class="graph-canvas-wrapper" onclick="plotPoint(event, '${sq.sub_id}')">
+                                <div class="graph-canvas-wrapper" ${isReviewMode ? '' : `onclick="plotPoint(event, '${sq.sub_id}')"`}>
                                     <svg class="graph-svg" id="svg_${sq.sub_id}" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
                                     <div id="points_${sq.sub_id}"></div>
                                 </div>
 
                                 <input type="text" class="axis-label-input x-axis" placeholder="X-axis Label (e.g. Distance in cm)" 
-                                    style="margin-top:10px;" oninput="updateGraphData('${sq.sub_id}')" value="${graphData.xAxis || ''}">
+                                    style="margin-top:10px;" oninput="updateGraphData('${sq.sub_id}')" value="${graphData.xAxis || ''}" ${isReviewMode ? 'disabled' : ''}>
                                 
+                                ${isReviewMode ? '' : `
                                 <p style="font-size:0.8em; color:#666; margin-top:10px;">
                                     Tip: Click on the grid to plot points. They will be joined by straight lines automatically.
-                                </p>
+                                </p>`}
                             </div>
                         `;
                         setTimeout(() => redrawGraph(sq.sub_id), 100);
@@ -982,6 +983,7 @@
                                     <canvas id="canvas_${sq.sub_id}" width="800" height="400" style="background:white;"></canvas>
                                     <input type="text" id="text_input_${sq.sub_id}" class="canvas-text-input">
                                 </div>
+                                ${isReviewMode ? '' : `
                                 <div class="canvas-controls">
                                     <div style="display:flex; gap:5px; margin-right:10px;">
                                         <button class="tool-btn active" id="btn_brush_${sq.sub_id}" onclick="setDrawTool('${sq.sub_id}', 'brush')">🖌️ Brush</button>
@@ -992,7 +994,7 @@
                                     <input type="range" min="1" max="10" value="2" id="size_${sq.sub_id}" style="width: 80px;">
                                     <button class="control-btn" style="background:#666; font-size:0.8em; padding:5px 10px;" 
                                         onclick="clearCanvas('${sq.sub_id}')">Clear</button>
-                                </div>
+                                </div>`}
                             </div>
                         `;
                         setTimeout(() => initCanvas(sq.sub_id), 100);
@@ -1002,7 +1004,7 @@
                             html += `
                                 <input type="text" id="ans_${sq.sub_id}" oninput="updateAnswer('${sq.sub_id}')"
                                     style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; outline: none; font-size: 1em;"
-                                    placeholder="Type your answer here..." value="${saved.answer || ''}">
+                                    placeholder="Type your answer here..." value="${saved.answer || ''}" ${isReviewMode ? 'disabled' : ''}>
                             `;
                         } else {
                             // Dynamic height based on marks or provided lines - capped at 15 lines
@@ -1015,13 +1017,13 @@
                             html += `
                                 <textarea id="ans_${sq.sub_id}" oninput="updateAnswer('${sq.sub_id}')"
                                     style="height: ${height}px;"
-                                    placeholder="Type your answer here...">${saved.answer || ''}</textarea>
+                                    placeholder="Type your answer here..." ${isReviewMode ? 'disabled' : ''}>${saved.answer || ''}</textarea>
                             `;
                         }
                     }
 
                     html += `
-                        <button class="control-btn btn-grade" onclick="grade('${sq.sub_id}', '${sq.type}', this)">Submit & Grade</button>
+                        ${isReviewMode ? '' : `<button class="control-btn btn-grade" onclick="grade('${sq.sub_id}', '${sq.type}', this)">Submit & Grade</button>`}
                         <div id="fb_${sq.sub_id}" class="feedback-zone ${saved.feedback ? 'show' : ''}">${saved.feedback || ''}</div>
                     `;
 
@@ -1033,7 +1035,7 @@
             document.getElementById('prevBtn').style.visibility = currentGroupIdx === 0 ? 'hidden' : 'visible';
             if (currentGroupIdx === pageGroups.length - 1) {
                 document.getElementById('nextBtn').style.display = 'none';
-                document.getElementById('finishBtn').style.display = 'block';
+                document.getElementById('finishBtn').style.display = isReviewMode ? 'none' : 'block';
             } else {
                 document.getElementById('nextBtn').style.display = 'block';
                 document.getElementById('finishBtn').style.display = 'none';

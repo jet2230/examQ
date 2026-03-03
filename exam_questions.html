@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Official Exam Library - Gallery</title>
     <script src="/static/theme_manager.js"></script>
+    <script src="/static/online_status.js"></script>
     <style>
         :root {
             --primary-color: #1e3c72;
@@ -285,6 +286,26 @@
 
             <div id="subjectView" class="subject-grid"></div>
             
+            <div id="adminProgressView" style="display:none; margin-top: 50px;">
+                <h2 style="color: #d63384; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                    📈 Student Progress (Admin Only)
+                </h2>
+                <div style="background: #fff; border-radius: 15px; border: 1px solid #eee; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead style="background: #f8f9fa; border-bottom: 2px solid #eee;">
+                            <tr>
+                                <th style="padding: 15px; text-align: left; color: #666; font-weight: 700;">Student</th>
+                                <th style="padding: 15px; text-align: left; color: #666; font-weight: 700;">Exam Paper</th>
+                                <th style="padding: 15px; text-align: left; color: #666; font-weight: 700;">Status</th>
+                                <th style="padding: 15px; text-align: left; color: #666; font-weight: 700;">Last Activity</th>
+                                <th style="padding: 15px; text-align: center; color: #666; font-weight: 700;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminProgressTable"></tbody>
+                    </table>
+                </div>
+            </div>
+            
             <div id="paperView" style="display:none;">
                 <span class="back-btn" onclick="showSubjects()">← Back to Subjects</span>
                 <div id="examContent"></div>
@@ -321,6 +342,7 @@
                     const ul = document.getElementById('usersLink');
                     if (al) al.style.display = 'inline';
                     if (ul) ul.style.display = 'inline';
+                    loadAdminProgress();
                 }
             }
             try {
@@ -332,6 +354,33 @@
                 allProgress = (await progRes.json()).progress || {};
                 showSubjects();
             } catch (e) { console.error(e); }
+        }
+
+        async function loadAdminProgress() {
+            const adminUser = localStorage.getItem('quiz_admin_username');
+            try {
+                const res = await fetch(`/api/admin/all-progress?username=${adminUser}`);
+                const data = await res.json();
+                if (data.success && data.all_progress.length > 0) {
+                    const view = document.getElementById('adminProgressView');
+                    const table = document.getElementById('adminProgressTable');
+                    view.style.display = 'block';
+                    table.innerHTML = data.all_progress.map(p => `
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 12px 15px;"><strong>${p.username}</strong></td>
+                            <td style="padding: 12px 15px;">${p.title}</td>
+                            <td style="padding: 12px 15px;"><span class="status-badge status-started">${p.status.replace('_', ' ')}</span></td>
+                            <td style="padding: 12px 15px; font-size: 0.85em; color: #666;">${formatLastAccessed(p.last_updated)}</td>
+                            <td style="padding: 12px 15px; text-align: center;">
+                                <a href="/official_exam_player.html?paper_id=${p.paper_id}&mode=review&student=${p.username}" 
+                                   style="text-decoration: none; font-size: 1.2em; filter: grayscale(1); transition: filter 0.2s;" 
+                                   onmouseover="this.style.filter='none'" onmouseout="this.style.filter='grayscale(1)'" 
+                                   title="View Exam Paper">👁️</a>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (e) { console.error("Failed to load admin progress", e); }
         }
 
         function showSubjects() {

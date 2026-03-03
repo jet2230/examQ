@@ -3,38 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ExamQ - AI Quiz Generator</title>
-    <script src="/static/theme_manager.js"></script>
+    <title>ExamQ | AI Exam Generator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="/static/online_status.js"></script>
     <style>
         :root {
             --primary-color: #1e3c72;
             --secondary-color: #2a5298;
-            --main-gradient: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            --main-gradient: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: var(--main-gradient);
-            min-height: 100vh;
-            padding: 20px;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-            overflow: hidden;
-        }
-        .header {
-            background: var(--main-gradient);
-            color: white;
-            padding: 40px;
-            text-align: center;
-        }
-        .header h1 { font-size: 2.5em; margin-bottom: 10px; }
-        .header p { opacity: 0.9; font-size: 1.1em; }
-
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background: #f4f7f9; color: #333; line-height: 1.6; }
+        .container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+        
         .navbar {
             padding: 15px 40px;
             display: flex;
@@ -47,12 +28,7 @@
             z-index: 1000;
         }
         .nav-links { display: flex; align-items: center; }
-        .nav-links a {
-            text-decoration: none;
-            color: var(--primary-color);
-            font-weight: 600;
-            margin-left: 20px;
-        }
+        .nav-links a { text-decoration: none; color: var(--primary-color); font-weight: 600; margin-left: 20px; }
         
         .hamburger {
             display: none;
@@ -85,221 +61,121 @@
             .nav-links.active { display: flex; }
             .nav-links a { margin: 10px 0; font-size: 1.1em; }
         }
-        .content { padding: 40px; }
 
-        .generator-card {
-            background: #f8f9fa;
-            padding: 30px;
-            border-radius: 15px;
-            border: 2px dashed var(--primary-color);
-            max-width: 800px;
-            margin: 0 auto 40px;
-        }
-
-        .form-group { margin-bottom: 20px; position: relative; }
-        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #555; }
-        .form-group input, .form-group select {
-            width: 100%;
-            padding: 15px;
-            border: 2px solid #eee;
-            border-radius: 10px;
-            font-size: 1.1em;
-            outline: none;
-        }
-        .form-group input:focus { border-color: var(--primary-color); }
-
-        .btn-generate {
-            width: 100%;
-            padding: 18px;
+        .header {
             background: var(--main-gradient);
             color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 1.2em;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .btn-generate:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
-        .btn-generate:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-
-        .loading-zone {
-            display: none;
+            padding: 60px 20px;
+            border-radius: 20px;
+            margin-bottom: 40px;
             text-align: center;
-            padding: 30px;
+            box-shadow: 0 10px 30px rgba(30, 60, 114, 0.2);
         }
+        .header h1 { font-size: 2.8em; font-weight: 800; margin-bottom: 15px; letter-spacing: -1px; }
+        .header p { font-size: 1.2em; opacity: 0.9; max-width: 600px; margin: 0 auto; }
+
+        .generator-card {
+            background: #fff;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+            border: 1px solid #eee;
+            margin-bottom: 40px;
+        }
+        .form-group { margin-bottom: 25px; position: relative; }
+        .form-group label { display: block; font-size: 0.9em; font-weight: 700; color: #666; margin-bottom: 8px; text-transform: uppercase; }
+        .form-input { 
+            width: 100%; padding: 15px 20px; border: 2px solid #eee; border-radius: 12px; 
+            outline: none; font-size: 1.1em; transition: all 0.3s;
+        }
+        .form-input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 4px rgba(30, 60, 114, 0.1); }
+
+        .btn-generate {
+            width: 100%; padding: 18px; background: var(--main-gradient); color: white;
+            border: none; border-radius: 12px; font-size: 1.2em; font-weight: 700;
+            cursor: pointer; transition: all 0.3s; box-shadow: 0 8px 20px rgba(30, 60, 114, 0.3);
+        }
+        .btn-generate:hover { transform: translateY(-3px); box-shadow: 0 12px 25px rgba(30, 60, 114, 0.4); }
+        .btn-generate:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+
+        .loading-zone { display: none; margin-top: 30px; text-align: center; }
         .spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid #f3f3f3;
-            border-top: 5px solid var(--primary-color);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
+            width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid var(--primary-color);
+            border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        .quiz-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-            margin-top: 30px;
-        }
-        .quiz-card {
-            background: white;
-            border: 1px solid #eee;
-            padding: 20px;
-            border-radius: 15px;
-            transition: all 0.3s;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-        .quiz-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
-        .quiz-topic { font-weight: 800; color: var(--primary-color); font-size: 1.2em; margin-bottom: 10px; }
-        .quiz-meta { font-size: 0.85em; color: #888; margin-bottom: 15px; }
-        .btn-take {
-            background: #f1f3f5;
-            color: var(--primary-color);
-            text-decoration: none;
-            padding: 10px;
-            border-radius: 8px;
-            text-align: center;
-            font-weight: 700;
-            transition: background 0.2s;
-        }
-        .btn-take:hover { background: var(--primary-color); color: white; }
-
-        /* Progress Styles */
-        .status-badge {
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 0.7em;
-            font-weight: 700;
-            text-transform: uppercase;
-        }
-        .status-started { background: #fff3cd; color: #856404; }
-        .last-accessed {
-            font-size: 0.75em;
-            color: #888;
-            margin-top: 5px;
-            font-style: italic;
-        }
-        .paper-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-        }
-        .paper-card {
-            background: white;
-            border-radius: 15px;
-            padding: 20px;
-            border: 1px solid #eee;
-            border-left: 5px solid #ffc107;
-            transition: all 0.3s;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .paper-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
-        .paper-title { font-weight: 800; color: #333; font-size: 1em; line-height: 1.4; }
-
-        /* Unified Split Button */
-        .split-btn {
-            display: flex;
-            margin-top: 10px;
-            border-radius: 8px;
-            overflow: hidden;
-            background: #ffc107;
-            text-decoration: none;
-            transition: transform 0.2s;
-        }
-        .split-btn:hover { transform: translateY(-2px); }
-        .split-btn .btn-main {
-            flex: 1;
-            padding: 10px;
-            color: #333;
-            text-align: center;
-            font-weight: 700;
-            text-decoration: none;
-            border-right: 1px solid rgba(0,0,0,0.1);
-        }
-        .split-btn .btn-close {
-            width: 35px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: rgba(0,0,0,0.4);
-            cursor: pointer;
-            border: none;
-            background: transparent;
-            font-size: 18px;
-            font-weight: bold;
-        }
-        .split-btn .btn-close:hover {
-            background: rgba(0,0,0,0.1);
-            color: #dc3545;
-        }
-        .paper-card { position: relative; overflow: visible; }
-
-
         .autocomplete-items {
-            position: absolute;
-            border: 1px solid #d4d4d4;
-            border-bottom: none;
-            border-top: none;
-            z-index: 99;
-            top: 100%;
-            left: 0;
-            right: 0;
-            border-radius: 0 0 10px 10px;
-            overflow: hidden;
+            position: absolute; border: 1px solid #d4d4d4; border-bottom: none; border-top: none;
+            z-index: 99; top: 100%; left: 0; right: 0; border-radius: 0 0 12px 12px; overflow: hidden;
         }
         .autocomplete-items div {
-            padding: 10px;
-            cursor: pointer;
-            background-color: #fff; 
-            border-bottom: 1px solid #d4d4d4; 
+            padding: 12px; cursor: pointer; background-color: #fff; border-bottom: 1px solid #d4d4d4;
         }
         .autocomplete-items div:hover { background-color: #e9e9e9; }
+
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 15px; text-align: left; }
+        th { background: #f8f9fa; color: #666; font-weight: 700; border-bottom: 2px solid #eee; }
+        tr:hover td { background-color: #f1f4f9; }
+
+        .status-badge {
+            padding: 4px 10px; border-radius: 12px; font-size: 0.8em; font-weight: 700; text-transform: uppercase;
+        }
+        .status-started { background: #fff3cd; color: #856404; }
+        
+        .tool-btn {
+            padding: 5px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #f8f9fa;
+            cursor: pointer;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+        .tool-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Animation Classes */
+        #savedQuizzesTable { transition: transform 0.3s ease, opacity 0.3s ease; }
+        .slide-out-left { transform: translateX(-30px); opacity: 0; }
+        .slide-out-right { transform: translateX(30px); opacity: 0; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="navbar">
-            <div style="font-weight: 800; color: #1e3c72; font-size: 1.2em;">🎓 ExamQ Generator</div>
-            <div class="hamburger" onclick="toggleMenu()">
-                <div></div>
-                <div></div>
-                <div></div>
-            </div>
-            <div class="nav-links" id="navLinks">
-                <span id="welcomeUser" style="margin-right: 15px; font-weight: 600; color: #1e3c72;"></span>
-                <a href="/admin_users.html" id="usersLink" class="admin-only" style="display:none; color:#d63384;">⚙️ Users</a>
-                <a href="/admin_exams.html" id="adminLink" class="admin-only" style="display:none; color:#d63384;">⚙️ Exams</a>
-                <a href="/exam_questions.html">📖 Exam Library</a>
-                <a href="/results">📊 Results</a>
-                <a href="/settings.html">⚙️ Settings</a>
-                <a href="#" onclick="logout()">🚪 Logout</a>
-            </div>
+    <div class="navbar">
+        <div style="font-weight: 800; color: #1e3c72; font-size: 1.2em;">🎓 ExamQ Generator</div>
+        <div class="hamburger" onclick="toggleMenu()">
+            <div></div>
+            <div></div>
+            <div></div>
         </div>
+        <div class="nav-links" id="navLinks">
+            <span id="welcomeUser" style="margin-right: 15px; font-weight: 600; color: #1e3c72;"></span>
+            <a href="/admin_users.html" id="usersLink" class="admin-only" style="display:none; color:#d63384;">⚙️ Users</a>
+            <a href="/admin_exams.html" id="adminLink" class="admin-only" style="display:none; color:#d63384;">⚙️ Exams</a>
+            <a href="/exam_questions.html">📖 Exam Library</a>
+            <a href="/results">📊 Results</a>
+            <a href="/settings.html">⚙️ Settings</a>
+            <a href="#" onclick="logout()">🚪 Logout</a>
+        </div>
+    </div>
 
+    <div class="container">
         <div class="header">
-            <h1>AI Quiz Generator</h1>
-            <p>Enter any topic and let AI create a practice quiz for you instantly.</p>
+            <h1>Create Custom AI Quizzes</h1>
+            <p>Enter any topic and our AI will craft a unique multiple-choice practice exam just for you.</p>
         </div>
 
         <div class="content">
             <div class="generator-card">
                 <div class="form-group">
                     <label>Quiz Topic</label>
-                    <input type="text" id="topic" placeholder="e.g. IGCSE Biology Heart Structure" autocomplete="off">
+                    <input type="text" id="topic" class="form-input" placeholder="e.g. Biology: Mitosis, English: MacBeth, IGCSE Physics..." autocomplete="off">
                     <div id="autocomplete-list" class="autocomplete-items"></div>
                 </div>
                 <div class="form-group">
                     <label>Number of Questions</label>
-                    <select id="num_questions">
+                    <select id="num_questions" class="form-input" style="appearance: none; background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23666%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-7.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E') no-repeat right 20px center; background-size: 12px;">
                         <option value="5">5 Questions</option>
                         <option value="10" selected>10 Questions</option>
                         <option value="15">15 Questions</option>
@@ -307,7 +183,7 @@
                     </select>
                 </div>
                 <button id="genBtn" class="btn-generate" onclick="generateQuiz()">🚀 Generate Practice Quiz</button>
-                
+
                 <div id="loading" class="loading-zone">
                     <div class="spinner"></div>
                     <h3 style="color: #1e3c72;">AI is crafting your quiz...</h3>
@@ -315,20 +191,34 @@
                 </div>
             </div>
 
-            <div id="resumeView" style="display:none; margin-bottom: 40px;">
-                <h2 style="color: #1e3c72; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
-                    ⏳ Continue Your Progress
-                </h2>
-                <div id="resumeGrid" class="paper-grid"></div>
-                <div style="margin-top: 30px; border-bottom: 2px solid #eee;"></div>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px;">
+                <h2 style="color: #1e3c72;">Explore AI Quizzes</h2>
+                <div style="position: relative; width: 300px;">
+                    <input type="text" id="quizSearchInput" placeholder="🔍 Search by topic or creator..." 
+                        style="width: 100%; padding: 8px 15px 8px 35px; border-radius: 20px; border: 1px solid #ddd; outline: none;"
+                        oninput="filterQuizzes()">
+                </div>
             </div>
 
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px;">
-                <h2 style="color: #1e3c72;">Your Saved AI Quizzes</h2>
+            <div style="background: #fff; border-radius: 15px; border: 1px solid #eee; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead style="background: #f8f9fa; border-bottom: 2px solid #eee;">
+                        <tr>
+                            <th style="padding: 15px; text-align: left; color: #666; font-weight: 700;">Topic</th>
+                            <th style="padding: 15px; text-align: left; color: #666; font-weight: 700;">Created By</th>
+                            <th style="padding: 15px; text-align: left; color: #666; font-weight: 700;">Date</th>
+                            <th style="padding: 15px; text-align: center; color: #666; font-weight: 700;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="savedQuizzesTable"></tbody>
+                </table>
+                <div id="noQuizzesMsg" style="display:none; text-align: center; color: #999; padding: 40px;">No quizzes found matching your search.</div>
             </div>
-            
-            <div id="savedQuizzes" class="quiz-grid">
-                <!-- Saved quizzes injected here -->
+
+            <div id="quizPagination" style="display: flex; justify-content: center; align-items: center; gap: 20px; margin-top: 20px; padding-bottom: 40px;">
+                <button class="tool-btn" id="prevQuizBtn" onclick="changeQuizPage(-1)">&lt; Prev 10</button>
+                <span id="quizPageInfo" style="font-weight: 600; color: #666;">Page 1</span>
+                <button class="tool-btn" id="nextQuizBtn" onclick="changeQuizPage(1)">Next 10 &gt;</button>
             </div>
         </div>
     </div>
@@ -341,6 +231,10 @@
             "Chemistry: Atomic Structure", "Chemistry: Organic Chemistry",
             "Physics: Forces and Motion", "Physics: Electricity"
         ];
+
+        let allQuizzes = [];
+        let currentQuizPage = 0;
+        const quizPageSize = 10;
 
         function toggleMenu() {
             document.getElementById('navLinks').classList.toggle('active');
@@ -360,159 +254,135 @@
             
             const welcomeEl = document.getElementById('welcomeUser');
             const displayUser = username.length > 6 ? username.substring(0, 6) + '...' : username;
-            welcomeEl.textContent = '👤 ' + displayUser;
-            welcomeEl.title = username;
+            if (welcomeEl) {
+                welcomeEl.textContent = '👤 ' + displayUser;
+                welcomeEl.title = username;
+            }
             
             if (isAdmin) {
-                document.getElementById('adminLink').style.display = 'inline';
-                document.getElementById('usersLink').style.display = 'inline';
+                const al = document.getElementById('adminLink');
+                const ul = document.getElementById('usersLink');
+                if (al) al.style.display = 'inline';
+                if (ul) ul.style.display = 'inline';
             }
 
             loadSavedQuizzes();
-            loadResumeSection();
             setupAutocomplete();
-        }
-
-        async function loadResumeSection() {
-            const username = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
-            try {
-                const [examRes, progRes] = await Promise.all([
-                    fetch('/api/official-exams/list'),
-                    fetch(`/api/student/exam-progress/list?username=${username}`)
-                ]);
-                
-                const examData = await examRes.json();
-                const progData = await progRes.json();
-                
-                const allExams = examData.exams || [];
-                const allProgress = progData.progress || {};
-                
-                const resumeContainer = document.getElementById('resumeView');
-                const resumeGrid = document.getElementById('resumeGrid');
-                const inProgress = allExams.filter(e => allProgress[e.id] && allProgress[e.id].status === 'in_progress');
-                
-                if (inProgress.length > 0) {
-                    resumeContainer.style.display = 'block';
-                    inProgress.sort((a,b) => new Date(allProgress[b.id].last_updated) - new Date(allProgress[a.id].last_updated));
-                    
-                    resumeGrid.innerHTML = inProgress.map(exam => {
-                        const prog = allProgress[exam.id];
-                        return `
-                            <div class="paper-card" onclick="window.location.href='/official_exam_player.html?paper_id=${exam.id}'">
-                                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                                    <span style="background: var(--primary-color); color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.7em; font-weight: bold; text-transform: uppercase;">${exam.subject}</span>
-                                    <div class="status-badge status-started">In Progress</div>
-                                </div>
-                                <div class="paper-title">${exam.title}</div>
-                                <div style="font-size: 0.85em; color: #666;">
-                                    <div style="font-weight: 700; color: #555;">${formatLongDate(exam.date)}</div>
-                                    <div class="last-accessed">🕒 ${formatLastAccessed(prog.last_updated)}</div>
-                                </div>
-                                <div class="split-btn">
-                                    <a href="/official_exam_player.html?paper_id=${exam.id}" class="btn-main">Continue →</a>
-                                    <div class="btn-close" onclick="deleteProgress(event, '${exam.id}')" title="Clear Progress">&times;</div>
-                                </div>
-                            </div>
-                        `;
-                    }).join('');
-                }
-            } catch (e) { console.error("Progress load failed", e); }
-        }
-
-        async function deleteProgress(event, paperId) {
-            event.stopPropagation(); // Don't trigger the card click
-            const btn = event.currentTarget.closest('.split-btn');
-            const main = btn.querySelector('.btn-main');
-            const close = btn.querySelector('.btn-close');
-
-            if (btn.getAttribute('data-confirm') === 'true') {
-                const username = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
-                try {
-                    const res = await fetch('/api/student/exam-progress/delete', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({ username, paper_id: paperId })
-                    });
-                    const data = await res.json();
-                    if (data.success) {
-                        showLineAlert("Progress cleared.", "success");
-                        loadResumeSection();
-                    }
-                } catch (e) { showLineAlert("Failed to delete progress", "error"); }
-            } else {
-                // First click: Show inline confirmation
-                btn.setAttribute('data-confirm', 'true');
-                btn.style.background = '#dc3545';
-                main.style.color = 'white';
-                main.textContent = 'Confirm Clear?';
-                close.style.color = 'white';
-                close.style.background = 'rgba(0,0,0,0.2)';
-
-                // Auto-reset after 3 seconds
-                setTimeout(() => {
-                    if (btn && btn.getAttribute('data-confirm') === 'true') {
-                        btn.removeAttribute('data-confirm');
-                        btn.style.background = '';
-                        main.style.color = '';
-                        main.textContent = 'Continue →';
-                        close.style.color = '';
-                        close.style.background = '';
-                    }
-                }, 3000);
-            }
-        }
-
-        function formatLongDate(dateStr) {
-            if (!dateStr || dateStr === 'Unknown') return dateStr;
-            const months = {'jan':0,'feb':1,'mar':2,'apr':3,'may':4,'jun':5,'jul':6,'aug':7,'sep':8,'oct':9,'nov':10,'dec':11};
-            const parts = dateStr.toLowerCase().split(/[\s,]+/);
-            let date = null;
-            if (parts.length >= 2) {
-                const year = parseInt(parts.find(p => p.match(/^\d{4}$/)));
-                const monthName = parts.find(p => months[p.substring(0,3)] !== undefined);
-                if (year && monthName) date = new Date(year, months[monthName.substring(0,3)], 1);
-            }
-            if (date && !isNaN(date.getTime())) {
-                return new Intl.DateTimeFormat('en-GB', { year: 'numeric', month: 'long' }).format(date);
-            }
-            return dateStr;
-        }
-
-        function formatLastAccessed(isoStr) {
-            if (!isoStr) return '';
-            const date = new Date(isoStr.replace(' ', 'T') + (isoStr.includes('Z') ? '' : 'Z'));
-            if (isNaN(date.getTime())) return '';
-            const now = new Date();
-            const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            if (date.toDateString() === now.toDateString()) return `Today, ${timeStr}`;
-            return `${date.toLocaleDateString([], { day: 'numeric', month: 'short' })}, ${timeStr}`;
         }
 
         async function loadSavedQuizzes() {
             const u = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
-            const res = await fetch(`/api/my-quizzes?username=${u}`);
-            const data = await res.json();
-            const container = document.getElementById('savedQuizzes');
-            container.innerHTML = '';
-            
-            if (data.quizzes.length === 0) {
-                container.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #999; padding: 40px;">No quizzes generated yet.</p>';
+            try {
+                const res = await fetch(`/api/my-quizzes?username=${u}`);
+                const data = await res.json();
+                allQuizzes = data.quizzes || [];
+                renderQuizzes();
+            } catch (e) { console.error(e); }
+        }
+
+        function changeQuizPage(delta) {
+            const table = document.getElementById('savedQuizzesTable');
+            const directionClass = delta > 0 ? 'slide-out-left' : 'slide-out-right';
+            const enterClass = delta > 0 ? 'slide-out-right' : 'slide-out-left';
+
+            table.classList.add(directionClass);
+
+            setTimeout(() => {
+                currentQuizPage += delta;
+                renderQuizzes();
+                
+                table.classList.remove(directionClass);
+                table.classList.add(enterClass);
+                table.style.transition = 'none';
+                table.offsetHeight; // force reflow
+                table.style.transition = '';
+                table.classList.remove(enterClass);
+            }, 200);
+        }
+
+        function renderQuizzes() {
+            const query = document.getElementById('quizSearchInput').value.toLowerCase();
+            const filtered = allQuizzes.filter(q => 
+                (q.topic && q.topic.toLowerCase().includes(query)) || 
+                (q.created_by && q.created_by.toLowerCase().includes(query))
+            );
+
+            const isAdmin = !!localStorage.getItem('quiz_admin_username');
+            const tableBody = document.getElementById('savedQuizzesTable');
+            const msg = document.getElementById('noQuizzesMsg');
+            const pagination = document.getElementById('quizPagination');
+            tableBody.innerHTML = '';
+
+            if (filtered.length === 0) {
+                msg.style.display = 'block';
+                pagination.style.display = 'none';
                 return;
             }
+            msg.style.display = 'none';
 
-            data.quizzes.forEach(q => {
-                const card = document.createElement('div');
-                card.className = 'quiz-card';
-                const date = new Date(q.created_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
-                card.innerHTML = `
-                    <div>
-                        <div class="quiz-topic">${q.topic}</div>
-                        <div class="quiz-meta">📅 Created: ${date}</div>
-                    </div>
-                    <a href="/quiz_${q.id}.html" class="btn-take">Take Quiz →</a>
+            const totalPages = Math.ceil(filtered.length / quizPageSize);
+            if (currentQuizPage < 0) currentQuizPage = 0;
+            if (currentQuizPage >= totalPages && totalPages > 0) currentQuizPage = totalPages - 1;
+
+            const start = currentQuizPage * quizPageSize;
+            const pageQuizzes = filtered.slice(start, start + quizPageSize);
+
+            pageQuizzes.forEach(q => {
+                const dateObj = new Date(q.created_at);
+                const dateStr = dateObj.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+                const timeStr = dateObj.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+                
+                const creator = q.created_by || 'Unknown';
+                const displayUser = creator.length > 10 ? creator.substring(0, 10) + '...' : creator;
+                
+                const topic = q.topic || 'Untitled Quiz';
+                const displayTopic = topic.length > 20 ? topic.substring(0, 20) + '...' : topic;
+                
+                let deleteBtn = isAdmin ? `<button onclick="deleteQuiz(event, ${q.id})" style="background:none; border:none; color:#dc3545; cursor:pointer; font-size:1.1em; padding:0 10px;" title="Delete Quiz">🗑️</button>` : '';
+
+                const tr = document.createElement('tr');
+                tr.style.borderBottom = '1px solid #eee';
+                tr.innerHTML = `
+                    <td style="padding: 12px 15px;"><strong title="${topic}">${displayTopic}</strong></td>
+                    <td style="padding: 12px 15px; color: #666;" title="${creator}">${displayUser}</td>
+                    <td style="padding: 12px 15px; font-size: 0.9em; color: #888;">${dateStr}, ${timeStr}</td>
+                    <td style="padding: 12px 15px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                        <a href="/quiz_${q.id}.html" style="background: var(--primary-color); color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 0.85em; font-weight: 700;">Take Quiz</a>
+                        ${deleteBtn}
+                    </td>
                 `;
-                container.appendChild(card);
+                tableBody.appendChild(tr);
             });
+
+            document.getElementById('quizPageInfo').textContent = `Page ${currentQuizPage + 1} of ${Math.max(1, totalPages)}`;
+            document.getElementById('prevQuizBtn').disabled = (currentQuizPage === 0);
+            document.getElementById('nextQuizBtn').disabled = (currentQuizPage >= totalPages - 1);
+            pagination.style.display = filtered.length > quizPageSize ? 'flex' : 'none';
+        }
+
+        function filterQuizzes() {
+            currentQuizPage = 0;
+            renderQuizzes();
+        }
+
+        async function deleteQuiz(event, quizId) {
+            event.preventDefault();
+            event.stopPropagation();
+            if (!confirm("Are you sure you want to delete this quiz?")) return;
+
+            const admin_username = localStorage.getItem('quiz_admin_username');
+            try {
+                const res = await fetch('/api/admin/delete-quiz', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ admin_username, quiz_id: quizId })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showLineAlert("Quiz deleted", "success");
+                    loadSavedQuizzes();
+                }
+            } catch (e) { console.error(e); }
         }
 
         function showLineAlert(msg, type='info') {
@@ -544,10 +414,7 @@
             const num = document.getElementById('num_questions').value;
             const u = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
             
-            if (!topic) { 
-                showLineAlert("Please enter a topic", "error"); 
-                return; 
-            }
+            if (!topic) { showLineAlert("Please enter a topic", "error"); return; }
 
             document.getElementById('genBtn').disabled = true;
             document.getElementById('loading').style.display = 'block';
