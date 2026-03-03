@@ -803,12 +803,12 @@ STUDENT'S ANSWER:
 {user_answer}
 
 MARKING INSTRUCTIONS:
-1. ZERO TOLERANCE: If the student's answer is gibberish or completely irrelevant, award 0 marks.
+1. ZERO TOLERANCE: If the student's answer is gibberish, irrelevant, or a REQUEST FOR HELP (e.g. "tell me", "I don't know", "what is the answer?"), you MUST award 0 marks. Do not attempt to find a match.
 2. MCQ (MULTIPLE CHOICE): Award FULL marks if correct letter matches, 0 if wrong.
 3. STANDARD TEXT QUESTIONS (SEMANTIC MATCHING):
-   - Award marks if the student's answer has the SAME MEANING as a point in the mark scheme.
-   - Use your expertise to recognize synonyms (e.g., 'seed type' matches 'type of seeds', 'mass' matches 'weight').
-   - DO NOT require a literal or numerical match for text-based explanations.
+   - Award marks ONLY if the student is actually attempting to answer the question.
+   - Use semantic matching for genuine attempts (e.g. 'seed type' matches 'type of seeds').
+   - PROHIBITION: Do not award "pity marks" for irrelevant text or help requests.
 4. CALCULATION QUESTIONS (HYPER-STRICT NUMERICAL MATCH): 
    - Award marks ONLY if the specific numbers/steps from the mark scheme are LITERALLY WRITTEN.
    - [FINAL_ANSWER_START]: Must match the final value exactly.
@@ -819,9 +819,9 @@ MARKING INSTRUCTIONS:
 
 RESPONSE FORMAT (JSON ONLY):
 {{
-  "marks_awarded": 0,
+  "marks_awarded": (integer),
   "max_marks": {max_marks},
-  "feedback": "Marking Justification: [State the evidence found]\\n\\nMODEL ANSWER: [THE ENTIRE OFFICIAL MARK SCHEME COPIED VERBATIM]",
+  "feedback": "MARKING JUSTIFICATION: [Your explanation]\\n\\nFULL MARK SCHEME: [THE ENTIRE OFFICIAL MARK SCHEME COPIED VERBATIM]",
   "marking_points_met": []
 }}
 

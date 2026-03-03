@@ -682,13 +682,16 @@
                 const opt = document.createElement('option');
                 opt.value = idx;
                 opt.style.color = '#333';
-                
-                // Get a nice label: "Question 1, 2" or just "Question 1"
-                const qIds = group.questions.map(q => q.id).join(', ');
-                opt.textContent = `Question ${qIds} (Page ${group.page})`;
+
+                if (group.isSectionC) {
+                    opt.textContent = `Section C: Choose Q9, 10, or 11`;
+                } else {
+                    // Get a nice label: "Question 1, 2" or just "Question 1"
+                    const qIds = group.questions.map(q => q.id).join(', ');
+                    opt.textContent = `Question ${qIds} (Page ${group.page})`;
+                }
                 select.appendChild(opt);
-            });
-        }
+            });        }
 
         let isReviewMode = false;
 
@@ -752,11 +755,35 @@
                 });
             }
 
-            // Do NOT group by page. Every question in the JSON array is a distinct step.
-            pageGroups = examData.questions.map(q => ({
-                page: q.sub_questions[0].qp_pages[0],
-                questions: [q]
-            }));
+            // Group questions by their first page
+            const groupsByPage = {};
+            const sectionCQuestions = [];
+            
+            examData.questions.forEach(q => {
+                if (q.id >= 9) {
+                    sectionCQuestions.push(q);
+                } else {
+                    const firstPage = q.sub_questions[0].qp_pages[0];
+                    if (!groupsByPage[firstPage]) {
+                        groupsByPage[firstPage] = {
+                            page: firstPage,
+                            questions: []
+                        };
+                    }
+                    groupsByPage[firstPage].questions.push(q);
+                }
+            });
+            
+            pageGroups = Object.values(groupsByPage).sort((a, b) => a.page - b.page);
+            
+            // Add Section C as a single group if it exists
+            if (sectionCQuestions.length > 0) {
+                pageGroups.push({
+                    page: sectionCQuestions[0].sub_questions[0].qp_pages[0],
+                    questions: sectionCQuestions,
+                    isSectionC: true
+                });
+            }
             
             populateQuestionJump();
 
@@ -824,23 +851,28 @@
             };
 
             // Handle choice groups (Section C)
-            const isChoiceGroup = group.questions.length > 1 && group.questions.every(q => q.id >= 9);
             let questionsToRender = group.questions;
 
-            if (isChoiceGroup) {
+            if (group.isSectionC) {
                 const choiceDiv = document.createElement('div');
                 choiceDiv.className = 'sub-question-item';
                 choiceDiv.style.background = '#f8f9fa';
                 choiceDiv.innerHTML = `
-                    <div class="sub-header"><span style="font-weight:700; color:#1e3c72;">Choose One Question</span></div>
-                    <div id="choiceBtns" style="display:flex; gap:10px;"></div>
+                    <div class="sub-header"><span style="font-weight:700; color:#1e3c72;">Choose One Question to Answer (Section C)</span></div>
+                    <div id="choiceBtns" style="display:flex; gap:10px; margin-top:10px;"></div>
                 `;
                 const btnContainer = choiceDiv.querySelector('#choiceBtns');
+                
+                if (!selectedQuestionInGroup[currentGroupIdx]) {
+                    selectedQuestionInGroup[currentGroupIdx] = group.questions[0].id;
+                }
+
                 group.questions.forEach(q => {
                     const btn = document.createElement('button');
                     btn.className = 'control-btn ' + (selectedQuestionInGroup[currentGroupIdx] === q.id ? 'btn-next' : 'btn-prev');
+                    btn.style.flex = "1";
                     btn.textContent = 'Question ' + q.id;
-                    btn.onclick = () => { selectedQuestionInGroup[currentGroupIdx] = q.id; render(); saveProgress(); };
+                    btn.onclick = () => { selectedQuestionInGroup[currentGroupIdx] = q.id; render(true); saveProgress(); };
                     btnContainer.appendChild(btn);
                 });
                 list.appendChild(choiceDiv);
@@ -973,10 +1005,10 @@
                                     placeholder="Type your answer here..." value="${saved.answer || ''}">
                             `;
                         } else {
-                            // Dynamic height based on marks or provided lines
+                            // Dynamic height based on marks or provided lines - capped at 15 lines
                             let height = 120;
-                            if (sq.lines_provided) height = Math.max(60, sq.lines_provided * 35);
-                            else if (sq.max_marks >= 30) height = 600;
+                            if (sq.lines_provided) height = Math.min(525, Math.max(60, sq.lines_provided * 35));
+                            else if (sq.max_marks >= 30) height = 525;
                             else if (sq.max_marks >= 10) height = 400;
                             else if (sq.max_marks >= 5) height = 250;
 
