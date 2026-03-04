@@ -1,0 +1,41 @@
+ * Serving Flask app 'exam_server'
+ * Debug mode: on
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5001
+ * Running on http://192.168.0.206:5001
+[33mPress CTRL+C to quit[0m
+192.168.0.206 - - [04/Mar/2026 14:17:20] "GET /official_exam_player.html?paper_id=maths_nov_2024_1h&mode=review&student=the22one98and7only68the78smartest6abdullah HTTP/1.1" 200 -
+192.168.0.206 - - [04/Mar/2026 14:17:20] "[36mGET /static/online_status.js HTTP/1.1[0m" 304 -
+192.168.0.206 - - [04/Mar/2026 14:17:20] "[36mGET /static/theme_manager.js HTTP/1.1[0m" 304 -
+192.168.0.206 - - [04/Mar/2026 14:17:20] "GET /api/user/preferences/get?username=admin HTTP/1.1" 200 -
+192.168.0.206 - - [04/Mar/2026 14:17:20] "GET /api/official-exams/maths_nov_2024_1h HTTP/1.1" 200 -
+192.168.0.206 - - [04/Mar/2026 14:17:20] "GET /api/user/preferences/get?username=admin HTTP/1.1" 200 -
+192.168.0.206 - - [04/Mar/2026 14:17:20] "[33mGET /api/results/detail?username=the22one98and7only68the78smartest6abdullah&paper_id=maths_nov_2024_1h HTTP/1.1[0m" 404 -
+192.168.0.206 - - [04/Mar/2026 14:17:20] "[36mGET /static/exams/maths_nov_2024_1h/qp/page_03.png HTTP/1.1[0m" 304 -
+192.168.0.206 - - [04/Mar/2026 14:17:23] "GET /static/exams/maths_nov_2024_1h/qp/page_04.png HTTP/1.1" 200 -
+192.168.0.206 - - [04/Mar/2026 14:17:25] "GET /static/exams/maths_nov_2024_1h/qp/page_05.png HTTP/1.1" 200 -
+192.168.0.45 - - [04/Mar/2026 14:17:27] "[35m[1mPOST /api/messages/send HTTP/1.1[0m" 201 -
+192.168.0.206 - - [04/Mar/2026 14:17:48] "[36mGET /exam_questions.html HTTP/1.1[0m" 304 -
+192.168.0.206 - - [04/Mar/2026 14:17:48] "[36mGET /static/theme_manager.js HTTP/1.1[0m" 304 -
+192.168.0.206 - - [04/Mar/2026 14:17:48] "[36mGET /static/online_status.js HTTP/1.1[0m" 304 -
+192.168.0.206 - - [04/Mar/2026 14:17:48] "GET /api/user/preferences/get?username=admin HTTP/1.1" 200 -
+192.168.0.206 - - [04/Mar/2026 14:17:48] "GET /api/student/exam-progress/list?username=admin HTTP/1.1" 200 -
+192.168.0.206 - - [04/Mar/2026 14:17:48] "GET /api/official-exams/list HTTP/1.1" 200 -
+192.168.0.206 - - [04/Mar/2026 14:19:05] "GET /exam_questions.html HTTP/1.1" 200 -
+192.168.0.206 - - [04/Mar/2026 14:19:05] "[36mGET /static/online_status.js HTTP/1.1[0m" 304 -
+192.168.0.206 - - [04/Mar/2026 14:19:05] "[36mGET /static/theme_manager.js HTTP/1.1[0m" 304 -
+192.168.0.206 - - [04/Mar/2026 14:19:05] "GET /api/user/preferences/get?username=admin HTTP/1.1" 200 -
+192.168.0.206 - - [04/Mar/2026 14:19:05] "GET /api/student/exam-progress/list?username=admin HTTP/1.1" 200 -
+192.168.0.206 - - [04/Mar/2026 14:19:05] "GET /api/official-exams/list HTTP/1.1" 200 -
+192.168.0.206 - - [04/Mar/2026 14:19:24] "GET /official_exam_player.html?paper_id=maths_nov_2024_1h&mode=review&student=test HTTP/1.1" 200 -
+192.168.0.206 - - [04/Mar/2026 14:19:24] "[36mGET /static/online_status.js HTTP/1.1[0m" 304 -
+192.168.0.206 - - [04/Mar/2026 14:19:24] "[36mGET /static/theme_manager.js HTTP/1.1[0m" 304 -
+192.168.0.206 - - [04/Mar/2026 14:19:24] "GET /api/user/preferences/get?username=admin HTTP/1.1" 200 -
+192.168.0.206 - - [04/Mar/2026 14:19:24] "GET /api/official-exams/maths_nov_2024_1h HTTP/1.1" 200 -
+192.168.0.206 - - [04/Mar/2026 14:19:24] "[33mGET /api/results/detail?username=test&paper_id=maths_nov_2024_1h HTTP/1.1[0m" 404 -
+192.168.0.206 - - [04/Mar/2026 14:19:24] "GET /api/user/preferences/get?username=admin HTTP/1.1" 200 -
+192.168.0.206 - - [04/Mar/2026 14:19:24] "[36mGET /static/exams/maths_nov_2024_1h/qp/page_03.png HTTP/1.1[0m" 304 -
+192.168.0.45 - - [04/Mar/2026 14:19:27] "[35m[1mPOST /api/messages/send HTTP/1.1[0m" 201 -
+/usr/lib64/python3.14/multiprocessing/resource_tracker.py:396: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown: {'/mp-k5b4851n'}
+  warnings.warn(

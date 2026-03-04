@@ -95,7 +95,9 @@
         document.getElementById('chatTitle').textContent = 'Chat with ' + displayUser;
         document.getElementById('chatTitle').title = targetUser; // Full name on hover
         document.getElementById('chatWindow').style.display = 'flex';
-        document.getElementById('chatMessages').innerHTML = '';
+        const msgContainer = document.getElementById('chatMessages');
+        msgContainer.innerHTML = '';
+        msgContainer.removeAttribute('data-msg-count'); // Reset count for new user
         fetchMessages();
         if (pollInterval) clearInterval(pollInterval);
         pollInterval = setInterval(fetchMessages, 3000);
@@ -121,16 +123,21 @@
             const data = await res.json();
             if (data.success) {
                 const container = document.getElementById('chatMessages');
-                const html = data.messages.map(m => {
-                    const isMe = m.sender === username;
-                    return `
-                        <div style="align-self: ${isMe ? 'flex-end' : 'flex-start'}; background: ${isMe ? '#1e3c72' : '#e9e9e9'}; color: ${isMe ? 'white' : 'black'}; padding: 8px 12px; border-radius: 12px; max-width: 80%; font-size: 0.9em; box-shadow: 0 2px 5px rgba(0,0,0,0.05); word-break: break-word;">
-                            ${linkify(m.message)}
-                        </div>
-                    `;
-                }).join('');
-                if (container.innerHTML !== html) {
+                const msgCount = data.messages.length;
+                
+                // Use a data attribute to check if we actually need to re-render
+                if (container.getAttribute('data-msg-count') !== msgCount.toString()) {
+                    const html = data.messages.map(m => {
+                        const isMe = m.sender === username;
+                        return `
+                            <div style="align-self: ${isMe ? 'flex-end' : 'flex-start'}; background: ${isMe ? '#1e3c72' : '#e9e9e9'}; color: ${isMe ? 'white' : 'black'}; padding: 8px 12px; border-radius: 12px; max-width: 80%; font-size: 0.9em; box-shadow: 0 2px 5px rgba(0,0,0,0.05); overflow-wrap: anywhere; word-break: break-word;">
+                                ${linkify(m.message)}
+                            </div>
+                        `;
+                    }).join('');
+                    
                     container.innerHTML = html;
+                    container.setAttribute('data-msg-count', msgCount);
                     container.scrollTop = container.scrollHeight;
                 }
 
@@ -194,12 +201,12 @@
                         const unreadBadge = unreadCount > 0 ? `<span style="background:#dc3545; color:white; font-size:0.7em; padding:1px 5px; border-radius:10px; margin-left:5px;">${unreadCount}</span>` : '';
                         
                         return `
-                            <div onclick="openChat('${u.username}')" style="display: flex; flex-direction: column; gap: 2px; margin-bottom: 10px; cursor: pointer; padding: 5px; border-radius: 5px; transition: background 0.2s;" onmouseover="this.style.background='#f0f4f9'" onmouseout="this.style.background='transparent'">
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <div style="width: 8px; height: 8px; background: ${u.is_online ? '#28a745' : '#ccc'}; border-radius: 50%; ${u.is_online ? 'box-shadow: 0 0 3px #28a745;' : ''}"></div>
-                                    <strong style="flex:1; color: ${u.is_online ? '#333' : '#666'}; font-size: 0.95em;" title="${u.username}">${displayUser}</strong>
+                            <div onclick="openChat('${u.username}')" style="display: flex; flex-direction: column; gap: 2px; margin-bottom: 10px; cursor: pointer; padding: 5px; border-radius: 5px; transition: background 0.2s; min-width: 0;" onmouseover="this.style.background='#f0f4f9'" onmouseout="this.style.background='transparent'">
+                                <div style="display: flex; align-items: center; gap: 8px; width: 100%;">
+                                    <div style="width: 8px; height: 8px; background: ${u.is_online ? '#28a745' : '#ccc'}; border-radius: 50%; ${u.is_online ? 'box-shadow: 0 0 3px #28a745;' : ''} flex-shrink: 0;"></div>
+                                    <strong style="flex:1; color: ${u.is_online ? '#333' : '#666'}; font-size: 0.95em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${u.username}">${displayUser}</strong>
                                     ${unreadBadge}
-                                    ${u.role === 'admin' ? '<span style="font-size: 0.65em; background: #d63384; color: white; padding: 1px 5px; border-radius: 4px;">ADMIN</span>' : ''}
+                                    ${u.role === 'admin' ? '<span style="font-size: 0.65em; background: #d63384; color: white; padding: 1px 5px; border-radius: 4px; flex-shrink: 0;">ADMIN</span>' : ''}
                                 </div>
                                 <div style="font-size: 0.75em; color: #999; margin-left: 16px;">
                                     ${u.is_online ? 'Online now' : 'Last active: ' + formatRelativeTime(u.last_online)}

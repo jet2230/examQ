@@ -176,8 +176,8 @@
                 <div class="form-group">
                     <label>Number of Questions</label>
                     <select id="num_questions" class="form-input" style="appearance: none; background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23666%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-7.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E') no-repeat right 20px center; background-size: 12px;">
-                        <option value="5">5 Questions</option>
-                        <option value="10" selected>10 Questions</option>
+                        <option value="5" selected>5 Questions</option>
+                        <option value="10">10 Questions</option>
                         <option value="15">15 Questions</option>
                         <option value="20">20 Questions</option>
                     </select>
@@ -271,9 +271,8 @@
         }
 
         async function loadSavedQuizzes() {
-            const u = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
             try {
-                const res = await fetch(`/api/my-quizzes?username=${u}`);
+                const res = await fetch('/api/all-quizzes');
                 const data = await res.json();
                 allQuizzes = data.quizzes || [];
                 renderQuizzes();
@@ -338,16 +337,39 @@
                 const topic = q.topic || 'Untitled Quiz';
                 const displayTopic = topic.length > 20 ? topic.substring(0, 20) + '...' : topic;
                 
-                let deleteBtn = isAdmin ? `<button onclick="deleteQuiz(event, ${q.id})" style="background:none; border:none; color:#dc3545; cursor:pointer; font-size:1.1em; padding:0 10px;" title="Delete Quiz">🗑️</button>` : '';
+                let deleteBtn = isAdmin ? `
+                    <div style="display:inline-flex; align-items:center; position:relative;">
+                        <button id="del_btn_${q.id}" onclick="showDeleteConfirm(event, ${q.id})" style="background:none; border:none; color:#dc3545; cursor:pointer; font-size:1.1em; padding:0 10px;" title="Delete Quiz">🗑️</button>
+                        <div id="del_confirm_${q.id}" style="display:none; gap:8px; align-items:center; background:white; padding:10px 15px; border-radius:10px; border:1px solid #ffcaca; position:absolute; right:40px; top:50%; transform:translateY(-50%); z-index:1000; box-shadow:0 10px 25px rgba(220,53,69,0.15); white-space:nowrap;">
+                            <span style="font-size:0.9em; color:#dc3545; font-weight:800; margin-right:5px;">Confirm Delete?</span>
+                            <button onclick="confirmDelete(event, ${q.id})" style="background:#dc3545; color:white; border:none; border-radius:6px; padding:5px 12px; font-size:0.85em; cursor:pointer; font-weight:700;">Delete</button>
+                            <button onclick="hideDeleteConfirm(event, ${q.id})" style="background:#f8f9fa; color:#666; border:1px solid #ddd; border-radius:6px; padding:5px 12px; font-size:0.85em; cursor:pointer;">Cancel</button>
+                        </div>
+                    </div>` : '';
+                let shareBtn = `<button onclick="toggleShare(event, ${q.id})" style="background:none; border:none; color:#1e3c72; cursor:pointer; font-size:1.1em; padding:0 10px;" title="Share Quiz">🔗</button>`;
 
                 const tr = document.createElement('tr');
                 tr.style.borderBottom = '1px solid #eee';
                 tr.innerHTML = `
-                    <td style="padding: 12px 15px;"><strong title="${topic}">${displayTopic}</strong></td>
+                    <td style="padding: 12px 15px;">
+                        <strong title="${topic}">${displayTopic}</strong>
+                    </td>
                     <td style="padding: 12px 15px; color: #666;" title="${creator}">${displayUser}</td>
                     <td style="padding: 12px 15px; font-size: 0.9em; color: #888;">${dateStr}, ${timeStr}</td>
-                    <td style="padding: 12px 15px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <td style="padding: 12px 15px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 10px; position: relative;">
                         <a href="/quiz_${q.id}.html" style="background: var(--primary-color); color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 0.85em; font-weight: 700;">Take Quiz</a>
+                        
+                        <div id="share_panel_${q.id}" class="share-panel" style="display:none; padding:15px; background:white; border-radius:12px; border:1px solid #ddd; position:absolute; right:80px; top:50%; transform:translateY(-50%); z-index:1001; box-shadow:0 10px 30px rgba(0,0,0,0.15); width:220px; text-align:left;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:5px;">
+                                <label style="font-size:0.85em; font-weight:700; color:#1e3c72;">Share With:</label>
+                                <span onclick="toggleShare(event, ${q.id})" style="cursor:pointer; font-size:1.2em; color:#999;">&times;</span>
+                            </div>
+                            <div id="share_user_list_${q.id}" style="max-height:200px; overflow-y:auto; display:flex; flex-direction:column; gap:5px; margin-bottom:5px;">
+                                <div style="font-size:0.8em; color:#888; text-align:center; padding:10px;">Loading users...</div>
+                            </div>
+                        </div>
+
+                        ${shareBtn}
                         ${deleteBtn}
                     </td>
                 `;
@@ -360,16 +382,117 @@
             pagination.style.display = filtered.length > quizPageSize ? 'flex' : 'none';
         }
 
-        function filterQuizzes() {
-            currentQuizPage = 0;
-            renderQuizzes();
+        async function toggleShare(event, quizId) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            const panel = document.getElementById(`share_panel_${quizId}`);
+            const listContainer = document.getElementById(`share_user_list_${quizId}`);
+            const isOpening = panel.style.display === 'none';
+            
+            // Close all other panels first
+            document.querySelectorAll('.share-panel').forEach(p => p.style.display = 'none');
+            document.querySelectorAll('[id^="del_confirm_"]').forEach(p => p.style.display = 'none');
+
+            if (isOpening) {
+                panel.style.display = 'block';
+                try {
+                    const res = await fetch('/api/users/all');
+                    const data = await res.json();
+                    if (data.success) {
+                        const currentUser = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
+                        // Sort users: online first, then by username
+                        const users = data.users
+                            .filter(u => u.username !== currentUser)
+                            .sort((a, b) => {
+                                if (a.is_online === b.is_online) return a.username.localeCompare(b.username);
+                                return a.is_online ? -1 : 1;
+                            });
+                        
+                        if (users.length === 0) {
+                            listContainer.innerHTML = '<div style="font-size:0.8em; color:#888; text-align:center; padding:10px;">No other users found.</div>';
+                        } else {
+                            listContainer.innerHTML = users.map(u => {
+                                const display = u.username.length > 10 ? u.username.substring(0, 10) + '...' : u.username;
+                                const statusDot = u.is_online ? 
+                                    '<div style="width:8px; height:8px; background:#28a745; border-radius:50%; box-shadow:0 0 4px #28a745; margin-right:8px;"></div>' :
+                                    '<div style="width:8px; height:8px; background:#ccc; border-radius:50%; margin-right:8px;"></div>';
+                                
+                                return `
+                                    <button onclick="shareQuiz(${quizId}, '${u.username}')" class="share-user-btn" style="text-align:left; padding:8px 12px; border:1px solid #eee; border-radius:8px; background:#f9f9f9; cursor:pointer; font-size:0.85em; transition:all 0.2s; display:flex; align-items:center;">
+                                        ${statusDot}
+                                        <span title="${u.username}" style="font-weight:600; color:${u.is_online ? '#28a745' : '#333'}; flex:1;">${display}</span>
+                                        ${u.role === 'admin' ? '<span style="font-size:0.6em; background:#d63384; color:white; padding:1px 4px; border-radius:3px; margin-left:5px;">ADMIN</span>' : ''}
+                                    </button>
+                                `;
+                            }).join('');
+                            
+                            // Add some hover effect style if not present
+                            if (!document.getElementById('shareBtnStyles')) {
+                                const style = document.createElement('style');
+                                style.id = 'shareBtnStyles';
+                                style.textContent = '.share-user-btn:hover { background: #e3f2fd !important; border-color: #1e3c72 !important; color: #1e3c72 !important; }';
+                                document.head.appendChild(style);
+                            }
+                        }
+                    }
+                } catch (e) { console.error("Failed to load users for sharing", e); }
+            } else {
+                panel.style.display = 'none';
+            }
         }
 
-        async function deleteQuiz(event, quizId) {
+        async function shareQuiz(quizId, recipient) {
+            const sender = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
+            
+            if (!recipient) return;
+
+            const quiz = allQuizzes.find(q => q.id === quizId);
+            const topic = quiz ? quiz.topic : 'Quiz';
+            const quizUrl = `${window.location.origin}/quiz_${quizId}.html`;
+            const message = `Check out this quiz I shared with you: ${topic}\nLink: ${quizUrl}`;
+
+            try {
+                const res = await fetch('/api/messages/send', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ sender, recipient, message })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showLineAlert("Quiz shared with " + recipient, "success");
+                    document.getElementById(`share_panel_${quizId}`).style.display = 'none';
+                } else {
+                    showLineAlert("Failed to share quiz.", "error");
+                }
+            } catch (e) {
+                console.error("Share error:", e);
+                showLineAlert("Error sharing quiz.", "error");
+            }
+        }
+
+        function showDeleteConfirm(event, quizId) {
             event.preventDefault();
             event.stopPropagation();
-            if (!confirm("Are you sure you want to delete this quiz?")) return;
+            // Close all other panels first
+            document.querySelectorAll('.share-panel').forEach(p => p.style.display = 'none');
+            document.querySelectorAll('[id^="del_confirm_"]').forEach(p => p.style.display = 'none');
+            
+            document.getElementById(`del_confirm_${quizId}`).style.display = 'inline-flex';
+        }
 
+        function hideDeleteConfirm(event, quizId) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            document.getElementById(`del_confirm_${quizId}`).style.display = 'none';
+        }
+
+        async function confirmDelete(event, quizId) {
+            event.preventDefault();
+            event.stopPropagation();
             const admin_username = localStorage.getItem('quiz_admin_username');
             try {
                 const res = await fetch('/api/admin/delete-quiz', {
@@ -381,8 +504,15 @@
                 if (data.success) {
                     showLineAlert("Quiz deleted", "success");
                     loadSavedQuizzes();
+                } else {
+                    showLineAlert("Failed to delete quiz: " + data.error, "error");
+                    hideDeleteConfirm(null, quizId);
                 }
-            } catch (e) { console.error(e); }
+            } catch (e) { 
+                console.error(e); 
+                showLineAlert("Server error during deletion", "error");
+                hideDeleteConfirm(null, quizId);
+            }
         }
 
         function showLineAlert(msg, type='info') {

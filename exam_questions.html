@@ -372,9 +372,11 @@
                     const table = document.getElementById('adminProgressTable');
                     // Only show if we're on the subjects view
                     if (!currentSubject) view.style.display = 'block';
-                    table.innerHTML = data.all_progress.map(p => `
+                    table.innerHTML = data.all_progress.map(p => {
+                        const displayUser = p.username.length > 10 ? p.username.substring(0, 10) + '...' : p.username;
+                        return `
                         <tr style="border-bottom: 1px solid #eee;">
-                            <td style="padding: 12px 15px;"><strong>${p.username}</strong></td>
+                            <td style="padding: 12px 15px;"><strong title="${p.username}">${displayUser}</strong></td>
                             <td style="padding: 12px 15px;">${p.title}</td>
                             <td style="padding: 12px 15px;"><span class="status-badge status-started">${p.status.replace('_', ' ')}</span></td>
                             <td style="padding: 12px 15px; font-size: 0.85em; color: #666;">${formatLastAccessed(p.last_updated)}</td>
@@ -385,7 +387,8 @@
                                    title="View Exam Paper">👁️</a>
                             </td>
                         </tr>
-                    `).join('');
+                    `;
+                    }).join('');
                 }
             } catch (e) { console.error("Failed to load admin progress", e); }
         }

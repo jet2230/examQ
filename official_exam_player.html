@@ -414,6 +414,10 @@
             background: #f8f9fa;
             border-left: 5px solid #1e3c72;
             display: none;
+            font-size: 0.9em;
+            line-height: 1.6;
+            color: #444;
+            white-space: pre-wrap;
         }
         .feedback-zone.show { display: block; }
 
@@ -1610,7 +1614,6 @@
             if (newIdx >= 0 && newIdx < pageGroups.length) {
                 currentGroupIdx = newIdx;
                 render();
-                saveProgress();
             }
         }
 

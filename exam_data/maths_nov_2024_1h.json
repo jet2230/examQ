@@ -1,0 +1,116 @@
+{
+  "paper_id": "maths_nov_2024_1h",
+  "title": "Pearson Edexcel International GCSE",
+  "subject": "Maths",
+  "qp_img_dir": "/static/exams/maths_nov_2024_1h/qp/",
+  "er_text": "",
+  "questions": [
+    {
+      "id": 1,
+      "sub_questions": [
+        {
+          "sub_id": "1",
+          "type": "text/mcq/calculation/draw/list",
+          "max_marks": 5,
+          "lines_provided": 2,
+          "ms_text": "30a + (10-1)d + a + (20-1)d = 284 or\n2a + 29d = 293",
+          "options": [],
+          "final_label": "Value",
+          "final_unit": "unit",
+          "qp_pages": [
+            3
+          ]
+        },
+        {
+          "sub_id": "1(a)",
+          "type": "text/mcq/calculation/draw/list",
+          "max_marks": 5,
+          "lines_provided": 2,
+          "ms_text": "2a + (30 - 1) d = 4395 or 2a + 29d = 293",
+          "options": [],
+          "final_label": "Value",
+          "final_unit": "unit",
+          "qp_pages": [
+            3
+          ]
+        },
+        {
+          "sub_id": "1(b)",
+          "type": "text/mcq/calculation/draw/list",
+          "max_marks": 4,
+          "lines_provided": 5,
+          "ms_text": "2a + (30 - 1) d = 4395 or 30a + 435d = 4395 or 2a + 29d = 284 or a + 9d = 142",
+          "options": [],
+          "final_label": "Value",
+          "final_unit": "unit",
+          "qp_pages": [
+            3
+          ]
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "sub_questions": [
+        {
+          "sub_id": "2",
+          "type": "text/mcq/calculation/draw/list",
+          "max_marks": 1,
+          "lines_provided": 0,
+          "ms_text": "The marking details for sub-question 2 are as follows: The question is about finding the equation of a line that passes through two points. The correct answer is given by the formula y = mx + c, where m is the slope and c is the y-intercept.",
+          "options": [],
+          "final_label": "Value",
+          "final_unit": "unit",
+          "qp_pages": [
+            4
+          ]
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "sub_questions": [
+        {
+          "sub_id": "3",
+          "type": "text/mcq/calculation/draw/list",
+          "max_marks": 1,
+          "lines_provided": 2,
+          "ms_text": "2a + 29d = 293",
+          "options": [],
+          "final_label": "Value",
+          "final_unit": "unit",
+          "qp_pages": [
+            5
+          ]
+        },
+        {
+          "sub_id": "3(b)",
+          "type": "text/mcq/calculation/draw/list",
+          "max_marks": 1,
+          "lines_provided": 2,
+          "ms_text": "2a + (30 - 1) d = 4395 or 30a + 435d = 4395 or\n2a + 29d = 293",
+          "options": [],
+          "final_label": "Value",
+          "final_unit": "unit",
+          "qp_pages": [
+            5
+          ]
+        },
+        {
+          "sub_id": "3(c)",
+          "type": "text/mcq/calculation/draw/list",
+          "max_marks": 1,
+          "lines_provided": 2,
+          "ms_text": "2a + (30 - 1) d = 4395 or 30a + 435d = 4395 or 2 a + 29d = 293 or a + (10 - 1) d + a + (20 - 1) d = 284 or a + 9d + a + 19d = 284 or 2 a + 28d = 284 or a + 14d = 142",
+          "options": [],
+          "final_label": "Value",
+          "final_unit": "unit",
+          "qp_pages": [
+            5
+          ]
+        }
+      ]
+    }
+  ],
+  "extract_pages": []
+}

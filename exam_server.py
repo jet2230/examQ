@@ -464,6 +464,20 @@ def save_quiz():
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
+@app.route('/api/all-quizzes')
+def get_all_quizzes():
+    """Get list of all saved quizzes"""
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, topic, created_by, created_at FROM saved_quizzes ORDER BY created_at DESC")
+        rows = cursor.fetchall()
+        quizzes = [dict(r) for r in rows]
+        conn.close()
+        return jsonify({'success': True, 'quizzes': quizzes})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
 @app.route('/api/my-quizzes')
 def get_my_quizzes():
     """Get list of quizzes created by a user"""
@@ -492,15 +506,41 @@ def get_single_quiz(quiz_id):
         row = cursor.fetchone()
         conn.close()
         if row:
+            quiz_data = json.loads(row['quiz_json'])
+            # If the JSON is a dict with 'questions' key, extract that list
+            questions = quiz_data.get('questions', []) if isinstance(quiz_data, dict) else quiz_data
             return jsonify({
                 'success': True, 
                 'quiz': {
                     'id': row['id'], 
                     'topic': row['topic'], 
-                    'questions': json.loads(row['quiz_json'])
+                    'questions': questions
                 }
             })
         return jsonify({'success': False, 'message': 'Quiz not found'}), 404
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/quiz/update', methods=['POST'])
+def update_quiz():
+    """Update quiz questions (for edits)"""
+    try:
+        data = request.json
+        quiz_id = data.get('quiz_id')
+        questions = data.get('questions')
+        
+        if not quiz_id or questions is None:
+            return jsonify({'success': False, 'message': 'Missing data'}), 400
+            
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE saved_quizzes SET quiz_json = ? WHERE id = ?",
+            (json.dumps(questions), quiz_id)
+        )
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
@@ -915,20 +955,53 @@ MANDATORY RULES:
 """
         print(f"  [GRADING] Q {sub_id} Student Answer: {user_answer[:100]}...", flush=True)
         
-        payload = {'model': 'llama3', 'prompt': prompt, 'stream': False, 'format': 'json', 'temperature': 0}
+        payload = {
+            'model': 'llama3', 
+            'prompt': prompt, 
+            'stream': False, 
+            'format': 'json',
+            'options': {
+                'temperature': 0,
+                'seed': 42,
+                'num_predict': 500
+            }
+        }
         
-        resp = requests.post('http://localhost:11434/api/generate', json=payload)
-        raw = resp.json().get('response', '{}')
-        print(f"  [GRADING] Q {sub_id} RAW AI: {raw.strip()}", flush=True)
-        result = clean_ai_json(raw) or {"marks_awarded": 0, "feedback": "AI Parsing Error"}
+        result = None
+        for attempt in range(2): # Try up to 2 times
+            try:
+                resp = requests.post('http://localhost:11434/api/generate', json=payload, timeout=90)
+                raw = resp.json().get('response', '{}')
+                print(f"  [GRADING] Q {sub_id} RAW AI (Attempt {attempt+1}): {raw.strip()}", flush=True)
+                
+                parsed = clean_ai_json(raw)
+                if parsed and isinstance(parsed, dict) and 'marks_awarded' in parsed:
+                    result = parsed
+                    break
+                else:
+                    print(f"  [GRADING] Attempt {attempt+1} failed to parse or missing keys. Retrying...", flush=True)
+            except Exception as e:
+                print(f"  [GRADING] Attempt {attempt+1} error: {str(e)}", flush=True)
         
-        # MANUALLY ENSURE MODEL ANSWER IS PRESENT
-        # If the AI forgot to copy the mark scheme, we force it here.
+        if not result:
+            result = {"marks_awarded": 0, "feedback": "AI Marking Error - The AI failed to provide a valid grade after multiple attempts. Please try again or check the manual mark scheme below."}
+        
+        # MANUALLY ENSURE FULL MODEL ANSWER IS PRESENT
+        # The AI often truncates the mark scheme, so we ensure the original is appended.
         feedback = result.get('feedback', 'No justification provided.')
-        if "FULL MARK SCHEME" not in feedback and "MODEL ANSWER" not in feedback:
-            result['feedback'] = f"{feedback}\n\nMODEL ANSWER: {mark_scheme}"
-        elif "FULL MARK SCHEME" in feedback:
-            result['feedback'] = feedback.replace("FULL MARK SCHEME", "MODEL ANSWER")
+        
+        # If the AI provided its own MODEL ANSWER/FULL MARK SCHEME, we replace its content with the original 
+        # to ensure it hasn't been truncated or hallucinated.
+        model_answer_html = f"<div style='background: #ffffcc; padding: 15px; border: 1px solid #e6e600; border-radius: 8px; margin-top: 15px; color: #333;'><strong style='color: #000; display: block; margin-bottom: 8px; border-bottom: 1px solid #e6e600; padding-bottom: 5px;'>OFFICIAL MODEL ANSWER:</strong>{mark_scheme}</div>"
+        
+        if "FULL MARK SCHEME:" in feedback:
+            parts = feedback.split("FULL MARK SCHEME:")
+            result['feedback'] = f"{parts[0].strip()}{model_answer_html}"
+        elif "MODEL ANSWER:" in feedback:
+            parts = feedback.split("MODEL ANSWER:")
+            result['feedback'] = f"{parts[0].strip()}{model_answer_html}"
+        else:
+            result['feedback'] = f"{feedback.strip()}{model_answer_html}"
             
         return jsonify(result), 200
     except Exception as e: return jsonify({'error': str(e)}), 500
@@ -1060,6 +1133,68 @@ def save_user_preferences():
 @app.route('/')
 def home_page(): return send_from_directory('.', 'exam_generator_v2.html')
 
+@app.route('/api/admin/all-progress')
+def get_all_student_progress():
+    try:
+        # Check if the requester is an admin
+        u = request.args.get('username')
+        if not u: return jsonify({'error': 'Missing username'}), 400
+        
+        conn = get_db(); cursor = conn.cursor()
+        cursor.execute("SELECT role FROM users WHERE username = ?", (u,))
+        user = cursor.fetchone()
+        if not user or user['role'] != 'admin':
+            conn.close()
+            return jsonify({'error': 'Unauthorized'}), 403
+            
+        # Fetch progress joined with exam titles
+        cursor.execute("""
+            SELECT p.username, p.paper_id, p.status, p.last_updated, e.title
+            FROM exam_progress p
+            JOIN official_exams e ON p.paper_id = e.id
+            ORDER BY p.last_updated DESC
+        """)
+        rows = cursor.fetchall(); conn.close()
+        
+        all_progress = [{
+            'username': r['username'],
+            'paper_id': r['paper_id'],
+            'status': r['status'],
+            'last_updated': r['last_updated'],
+            'title': r['title']
+        } for r in rows]
+        
+        return jsonify({'success': True, 'all_progress': all_progress}), 200
+    except Exception as e: return jsonify({'error': str(e)}), 500
+
+@app.route('/api/admin/delete-quiz', methods=['POST'])
+def delete_quiz():
+    """Admin endpoint to delete a saved quiz"""
+    try:
+        data = request.json
+        admin_username = data.get('admin_username')
+        quiz_id = data.get('quiz_id')
+        
+        if not admin_username or not quiz_id:
+            return jsonify({'success': False, 'error': 'Missing data'}), 400
+            
+        # Verify admin role
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT role FROM users WHERE username = ?", (admin_username,))
+        user = cursor.fetchone()
+        
+        if not user or user['role'] != 'admin':
+            conn.close()
+            return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+            
+        cursor.execute("DELETE FROM saved_quizzes WHERE id = ?", (quiz_id,))
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @app.route('/api/student/exam-progress/delete', methods=['POST'])
 def delete_exam_progress():
     try:
@@ -1101,4 +1236,20 @@ def serve_everything_else(path): return send_from_directory('.', path)
 
 if __name__ == '__main__':
     init_db()
+    # Silence noisy polling logs
+    import logging
+    class NoPollingFilter(logging.Filter):
+        def filter(self, record):
+            msg = record.getMessage()
+            return not any(x in msg for x in [
+                '/api/messages/unread-count', 
+                '/api/messages/get',
+                '/api/user/heartbeat', 
+                '/api/users/all',
+                '/api/student/exam-progress/save',
+                '/api/admin/all-progress'
+            ])
+    
+    logging.getLogger('werkzeug').addFilter(NoPollingFilter())
+    
     app.run(host='0.0.0.0', port=5001, debug=True, use_reloader=False)
