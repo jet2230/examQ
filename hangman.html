@@ -126,6 +126,21 @@
             display: inline-block;
         }
 
+        .user-card {
+            padding: 8px 12px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.8em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            background: #fdfdfd;
+        }
+        .user-card:hover { background: #f1f4f9; border-color: #abc; }
+        .user-card.selected { background: #e3f2fd; border-color: #1e3c72; border-width: 2px; }
+
         /* Toggle Switch CSS */
         .switch input:checked + .slider { background-color: #28a745; }
         .switch input:focus + .slider { box-shadow: 0 0 1px #28a745; }
@@ -225,6 +240,15 @@
                 
                 <div class="players-panel" id="lobbyPlayers" style="margin-top:40px;"></div>
 
+                <!-- Invitation Section (Host Only) -->
+                <div id="hostInviteArea" style="display:none; margin-top:30px; padding:20px; background:#fff; border:1px solid #eee; border-radius:15px; box-shadow:0 4px 15px rgba(0,0,0,0.05);">
+                    <h4 style="color:var(--primary-color); margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">👤 Invite More Players</h4>
+                    <div id="inviteUserList" style="max-height:200px; overflow-y:auto; margin-bottom:15px; display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:10px;">
+                        <div style="padding:10px; text-align:center; color:#999; font-size:0.85em;">Loading students...</div>
+                    </div>
+                    <button id="sendInviteBtn" class="btn-action" style="width:100%; margin:0; padding:10px; font-size:0.9em; background:#1e3c72;" onclick="sendLobbyInvitations()">Send Invitations</button>
+                </div>
+
                 <!-- Game Rules -->
                 <div style="margin-top:40px; text-align:left; background:#f1f4f9; padding:20px; border-radius:15px; border:1px solid #ddd;">
                     <h4 style="color:var(--primary-color); margin-bottom:10px; display:flex; align-items:center; gap:8px;">📜 How to Play</h4>
@@ -267,7 +291,10 @@
                     
                     <!-- Host View -->
                     <div id="hostClueBox" style="display:none; flex-direction:column; gap:10px; align-items:center; width:100%;">
+                        <div id="peekDisplay" style="display:none; margin-bottom:5px; padding:8px 15px; background:#fff3cd; color:#856404; border-radius:8px; border:1px solid #ffeeba; font-weight:800; font-family:monospace; letter-spacing:2px; font-size:1.2em;">
+                        </div>
                         <div style="display:flex; gap:10px; align-items:center;">
+                            <button id="peekBtn" class="btn-action" style="background:#6c757d; margin:0; padding:8px 15px; font-size:0.8em; cursor:pointer;" onmousedown="showPeek()" onmouseup="hidePeek()" onmouseleave="hidePeek()" ontouchstart="showPeek()" ontouchend="hidePeek()">👁️ Peek at Word</button>
                             <input type="text" id="clueInput" placeholder="Enter a clue..." style="padding:8px; border-radius:5px; border:1px solid #ddd; width:200px;" onkeydown="if(event.key==='Enter') sendClue()">
                             <button class="btn-action" style="background:#1e3c72; margin:0; padding:8px 15px; font-size:0.8em;" onclick="sendClue()">Send Clue</button>
                         </div>
@@ -383,6 +410,10 @@
                     document.getElementById('guestWait').style.display = 'none';
                     document.getElementById('gameStatus').textContent = "You are the host. Choose a word to begin!";
                     
+                    // Show invitation area for host
+                    document.getElementById('hostInviteArea').style.display = 'block';
+                    loadUsersToInvite();
+
                     const wordInput = document.getElementById('secretWordInput');
                     const startBtn = document.getElementById('startBtn');
                     
@@ -427,6 +458,82 @@
                 renderActiveGame(acceptedPlayers);
             } else if (session.status === 'finished') {
                 showGameOver();
+            }
+        }
+
+        let lobbySelectedUsers = new Set();
+        async function loadUsersToInvite() {
+            const list = document.getElementById('inviteUserList');
+            if (!list || list.getAttribute('data-loaded') === 'true') return;
+            
+            try {
+                const res = await fetch('/api/users/all');
+                const data = await res.json();
+                if (data.success) {
+                    const currentPlayers = session.players.map(p => p.username);
+                    const users = data.users.filter(u => u.username !== username && !currentPlayers.includes(u.username));
+                    
+                    if (users.length === 0) {
+                        list.innerHTML = '<div style="padding:10px; text-align:center; color:#999; font-size:0.85em; grid-column: 1 / -1;">No more students available.</div>';
+                    } else {
+                        list.innerHTML = users.map(u => {
+                            const display = u.username.length > 10 ? u.username.substring(0, 10) + '...' : u.username;
+                            return `
+                                <div class="user-card" onclick="toggleLobbyUserSelection(this, '${u.username}')">
+                                    <div style="width:8px; height:8px; background:${u.is_online ? '#28a745' : '#ccc'}; border-radius:50%;"></div>
+                                    <strong title="${u.username}">${display}</strong>
+                                </div>
+                            `;
+                        }).join('');
+                    }
+                    list.setAttribute('data-loaded', 'true');
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function toggleLobbyUserSelection(el, user) {
+            if (lobbySelectedUsers.has(user)) {
+                lobbySelectedUsers.delete(user);
+                el.classList.remove('selected');
+            } else {
+                lobbySelectedUsers.add(user);
+                el.classList.add('selected');
+            }
+        }
+
+        async function sendLobbyInvitations() {
+            if (lobbySelectedUsers.size === 0) {
+                alert("Please select at least 1 student to invite.");
+                return;
+            }
+
+            const btn = document.getElementById('sendInviteBtn');
+            btn.disabled = true;
+            btn.textContent = "Sending...";
+
+            try {
+                const res = await fetch('/api/games/invite', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        host: username,
+                        game_type: session.game_type,
+                        invitees: Array.from(lobbySelectedUsers),
+                        session_id: sessionId
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert("Invitations sent!");
+                    lobbySelectedUsers.clear();
+                    const list = document.getElementById('inviteUserList');
+                    list.removeAttribute('data-loaded'); // Allow refresh
+                    loadUsersToInvite();
+                }
+            } catch (e) { console.error(e); }
+            finally {
+                btn.disabled = false;
+                btn.textContent = "Send Invitations";
             }
         }
 
@@ -596,6 +703,22 @@
             state.clueStack.push({ type: 'clue', text: clue });
             input.value = '';
             await updateServerState(state);
+        }
+
+        function showPeek() {
+            if (session && session.state && session.host === username) {
+                const peekDisplay = document.getElementById('peekDisplay');
+                peekDisplay.textContent = session.state.word;
+                peekDisplay.style.display = 'block';
+            }
+        }
+
+        function hidePeek() {
+            const peekDisplay = document.getElementById('peekDisplay');
+            if (peekDisplay) {
+                peekDisplay.style.display = 'none';
+                peekDisplay.textContent = '';
+            }
         }
 
         async function makeGuess(letter) {
