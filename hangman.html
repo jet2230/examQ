@@ -408,25 +408,19 @@
                 const data = await res.json();
                 if (data.success) {
                     // Stale Data Protection:
-                    // Only overwrite if we aren't currently updating OR if the server state is strictly newer
-                    if (isUpdating) {
-                        if (session && session.state && data.session.state && data.session.state.updatedAt > session.state.updatedAt) {
-                            // Server actually has a newer state than our "in-flight" update, so we accept it
-                            session = data.session;
-                            updateUI();
-                        }
-                    } else {
-                        // Not updating, check timestamps if both exist
-                        if (session && session.state && data.session.state) {
-                            if (data.session.state.updatedAt >= session.state.updatedAt) {
-                                session = data.session;
-                                updateUI();
-                            }
-                        } else {
-                            // First load or missing state
-                            session = data.session;
-                            updateUI();
-                        }
+                    const statusChanged = !session || data.session.status !== session.status;
+                    const hostChanged = !session || data.session.host !== session.host;
+                    
+                    let serverIsNewer = false;
+                    if (session && session.state && data.session.state) {
+                        const serverTs = data.session.state.updatedAt || 0;
+                        const localTs = session.state.updatedAt || 0;
+                        serverIsNewer = serverTs > localTs;
+                    }
+
+                    if (statusChanged || hostChanged || serverIsNewer || !isUpdating) {
+                        session = data.session;
+                        updateUI();
                     }
                 }
             } catch (e) { console.error("Fetch error:", e); }
@@ -521,6 +515,7 @@
             } else if (session.status === 'finished') {
                 document.getElementById('timerDisplay').style.display = 'none';
                 if (turnTimer) { clearInterval(turnTimer); turnTimer = null; }
+                renderActiveGame(acceptedPlayers); // Render the final state
                 showGameOver();
             } else {
                 document.getElementById('timerDisplay').style.display = 'none';
@@ -538,6 +533,7 @@
                 const data = await res.json();
                 if (data.success) {
                     const currentPlayers = session.players.map(p => p.username.toLowerCase());
+                    const aiPlayers = ['Bob', 'Tim'];
                     const users = data.users.filter(u => u.username.toLowerCase() !== username.toLowerCase() && !currentPlayers.includes(u.username.toLowerCase()));
                     
                     if (users.length === 0) {
@@ -545,10 +541,12 @@
                     } else {
                         list.innerHTML = users.map(u => {
                             const display = u.username.length > 10 ? u.username.substring(0, 10) + '...' : u.username;
+                            const isAI = aiPlayers.includes(u.username);
+                            const aiBadge = isAI ? '<span style="font-size:0.7em; background:#6c757d; color:white; padding:1px 4px; border-radius:3px; margin-left:4px;">AI</span>' : '';
                             return `
                                 <div class="user-card" onclick="toggleLobbyUserSelection(this, '${u.username}')">
                                     <div style="width:8px; height:8px; background:${u.is_online ? '#28a745' : '#ccc'}; border-radius:50%;"></div>
-                                    <strong title="${u.username}">${display}</strong>
+                                    <strong title="${u.username}">${display}${aiBadge}</strong>
                                 </div>
                             `;
                         }).join('');
@@ -945,15 +943,24 @@
         }
 
         async function resetGame() {
+            isUpdating = true;
             try {
                 await fetch('/api/games/update', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ session_id: sessionId, state: { restarting: true }, status: 'pending', new_host: username })
+                    body: JSON.stringify({ 
+                        session_id: sessionId, 
+                        state: { restarting: true, updatedAt: Date.now() }, 
+                        status: 'pending', 
+                        new_host: username 
+                    })
                 });
                 document.getElementById('secretWordInput').value = '';
                 await fetchSession();
             } catch (e) { console.error(e); }
+            finally {
+                setTimeout(() => { isUpdating = false; }, 1000);
+            }
         }
 
         function triggerCelebration() {
@@ -972,9 +979,10 @@
 
         function showGameOver() {
             const state = session.state;
-            const isWon = state.word.split('').every(char => char === ' ' || state.guessedLetters.includes(char));
+            const isWon = state.word.split('').every(char => char === ' ' || state.guessedLetters.some(l => l.toUpperCase() === char.toUpperCase()));
             const isLost = state.wrongGuesses >= 6;
-            const delay = isLost ? 1000 : 0;
+            // Delay showing the overlay so users can see the final state
+            const delay = isLost ? 1000 : 1500;
 
             setTimeout(() => {
                 const overlay = document.getElementById('gameOverlay');

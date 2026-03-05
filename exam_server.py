@@ -27,6 +27,7 @@ DATABASE = 'quizzes.db'
 QUIZ_RESULTS_DIR = 'results'
 RESOURCES_BASE = '/home/obo/playground/examQ/resources/igcse_edxcel_exampapers'
 OLLAMA_API = "http://localhost:11434/api/generate"
+AI_PLAYERS = ['Bob', 'Tim']
 
 # Global state for background import jobs
 import_jobs = {}
@@ -126,6 +127,8 @@ def init_db():
     conn.commit()
     
     cursor.execute("INSERT OR IGNORE INTO users (username, password, role) VALUES ('admin', 'pass123', 'admin')")
+    for ai in AI_PLAYERS:
+        cursor.execute("INSERT OR IGNORE INTO users (username, password, role) VALUES (?, 'ai_player', 'student')", (ai,))
     conn.commit()
     conn.close()
 
@@ -271,8 +274,9 @@ def game_invite():
             existing_users = [p['username'] for p in players]
             for u in invitees:
                 if u not in existing_users:
-                    players.append({'username': u, 'status': 'invited'})
-            cursor.execute("UPDATE game_sessions SET players_json = ? WHERE id = ?", (json.dumps(players), session_id))
+                    status = 'accepted' if u in AI_PLAYERS else 'invited'
+                    players.append({'username': u, 'status': status})
+            cursor.execute("UPDATE game_sessions SET players_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(players), session_id))
         
         # Send messages to invitees
         invite_msg = f"🎮 {host} invited you to play {game_type}! Click here to join: {request.host_url}games.html?join={session_id}"
@@ -282,8 +286,242 @@ def game_invite():
             cursor.execute("INSERT INTO messages (sender, recipient, message) VALUES (?, ?, ?)", ('System', u, m_safe))
             
         conn.commit(); conn.close()
+        trigger_ai_if_needed(session_id)
         return jsonify({'success': True, 'session_id': session_id}), 201
     except Exception as e: return jsonify({'error': str(e)}), 500
+
+def process_ai_action(session_id):
+    """Handle AI player logic for Bob and Tim using Ollama"""
+    try:
+        conn = get_db(); cursor = conn.cursor()
+        cursor.execute("SELECT * FROM game_sessions WHERE id = ?", (session_id,))
+        row = cursor.fetchone()
+        if not row: return
+        
+        status = row['status']
+        host = row['host_username']
+        players = json.loads(row['players_json'])
+        state = json.loads(row['state_json']) if row['state_json'] else {}
+        
+        current_turn = state.get('currentTurn')
+        print(f"[AI-DEBUG] Session {session_id} | Status: {status} | Host: {host} | Turn: {current_turn}")
+        
+        # 1. AI as Host: Start game or restart game
+        if status == 'pending' and host in AI_PLAYERS:
+            # AI needs to choose a word and start the game
+            # Only start if there are other accepted players
+            accepted_guests = [p for p in players if p['status'] == 'accepted' and p['username'].lower() != host.lower()]
+            if not accepted_guests:
+                print(f"[AI-DEBUG] No guests yet, AI host {host} waiting...")
+                conn.close(); return
+                
+            print(f"[AI-DEBUG] AI host {host} choosing a word...")
+            prompt = """You are playing Hangman. You are the host. 
+Choose a RANDOM, UNIQUE secret word or short common phrase (max 30 chars).
+Pick from categories like: Nature, Science, History, Tech, Movies, or everyday objects.
+Ensure the word/phrase is correctly spelled and commonly known.
+If you choose a phrase, INCLUDE THE SPACES between words.
+Respond ONLY with a JSON object in this format: {"word": "YOUR CHOICE"}"""
+            
+            try:
+                response = requests.post(OLLAMA_API, json={
+                    'model': 'llama3', 
+                    'prompt': prompt, 
+                    'stream': False,
+                    'format': 'json',
+                    'options': {'temperature': 0.9}
+                }, timeout=30)
+                
+                ai_data = json.loads(response.json().get('response', '{}'))
+                word = ai_data.get('word', '').strip().upper()
+                word = re.sub(r'[^A-Z ]', '', word).strip()
+                
+                if not word or len(word) < 3:
+                    fallbacks = ["ADVENTURE", "JOURNEY", "MYSTERY", "HORIZON", "VOLCANO", "GALAXY"]
+                    import random
+                    word = random.choice(fallbacks)
+            except:
+                fallbacks = ["CHALLENGE", "VISTAS", "PIONEER", "WILDERNESS", "ORBITAL"]
+                import random
+                word = random.choice(fallbacks)
+            
+            print(f"[AI-DEBUG] AI host {host} chose word: {word}")
+            
+            first_turn = accepted_guests[0]['username']
+            new_state = {
+                'word': word, 'guessedLetters': [], 'wrongGuesses': 0,
+                'currentTurn': first_turn, 'playersOrder': [p['username'] for p in players if p['status'] == 'accepted'],
+                'allowNumbers': False, 'restarting': False, 'cluesRequestedBy': [], 'clueStack': [],
+                'turnStartedAt': int(datetime.now().timestamp() * 1000),
+                'updatedAt': int(datetime.now().timestamp() * 1000)
+            }
+            cursor.execute("UPDATE game_sessions SET state_json = ?, status = 'active', updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(new_state), session_id))
+            conn.commit(); conn.close(); return
+
+        # 2. AI as Guest: Make a guess
+        if status == 'active' and current_turn in AI_PLAYERS:
+            # AI needs to decide: Guess or Request Clue?
+            # 20% chance to request a clue if not already requested by this AI
+            import random
+            if random.random() < 0.20 and current_turn not in state.get('cluesRequestedBy', []):
+                print(f"[AI-DEBUG] AI player {current_turn} requesting a clue...")
+                new_state = state.copy()
+                if not new_state.get('cluesRequestedBy'): new_state['cluesRequestedBy'] = []
+                new_state['cluesRequestedBy'].append(current_turn)
+                if not new_state.get('clueStack'): new_state['clueStack'] = []
+                new_state['clueStack'].append({'type': 'request', 'user': current_turn})
+                new_state['updatedAt'] = int(datetime.now().timestamp() * 1000)
+                
+                cursor.execute("UPDATE game_sessions SET state_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(new_state), session_id))
+                conn.commit()
+                # AI will still proceed to make a guess after requesting
+            
+            # AI needs to guess a letter
+            word_display = ""
+            for char in state['word']:
+                if char == ' ': word_display += '/ '
+                elif char.upper() in [l.upper() for l in state['guessedLetters']]: word_display += char + ' '
+                else: word_display += '_ '
+            
+            guessed = ", ".join(state['guessedLetters'])
+            prompt = f"""You are playing Hangman.
+The word so far is: {word_display}
+Guessed letters: {guessed}
+Choose the next letter to guess. Return ONLY the single letter."""
+            
+            print(f"[AI-DEBUG] AI player {current_turn} guessing...")
+            try:
+                response = requests.post(OLLAMA_API, json={'model': 'llama3', 'prompt': prompt, 'stream': False}, timeout=30)
+                if response.status_code != 200:
+                    print(f"[AI-DEBUG] Ollama error: {response.status_code}")
+                    letter = 'E'
+                else:
+                    letter = response.json().get('response', 'E').strip().upper()
+                    print(f"[AI-DEBUG] Ollama raw response: {letter}")
+                    match = re.search(r'[A-Z]', letter)
+                    letter = match.group(0) if match else 'E'
+            except Exception as e:
+                print(f"[AI-DEBUG] Ollama request failed: {e}")
+                letter = 'E'
+            
+            print(f"[AI-DEBUG] AI player {current_turn} chose letter: {letter}")
+            
+            # Check if already guessed (simple fallback)
+            if letter in [l.upper() for l in state['guessedLetters']]:
+                print(f"[AI-DEBUG] Letter {letter} already guessed, using fallback...")
+                for l in "ETAOINSHRDLU":
+                    if l not in [g.upper() for g in state['guessedLetters']]:
+                        letter = l; break
+
+            # Update state (mimic client logic)
+            new_state = state.copy()
+            new_state['guessedLetters'].append(letter)
+            is_correct = letter.upper() in state['word'].upper()
+            if not is_correct: new_state['wrongGuesses'] += 1
+            
+            is_won = all(c == ' ' or c.upper() in [l.upper() for l in new_state['guessedLetters']] for c in state['word'])
+            is_lost = new_state['wrongGuesses'] >= 6
+            
+            new_state['updatedAt'] = int(datetime.now().timestamp() * 1000)
+            new_state['turnStartedAt'] = int(datetime.now().timestamp() * 1000)
+            
+            new_status = 'active'
+            if is_won or is_lost:
+                new_status = 'finished'
+                if is_won: new_state['winner'] = current_turn
+                print(f"[AI-DEBUG] Session {session_id} ended. is_won: {is_won} | is_lost: {is_lost} | Winner: {new_state.get('winner')}")
+            else:
+                if not is_correct:
+                    players_order = state['playersOrder']
+                    try:
+                        curr_idx = players_order.index(current_turn)
+                        next_idx = (curr_idx + 1) % len(players_order)
+                        # Skip host if > 1 player
+                        if len(players_order) > 1 and players_order[next_idx].lower() == host.lower():
+                            next_idx = (next_idx + 1) % len(players_order)
+                        new_state['currentTurn'] = players_order[next_idx]
+                        print(f"[AI-DEBUG] Next turn: {new_state['currentTurn']}")
+                    except Exception as e:
+                        print(f"[AI-DEBUG] Turn switch error: {e}")
+            
+            print(f"[AI-DEBUG] Updating session {session_id} state...")
+            cursor.execute("UPDATE game_sessions SET state_json = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(new_state), new_status, session_id))
+            conn.commit()
+            print(f"[AI-DEBUG] Update complete.")
+            
+            # If game finished, handle auto-restart if AI is involved
+            if new_status == 'finished':
+                # AI won OR AI was host (it's the host's job to restart)
+                if (current_turn in AI_PLAYERS and is_won) or (host in AI_PLAYERS):
+                    wait_time = 5.0
+                    print(f"[AI-DEBUG] Session {session_id} triggering auto-restart in {wait_time}s (AI involved)...")
+                    threading.Timer(wait_time, process_ai_action, [session_id]).start()
+
+            conn.close(); return
+
+        # 2.5 AI as Winner (Polling fallback): Transition to new game lobby
+        if status == 'finished' and state.get('winner') in AI_PLAYERS:
+            # Only auto-restart if at least 5 seconds have passed since the win
+            last_update = state.get('updatedAt', 0)
+            now_ms = int(datetime.now().timestamp() * 1000)
+            if now_ms - last_update < 5000:
+                # Too soon, check again in 2s
+                threading.Timer(2.0, process_ai_action, [session_id]).start()
+                conn.close(); return
+
+            print(f"[AI-DEBUG] Transitioning to lobby. AI {state.get('winner')} becoming host.")
+            new_state = {'restarting': True, 'updatedAt': int(datetime.now().timestamp() * 1000)}
+            new_host = state.get('winner')
+            cursor.execute("UPDATE game_sessions SET state_json = ?, status = 'pending', host_username = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(new_state), new_host, session_id))
+            conn.commit()
+            threading.Timer(2.0, process_ai_action, [session_id]).start()
+            conn.close(); return
+
+        # 2.6 AI as Host and Game Finished (Polling fallback): Restart game
+        if status == 'finished' and host in AI_PLAYERS and not state.get('winner'):
+            # Players lost, AI remains host, restart game
+            # Only auto-restart if at least 5 seconds have passed
+            last_update = state.get('updatedAt', 0)
+            now_ms = int(datetime.now().timestamp() * 1000)
+            if now_ms - last_update < 5000:
+                threading.Timer(2.0, process_ai_action, [session_id]).start()
+                conn.close(); return
+
+            print(f"[AI-DEBUG] Players lost. AI host {host} restarting game...")
+            new_state = {'restarting': True, 'updatedAt': int(datetime.now().timestamp() * 1000)}
+            cursor.execute("UPDATE game_sessions SET state_json = ?, status = 'pending', updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(new_state), session_id))
+            conn.commit()
+            threading.Timer(2.0, process_ai_action, [session_id]).start()
+            conn.close(); return
+
+        # 3. AI as Host: Provide clue if requested
+        if status == 'active' and host in AI_PLAYERS:
+            # Check if there are new clue requests
+            clue_stack = state.get('clueStack', [])
+            if clue_stack and clue_stack[-1]['type'] == 'request':
+                print(f"[AI-DEBUG] AI host {host} providing clue...")
+                prompt = f"You are the host in Hangman. The secret word is '{state['word']}'. Provide a short, helpful hint without giving away the word. Return ONLY the hint text."
+                try:
+                    response = requests.post(OLLAMA_API, json={'model': 'llama3', 'prompt': prompt, 'stream': False}, timeout=30)
+                    hint = response.json().get('response', 'Keep guessing!').strip().replace('"', '')
+                except:
+                    hint = "It's a common word!"
+                
+                new_state = state.copy()
+                new_state['clueStack'].append({'type': 'clue', 'text': hint})
+                new_state['updatedAt'] = int(datetime.now().timestamp() * 1000)
+                
+                cursor.execute("UPDATE game_sessions SET state_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(new_state), session_id))
+                conn.commit()
+        
+        conn.close()
+    except Exception as e:
+        print(f"AI Error: {e}")
+
+def trigger_ai_if_needed(session_id):
+    # Short delay to ensure the database commit from the triggering request is fully finished
+    # and the client has a moment to see the change
+    threading.Timer(2.0, process_ai_action, [session_id]).start()
 
 @app.route('/api/games/respond', methods=['POST'])
 def game_respond():
@@ -325,6 +563,16 @@ def get_game_session(session_id):
         row = cursor.fetchone(); conn.close()
         if not row: return jsonify({'error': 'Not found'}), 404
         
+        status = row['status']
+        state = json.loads(row['state_json']) if row['state_json'] else None
+        
+        # Proactive AI trigger: if it's an AI's turn and game is active
+        if status == 'active' and state and state.get('currentTurn') in AI_PLAYERS:
+            # Check if we should trigger (only if updatedAt is older than 5s to avoid double triggers)
+            last_upd = state.get('updatedAt', 0)
+            if int(datetime.now().timestamp() * 1000) - last_upd > 5000:
+                trigger_ai_if_needed(session_id)
+
         return jsonify({
             'success': True,
             'session': {
@@ -332,8 +580,8 @@ def get_game_session(session_id):
                 'game_type': row['game_type'],
                 'host': row['host_username'],
                 'players': json.loads(row['players_json']),
-                'state': json.loads(row['state_json']) if row['state_json'] else None,
-                'status': row['status']
+                'state': state,
+                'status': status
             }
         })
     except Exception as e: return jsonify({'error': str(e)}), 500
@@ -369,6 +617,7 @@ def update_game_state():
         cursor.execute(query, tuple(params))
         
         conn.commit(); conn.close()
+        trigger_ai_if_needed(session_id)
         return jsonify({'success': True}), 200
     except Exception as e: return jsonify({'error': str(e)}), 500
 
@@ -458,9 +707,43 @@ def get_all_users_status():
             FROM users ORDER BY is_online DESC, username ASC
         """)
         rows = cursor.fetchall(); conn.close()
-        users = [{'username': r['username'], 'role': r['role'], 'is_online': bool(r['is_online']), 'last_online': r['last_online']} for r in rows]
+        users = []
+        for r in rows:
+            is_online = bool(r['is_online'])
+            if r['username'] in AI_PLAYERS:
+                is_online = True
+            users.append({'username': r['username'], 'role': r['role'], 'is_online': is_online, 'last_online': r['last_online']})
         return jsonify({'success': True, 'users': users}), 200
     except Exception as e: return jsonify({'error': str(e)}), 500
+
+def trigger_ai_chat_response(sender, recipient, message):
+    """Generate an AI response for chat using Ollama"""
+    try:
+        # personality based on name
+        personality = "You are Bob, a friendly and helpful student AI player."
+        if recipient == 'Tim':
+            personality = "You are Tim, a slightly witty and competitive student AI player."
+            
+        prompt = f"""{personality}
+You just received a message from {sender}: "{message}"
+Write a short, conversational response (max 2 sentences).
+Keep the tone appropriate for a school setting.
+Return ONLY the response text."""
+
+        response = requests.post(OLLAMA_API, json={
+            'model': 'llama3',
+            'prompt': prompt,
+            'stream': False
+        }, timeout=30)
+        
+        if response.status_code == 200:
+            reply = response.json().get('response', '').strip().replace('"', '')
+            if reply:
+                conn = get_db(); cursor = conn.cursor()
+                cursor.execute("INSERT INTO messages (sender, recipient, message) VALUES (?, ?, ?)", (recipient, sender, reply))
+                conn.commit(); conn.close()
+    except Exception as e:
+        print(f"AI Chat Error: {e}")
 
 @app.route('/api/messages/send', methods=['POST'])
 def send_message():
@@ -474,7 +757,13 @@ def send_message():
             
         conn = get_db(); cursor = conn.cursor()
         cursor.execute("INSERT INTO messages (sender, recipient, message) VALUES (?, ?, ?)", (s, r, m))
-        conn.commit(); conn.close(); return jsonify({'success': True}), 201
+        conn.commit(); conn.close()
+        
+        # Trigger AI response if recipient is an AI bot
+        if r in AI_PLAYERS:
+            threading.Thread(target=trigger_ai_chat_response, args=(s, r, m)).start()
+            
+        return jsonify({'success': True}), 201
     except Exception as e: return jsonify({'error': str(e)}), 500
 
 @app.route('/api/messages/get')
@@ -1571,15 +1860,16 @@ if __name__ == '__main__':
             msg = record.getMessage()
             # Only filter standard Werkzeug GET/POST logs for these endpoints
             # This allows our explicit print("[CHAT] ...") to still show up
+            if "[AI-DEBUG]" in msg: return False
             return not any(x in msg for x in [
                 '/api/messages/unread-count', 
                 '/api/messages/get',
-                '/api/user/heartbeat', 
+                '/api/user/heartbeat',
                 '/api/users/all',
                 '/api/student/exam-progress/save',
-                '/api/admin/all-progress'
-            ])
-    
+                '/api/admin/all-progress',
+                '/api/games/session'
+                ])    
     logging.getLogger('werkzeug').addFilter(NoPollingFilter())
     
     app.run(host='0.0.0.0', port=5001, debug=True, use_reloader=False)
