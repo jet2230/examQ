@@ -277,7 +277,9 @@ def game_invite():
         # Send messages to invitees
         invite_msg = f"🎮 {host} invited you to play {game_type}! Click here to join: {request.host_url}games.html?join={session_id}"
         for u in invitees:
-            cursor.execute("INSERT INTO messages (sender, recipient, message) VALUES (?, ?, ?)", ('System', u, invite_msg))
+            # Check length just in case host name or game type is somehow massive
+            m_safe = invite_msg[:10000]
+            cursor.execute("INSERT INTO messages (sender, recipient, message) VALUES (?, ?, ?)", ('System', u, m_safe))
             
         conn.commit(); conn.close()
         return jsonify({'success': True, 'session_id': session_id}), 201
@@ -465,6 +467,11 @@ def send_message():
     try:
         data = request.json; s, r, m = data.get('sender'), data.get('recipient'), data.get('message')
         if not s or not r or not m: return jsonify({'error': 'Missing fields'}), 400
+        
+        # Prevent massive messages that freeze browsers
+        if len(m) > 10000:
+            return jsonify({'error': 'Message too long (max 10,000 chars)'}), 400
+            
         conn = get_db(); cursor = conn.cursor()
         cursor.execute("INSERT INTO messages (sender, recipient, message) VALUES (?, ?, ?)", (s, r, m))
         conn.commit(); conn.close(); return jsonify({'success': True}), 201
@@ -475,11 +482,28 @@ def get_messages():
     try:
         u, other = request.args.get('username'), request.args.get('other')
         if not u: return jsonify({'error': 'Missing username'}), 400
+        
+        print(f"  [CHAT] Fetching. user='{u}', other='{other}'", flush=True)
+        
         conn = get_db(); cursor = conn.cursor()
-        if other: cursor.execute("SELECT * FROM messages WHERE (sender = ? AND recipient = ?) OR (sender = ? AND recipient = ?) ORDER BY timestamp ASC", (u, other, other, u))
-        else: cursor.execute("SELECT * FROM messages WHERE recipient = ? OR sender = ? ORDER BY timestamp DESC LIMIT 50", (u, u))
-        rows = cursor.fetchall(); conn.close(); return jsonify({'success': True, 'messages': [dict(r) for r in rows]}), 200
-    except Exception as e: return jsonify({'error': str(e)}), 500
+        if other: 
+            # Use lower() or trim() if suspecting whitespace issues, though SQL is usually case-sensitive for strings
+            cursor.execute("SELECT * FROM messages WHERE (sender = ? AND recipient = ?) OR (sender = ? AND recipient = ?) ORDER BY timestamp ASC", (u, other, other, u))
+        else: 
+            cursor.execute("SELECT * FROM messages WHERE recipient = ? OR sender = ? ORDER BY timestamp DESC LIMIT 50", (u, u))
+        
+        rows = cursor.fetchall(); conn.close()
+        msgs = [dict(r) for r in rows]
+        
+        if u == 'the22one98and7only68the78smartest6abdullah' or other == 'the22one98and7only68the78smartest6abdullah':
+            print(f"  [CHAT] DEBUG for long-name user. Found {len(msgs)} messages.", flush=True)
+            if len(msgs) > 0:
+                print(f"  [CHAT] First msg: {msgs[0]['sender']} -> {msgs[0]['recipient']}: {msgs[0]['message'][:20]}...", flush=True)
+        
+        return jsonify({'success': True, 'messages': msgs}), 200
+    except Exception as e: 
+        print(f"  [CHAT] Error: {str(e)}", flush=True)
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/messages/read', methods=['POST'])
 def mark_messages_read():
@@ -1545,6 +1569,8 @@ if __name__ == '__main__':
     class NoPollingFilter(logging.Filter):
         def filter(self, record):
             msg = record.getMessage()
+            # Only filter standard Werkzeug GET/POST logs for these endpoints
+            # This allows our explicit print("[CHAT] ...") to still show up
             return not any(x in msg for x in [
                 '/api/messages/unread-count', 
                 '/api/messages/get',

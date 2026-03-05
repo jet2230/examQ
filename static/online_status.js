@@ -118,17 +118,28 @@
 
     async function fetchMessages() {
         if (!activeChatUser) return;
+        const currentUsername = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
+        if (!currentUsername) return;
+
         try {
-            const res = await fetch(`/api/messages/get?username=${username}&other=${activeChatUser}`);
+            const url = `/api/messages/get?username=${currentUsername}&other=${activeChatUser}`;
+            if (currentUsername.includes('the22one') && activeChatUser.includes('huda')) {
+                console.log(`[CHAT-DEBUG] Fetching: ${url}`);
+            }
+            const res = await fetch(url);
             const data = await res.json();
             if (data.success) {
                 const container = document.getElementById('chatMessages');
                 const msgCount = data.messages.length;
+                if (currentUsername.includes('the22one') && activeChatUser.includes('huda')) {
+                    console.log(`[CHAT-DEBUG] Abdullah/Huda chat count: ${msgCount}`);
+                    if (msgCount > 0) console.log(`[CHAT-DEBUG] First msg user: ${data.messages[0].sender}`);
+                }
                 
                 // Use a data attribute to check if we actually need to re-render
                 if (container.getAttribute('data-msg-count') !== msgCount.toString()) {
                     const html = data.messages.map(m => {
-                        const isMe = m.sender === username;
+                        const isMe = m.sender === currentUsername;
                         return `
                             <div style="align-self: ${isMe ? 'flex-end' : 'flex-start'}; background: ${isMe ? '#1e3c72' : '#e9e9e9'}; color: ${isMe ? 'white' : 'black'}; padding: 8px 12px; border-radius: 12px; max-width: 80%; font-size: 0.9em; box-shadow: 0 2px 5px rgba(0,0,0,0.05); overflow-wrap: anywhere; word-break: break-word;">
                                 ${linkify(m.message)}
@@ -146,7 +157,7 @@
                     await fetch('/api/messages/read', {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({ username, other: activeChatUser })
+                        body: JSON.stringify({ username: currentUsername, other: activeChatUser })
                     });
                     checkUnread(); // Update the badge
                 }
@@ -155,15 +166,16 @@
     }
 
     window.sendMessage = async function() {
+        const currentUsername = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
         const input = document.getElementById('chatInput');
         const msg = input.value.trim();
-        if (!msg || !activeChatUser) return;
+        if (!msg || !activeChatUser || !currentUsername) return;
 
         try {
             const res = await fetch('/api/messages/send', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ sender: username, recipient: activeChatUser, message: msg })
+                body: JSON.stringify({ sender: currentUsername, recipient: activeChatUser, message: msg })
             });
             if ((await res.json()).success) {
                 input.value = '';
