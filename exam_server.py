@@ -772,7 +772,7 @@ def get_messages():
         u, other = request.args.get('username'), request.args.get('other')
         if not u: return jsonify({'error': 'Missing username'}), 400
         
-        print(f"  [CHAT] Fetching. user='{u}', other='{other}'", flush=True)
+        # print(f"  [CHAT] Fetching. user='{u}', other='{other}'", flush=True)
         
         conn = get_db(); cursor = conn.cursor()
         if other: 
@@ -1868,8 +1868,10 @@ if __name__ == '__main__':
                 '/api/users/all',
                 '/api/student/exam-progress/save',
                 '/api/admin/all-progress',
-                '/api/games/session'
-                ])    
+                '/api/games/session',
+                '/api/games/my-active',
+                '/api/games/available'
+            ])
     logging.getLogger('werkzeug').addFilter(NoPollingFilter())
     
     app.run(host='0.0.0.0', port=5001, debug=True, use_reloader=False)

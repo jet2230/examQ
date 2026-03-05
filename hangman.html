@@ -450,6 +450,10 @@
                 document.getElementById('clueDisplay').style.display = 'none';
                 document.getElementById('clueControls').style.display = 'none';
                 
+                // Show invitation area for everyone in the lobby
+                document.getElementById('hostInviteArea').style.display = 'block';
+                loadUsersToInvite();
+
                 const playersList = document.getElementById('lobbyPlayers');
                 playersList.innerHTML = acceptedPlayers.map(p => {
                     const display = p.username.length > 10 ? p.username.substring(0,10)+'...' : p.username;
@@ -467,10 +471,6 @@
                     document.getElementById('guestWait').style.display = 'none';
                     document.getElementById('gameStatus').textContent = "You are the host. Choose a word to begin!";
                     
-                    // Show invitation area for host
-                    document.getElementById('hostInviteArea').style.display = 'block';
-                    loadUsersToInvite();
-
                     const wordInput = document.getElementById('secretWordInput');
                     const startBtn = document.getElementById('startBtn');
                     
@@ -509,15 +509,18 @@
                 }
             } else if (session.status === 'active') {
                 document.getElementById('lobbyView').style.display = 'none';
+                document.getElementById('hostInviteArea').style.display = 'none';
                 document.getElementById('gameView').style.display = 'block';
                 document.getElementById('clueControls').style.display = 'flex';
                 renderActiveGame(acceptedPlayers);
             } else if (session.status === 'finished') {
+                document.getElementById('hostInviteArea').style.display = 'none';
                 document.getElementById('timerDisplay').style.display = 'none';
                 if (turnTimer) { clearInterval(turnTimer); turnTimer = null; }
                 renderActiveGame(acceptedPlayers); // Render the final state
                 showGameOver();
             } else {
+                document.getElementById('hostInviteArea').style.display = 'none';
                 document.getElementById('timerDisplay').style.display = 'none';
                 if (turnTimer) { clearInterval(turnTimer); turnTimer = null; }
             }
