@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ExamQ - Games</title>
+    <script src="/static/theme_manager.js"></script>
+    <script src="/static/online_status.js"></script>
+    <style>
+        :root {
+            --primary-color: #1e3c72;
+            --secondary-color: #2a5298;
+            --main-gradient: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--main-gradient);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            overflow: hidden;
+        }
+        .header {
+            background: var(--main-gradient);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        .navbar {
+            padding: 15px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+            background: white;
+        }
+        .nav-brand { font-weight: 800; color: var(--primary-color); font-size: 1.2em; }
+        .nav-links a { text-decoration: none; color: var(--primary-color); font-weight: 600; margin-left: 20px; }
+        
+        .content { padding: 40px; }
+        
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        .game-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            border: 1px solid #eee;
+            transition: transform 0.2s;
+        }
+        .game-card:hover { transform: translateY(-5px); }
+        .game-icon { font-size: 3em; margin-bottom: 15px; }
+        .game-title { font-size: 1.5em; font-weight: 800; color: var(--primary-color); margin-bottom: 10px; }
+        .game-desc { color: #666; font-size: 0.9em; margin-bottom: 20px; }
+        
+        .btn-play {
+            background: var(--main-gradient);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .sessions-section { margin-top: 40px; }
+        .session-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: #fff;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-active { background: #d4edda; color: #155724; }
+
+        /* Modal for Invitations */
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); }
+        .modal-content { background: white; margin: 10% auto; max-width: 500px; border-radius: 20px; padding: 30px; }
+        .user-list { max-height: 300px; overflow-y: auto; margin: 20px 0; border: 1px solid #eee; border-radius: 10px; }
+        .user-item { 
+            padding: 10px 15px; 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            cursor: pointer; 
+            border-bottom: 1px solid #eee;
+        }
+        .user-item:hover { background: #f1f4f9; }
+        .user-item.selected { background: #e3f2fd; border-left: 4px solid var(--primary-color); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="navbar">
+            <div class="nav-brand">🎓 ExamQ Games</div>
+            <div class="nav-links">
+                <span id="welcomeUser" style="margin-right: 15px; font-weight: 600; color: var(--primary-color);"></span>
+                <a href="/">🏠 Home</a>
+                <a href="/exam_questions.html">📖 Library</a>
+                <a href="/results">📊 Results</a>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="game-grid">
+                <div class="game-card">
+                    <div class="game-icon">😵</div>
+                    <div class="game-title">Multiplayer Hangman</div>
+                    <div class="game-desc">Invite classmates to a classic word-guessing challenge!</div>
+                    <button class="btn-play" onclick="openInviteModal('Hangman')">Start New Game</button>
+                </div>
+                <div class="game-card" style="opacity: 0.5;">
+                    <div class="game-icon">🧩</div>
+                    <div class="game-title">More Games</div>
+                    <div class="game-desc">Coming soon...</div>
+                    <button class="btn-play" disabled>Locked</button>
+                </div>
+            </div>
+
+            <div class="sessions-section">
+                <h2 style="color: var(--primary-color); margin-bottom: 20px;">Your Active Sessions</h2>
+                <div id="sessionsList">
+                    <div style="text-align:center; color:#999; padding:20px;">No active game sessions found.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invite Modal -->
+    <div id="inviteModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Invite Players</h2>
+            <p style="color: #666; font-size: 0.9em; margin-top: 5px;">Select at least 1 student to play with.</p>
+            
+            <div id="userList" class="user-list">
+                <div style="padding:20px; text-align:center; color:#999;">Loading students...</div>
+            </div>
+
+            <div style="display:flex; gap:10px;">
+                <button class="btn-play" style="flex:1;" onclick="sendInvitations()">Send Invitations</button>
+                <button class="btn-play" style="flex:1; background:#eee; color:#666; border:1px solid #ddd;" onclick="closeModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedUsers = new Set();
+        let currentGameType = '';
+        const username = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
+
+        async function init() {
+            if (!username) { window.location.href = 'login.html'; return; }
+            document.getElementById('welcomeUser').textContent = '👤 ' + (username.length > 8 ? username.substring(0,8)+'...' : username);
+            
+            // Check for 'join' param in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const joinId = urlParams.get('join');
+            if (joinId) {
+                handleJoin(joinId);
+            }
+
+            loadSessions();
+            setInterval(loadSessions, 5000); // Poll for new invites/status changes
+        }
+
+        async function handleJoin(sessionId) {
+            try {
+                const res = await fetch('/api/games/respond', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ session_id: sessionId, username, action: 'accept' })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    window.location.href = `hangman.html?id=${sessionId}`;
+                } else if (data.error === 'Session not found') {
+                    alert("This game invitation is no longer active. The host may have removed the session.");
+                    // Clean URL
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                } else {
+                    alert("Failed to join game: " + data.error);
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        async function loadSessions() {
+            try {
+                const res = await fetch(`/api/games/my-active?username=${username}`);
+                const data = await res.json();
+                if (data.success) {
+                    renderSessions(data.sessions);
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function renderSessions(sessions) {
+            const container = document.getElementById('sessionsList');
+            const isAdmin = !!localStorage.getItem('quiz_admin_username');
+            
+            if (sessions.length === 0) {
+                container.innerHTML = '<div style="text-align:center; color:#999; padding:20px;">No active game sessions found.</div>';
+                return;
+            }
+
+            container.innerHTML = sessions.map(s => {
+                const players = JSON.parse(s.players_json);
+                const accepted = players.filter(p => p.status === 'accepted').length;
+                const total = players.length;
+                const displayHost = s.host_username.length > 10 ? s.host_username.substring(0, 10) + '...' : s.host_username;
+                
+                let actionBtn = '';
+                if (s.status === 'pending') {
+                    const myStatus = players.find(p => p.username === username)?.status;
+                    if (myStatus === 'invited') {
+                        actionBtn = `<button class="btn-play" onclick="respondInvite('${s.id}', 'accept')">Accept</button>`;
+                    } else if (s.host_username === username && accepted > 1) {
+                        actionBtn = `<a href="hangman.html?id=${s.id}" class="btn-play" style="background:#28a745;">Start Game</a>`;
+                    } else {
+                        actionBtn = `<span style="font-size:0.8em; color:#888;">Waiting for players (${accepted}/${total})</span>`;
+                    }
+                } else {
+                    actionBtn = `<a href="hangman.html?id=${s.id}" class="btn-play">Resume</a>`;
+                }
+
+                const canDelete = isAdmin || s.host_username === username;
+                
+                let expiryHtml = '';
+                if (s.status === 'pending' && s.expires_at) {
+                    expiryHtml = `<div class="expiry-timer" data-expires="${s.expires_at}" id="timer_${s.id}" style="font-size:0.75em; color:#dc3545; font-weight:bold; margin-top:5px;">Expires in: --:--</div>`;
+                }
+
+                const deleteHtml = canDelete ? `
+                    <div style="position: relative; display: inline-block; margin-left: 10px;">
+                        <button id="del_btn_${s.id}" onclick="showDeleteConfirm(event, '${s.id}')" style="background:none; border:none; color:#dc3545; cursor:pointer; font-size:1.1em; padding:5px;" title="Delete Session">🗑️</button>
+                        <div id="del_confirm_${s.id}" style="display:none; gap:8px; align-items:center; background:white; padding:10px 15px; border-radius:10px; border:1px solid #ffcaca; position:absolute; right:40px; top:50%; transform:translateY(-50%); z-index:1000; box-shadow:0 10px 25px rgba(220,53,69,0.15); white-space:nowrap;">
+                            <span style="font-size:0.85em; color:#dc3545; font-weight:800;">Delete?</span>
+                            <button onclick="confirmDelete(event, '${s.id}')" style="background:#dc3545; color:white; border:none; border-radius:6px; padding:5px 12px; font-size:0.8em; cursor:pointer; font-weight:700;">Yes</button>
+                            <button onclick="hideDeleteConfirm(event, '${s.id}')" style="background:#f8f9fa; color:#666; border:1px solid #ddd; border-radius:6px; padding:5px 12px; font-size:0.8em; cursor:pointer;">No</button>
+                        </div>
+                    </div>
+                ` : '';
+
+                return `
+                    <div class="session-item">
+                        <div>
+                            <strong style="color:var(--primary-color);">${s.game_type}</strong>
+                            <div style="font-size:0.8em; color:#666;" title="${s.host_username}">Host: ${displayHost} | Players: ${total}</div>
+                            ${expiryHtml}
+                        </div>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <span class="status-badge status-${s.status}">${s.status}</span>
+                            ${actionBtn}
+                            ${deleteHtml}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            startExpiryTimers();
+        }
+
+        function startExpiryTimers() {
+            const updateTimers = () => {
+                document.querySelectorAll('.expiry-timer').forEach(el => {
+                    const expiresAt = new Date(el.getAttribute('data-expires').replace(' ', 'T') + 'Z');
+                    const now = new Date();
+                    const diff = expiresAt - now;
+                    
+                    if (diff <= 0) {
+                        el.textContent = 'Expired';
+                        return;
+                    }
+                    
+                    const mins = Math.floor(diff / 60000);
+                    const secs = Math.floor((diff % 60000) / 1000);
+                    el.textContent = `Expires in: ${mins}:${secs.toString().padStart(2, '0')}`;
+                });
+            };
+            if (window.expiryInterval) clearInterval(window.expiryInterval);
+            updateTimers();
+            window.expiryInterval = setInterval(updateTimers, 1000);
+        }
+
+        function showDeleteConfirm(event, sessionId) {
+            event.preventDefault();
+            event.stopPropagation();
+            document.querySelectorAll('[id^="del_confirm_"]').forEach(p => p.style.display = 'none');
+            document.getElementById(`del_confirm_${sessionId}`).style.display = 'inline-flex';
+        }
+
+        function hideDeleteConfirm(event, sessionId) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            document.getElementById(`del_confirm_${sessionId}`).style.display = 'none';
+        }
+
+        async function confirmDelete(event, sessionId) {
+            event.preventDefault();
+            event.stopPropagation();
+            try {
+                const res = await fetch('/api/games/delete', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ session_id: sessionId, username })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    loadSessions();
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        async function respondInvite(sessionId, action) {
+            try {
+                const res = await fetch('/api/games/respond', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ session_id: sessionId, username, action })
+                });
+                const data = await res.json();
+                if (data.success && action === 'accept') {
+                    window.location.href = `hangman.html?id=${sessionId}`;
+                } else {
+                    loadSessions();
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        async function openInviteModal(gameType) {
+            currentGameType = gameType;
+            selectedUsers.clear();
+            const modal = document.getElementById('inviteModal');
+            modal.style.display = 'block';
+            
+            const list = document.getElementById('userList');
+            list.innerHTML = '<div style="padding:20px; text-align:center; color:#999;">Loading students...</div>';
+            
+            try {
+                const res = await fetch('/api/users/all');
+                const data = await res.json();
+                if (data.success) {
+                    const users = data.users.filter(u => u.username !== username);
+                    list.innerHTML = users.map(u => {
+                        const display = u.username.length > 10 ? u.username.substring(0, 10) + '...' : u.username;
+                        return `
+                            <div class="user-item" onclick="toggleUserSelection(this, '${u.username}')">
+                                <div style="width:8px; height:8px; background:${u.is_online ? '#28a745' : '#ccc'}; border-radius:50%;"></div>
+                                <strong title="${u.username}">${display}</strong>
+                                ${u.is_online ? '<span style="font-size:0.7em; color:#28a745;">online</span>' : ''}
+                            </div>
+                        `;
+                    }).join('');
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function toggleUserSelection(el, user) {
+            if (selectedUsers.has(user)) {
+                selectedUsers.delete(user);
+                el.classList.remove('selected');
+            } else {
+                selectedUsers.add(user);
+                el.classList.add('selected');
+            }
+        }
+
+        async function sendInvitations() {
+            if (selectedUsers.size === 0) {
+                alert("Please select at least 1 player.");
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/games/invite', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        host: username,
+                        game_type: currentGameType,
+                        invitees: Array.from(selectedUsers)
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert("Invitations sent!");
+                    closeModal();
+                    loadSessions();
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function closeModal() { document.getElementById('inviteModal').style.display = 'none'; }
+        
+        window.addEventListener('click', (e) => {
+            if (e.target == document.getElementById('inviteModal')) closeModal();
+            if (!e.target.closest('[id^="del_confirm_"]') && !e.target.closest('[onclick^="showDeleteConfirm"]')) {
+                document.querySelectorAll('[id^="del_confirm_"]').forEach(p => p.style.display = 'none');
+            }
+        });
+
+        init();
+    </script>
+</body>
+</html>

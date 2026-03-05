@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ExamQ - Hangman</title>
+    <script src="/static/theme_manager.js"></script>
+    <script src="/static/online_status.js"></script>
+    <style>
+        :root {
+            --primary-color: #1e3c72;
+            --secondary-color: #2a5298;
+            --main-gradient: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--main-gradient);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .header { background: #f8f9fa; padding: 20px 40px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .content { padding: 40px; text-align: center; }
+        
+        .hangman-drawing {
+            height: 250px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: center;
+        }
+        .word-display {
+            font-size: 2.5em;
+            font-family: monospace;
+            letter-spacing: 15px;
+            margin-bottom: 30px;
+            color: var(--primary-color);
+            font-weight: 800;
+        }
+        .keyboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+            gap: 10px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .key {
+            padding: 10px;
+            background: #eee;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: all 0.2s;
+        }
+        .key:hover { background: #e0e0e0; }
+        .key.used { opacity: 0.3; cursor: not-allowed; }
+        .key.correct { background: #d4edda; color: #155724; border-color: #c3e6cb; }
+        .key.wrong { background: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+
+        .players-panel {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f1f4f9;
+            border-radius: 15px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .player-chip {
+            padding: 5px 15px;
+            background: white;
+            border-radius: 20px;
+            font-size: 0.85em;
+            border: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .player-chip.active-turn {
+            border-color: #28a745;
+            background: #e8f5e9;
+            box-shadow: 0 0 10px rgba(40,167,69,0.2);
+        }
+
+        #gameOverlay {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.9);
+            z-index: 100;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .overlay-title { font-size: 3em; font-weight: 800; margin-bottom: 20px; }
+        
+        .btn-action {
+            background: var(--main-gradient);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            margin-top: 20px;
+        }
+
+        /* SVG Hangman Parts */
+        .hangman-svg line, .hangman-svg circle { 
+            stroke: #333; 
+            stroke-width: 4; 
+            fill: none; 
+            stroke-linecap: round;
+            display: none;
+        }
+        .show-part { display: block !important; }
+    </style>
+</head>
+<body>
+    <div class="container" style="position: relative;">
+        <div class="header">
+            <div>
+                <h2 style="color: var(--primary-color);">Multiplayer Hangman</h2>
+                <div id="gameStatus" style="font-size: 0.8em; color: #666;">Waiting for turn...</div>
+            </div>
+            <a href="/games.html" style="text-decoration:none; color:#1e3c72; font-weight:700;">⬅ Back</a>
+        </div>
+
+        <div class="content">
+            <div id="setupView" style="display:none;">
+                <h3 style="margin-bottom:20px;">You are the host!</h3>
+                <p style="margin-bottom:20px;">Choose a word for your friends to guess:</p>
+                <input type="text" id="secretWordInput" maxlength="15" style="padding:12px; border-radius:8px; border:1px solid #ddd; margin-bottom:20px; width:250px; text-transform:uppercase;" placeholder="ENTER SECRET WORD">
+                <br>
+                <button class="btn-action" onclick="startGame()">Start Game</button>
+            </div>
+
+            <div id="gameView" style="display:none;">
+                <div class="hangman-drawing">
+                    <svg class="hangman-svg" width="200" height="250">
+                        <!-- Scaffold -->
+                        <line x1="20" y1="230" x2="180" y2="230" style="display:block;" /> <!-- Base -->
+                        <line x1="50" y1="230" x2="50" y2="20" style="display:block;" />  <!-- Post -->
+                        <line x1="50" y1="20" x2="130" y2="20" style="display:block;" />  <!-- Top -->
+                        <line x1="130" y1="20" x2="130" y2="50" style="display:block;" /> <!-- Rope -->
+                        
+                        <!-- Body Parts -->
+                        <circle id="part_0" cx="130" cy="70" r="20" /> <!-- Head -->
+                        <line id="part_1" x1="130" y1="90" x2="130" y2="160" /> <!-- Body -->
+                        <line id="part_2" x1="130" y1="110" x2="100" y2="140" /> <!-- Left Arm -->
+                        <line id="part_3" x1="130" y1="110" x2="160" y2="140" /> <!-- Right Arm -->
+                        <line id="part_4" x1="130" y1="160" x2="100" y2="200" /> <!-- Left Leg -->
+                        <line id="part_5" x1="130" y1="160" x2="160" y2="200" /> <!-- Right Leg -->
+                    </svg>
+                </div>
+
+                <div id="wordContainer" class="word-display">_ _ _ _ _</div>
+                
+                <div id="keyboard" class="keyboard"></div>
+
+                <div id="playersPanel" class="players-panel"></div>
+            </div>
+
+            <div id="gameOverlay">
+                <div class="overlay-title" id="overlayTitle">GAME OVER</div>
+                <p id="overlayMessage" style="font-size: 1.2em; color: #666;"></p>
+                <button class="btn-action" onclick="window.location.href='/games.html'">Back to Games</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionId = urlParams.get('id');
+        const username = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
+        
+        let session = null;
+        let pollInterval = null;
+
+        async function init() {
+            if (!sessionId || !username) { window.location.href = 'games.html'; return; }
+            await fetchSession();
+            pollInterval = setInterval(fetchSession, 2000);
+        }
+
+        async function fetchSession() {
+            try {
+                const res = await fetch(`/api/games/session/${sessionId}`);
+                const data = await res.json();
+                if (data.success) {
+                    session = data.session;
+                    updateUI();
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function updateUI() {
+            if (session.status === 'pending') {
+                if (session.host === username) {
+                    document.getElementById('setupView').style.display = 'block';
+                    document.getElementById('gameView').style.display = 'none';
+                } else {
+                    document.getElementById('gameStatus').textContent = "Waiting for host to choose a word...";
+                    document.getElementById('setupView').style.display = 'none';
+                    document.getElementById('gameView').style.display = 'none';
+                }
+            } else if (session.status === 'active') {
+                document.getElementById('setupView').style.display = 'none';
+                document.getElementById('gameView').style.display = 'block';
+                renderGame();
+            } else if (session.status === 'finished') {
+                showGameOver();
+            }
+        }
+
+        function renderGame() {
+            const state = session.state;
+            const wordDisplay = state.word.split('').map(char => 
+                state.guessedLetters.includes(char) ? char : '_'
+            ).join(' ');
+            document.getElementById('wordContainer').textContent = wordDisplay;
+
+            // Render keyboard
+            const keyboard = document.getElementById('keyboard');
+            keyboard.innerHTML = '';
+            const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+            
+            const isMyTurn = state.currentTurn === username;
+            document.getElementById('gameStatus').textContent = isMyTurn ? "IT'S YOUR TURN! Pick a letter." : `Waiting for ${state.currentTurn}...`;
+
+            alphabet.forEach(letter => {
+                const btn = document.createElement('button');
+                btn.className = 'key';
+                btn.textContent = letter;
+                if (state.guessedLetters.includes(letter)) {
+                    btn.classList.add('used');
+                    const isCorrect = state.word.includes(letter);
+                    btn.classList.add(isCorrect ? 'correct' : 'wrong');
+                    btn.disabled = true;
+                } else if (!isMyTurn) {
+                    btn.disabled = true;
+                }
+                btn.onclick = () => makeGuess(letter);
+                keyboard.appendChild(btn);
+            });
+
+            // Update Hangman Drawing
+            for (let i = 0; i < 6; i++) {
+                const part = document.getElementById(`part_${i}`);
+                if (i < state.wrongGuesses) {
+                    part.classList.add('show-part');
+                } else {
+                    part.classList.remove('show-part');
+                }
+            }
+
+            // Players list
+            const playersPanel = document.getElementById('playersPanel');
+            playersPanel.innerHTML = session.players.filter(p => p.status === 'accepted').map(p => {
+                const display = p.username.length > 10 ? p.username.substring(0, 10) + '...' : p.username;
+                return `
+                    <div class="player-chip ${p.username === state.currentTurn ? 'active-turn' : ''}" title="${p.username}">
+                        <div style="width:8px; height:8px; background:#28a745; border-radius:50%;"></div>
+                        <strong>${display}</strong>
+                        ${p.username === session.host ? '👑' : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function startGame() {
+            const word = document.getElementById('secretWordInput').value.trim().toUpperCase();
+            if (!word || word.length < 3) {
+                alert("Please enter a valid word (at least 3 letters).");
+                return;
+            }
+
+            // Find first guesser (not the host)
+            const activePlayers = session.players.filter(p => p.status === 'accepted');
+            const guestPlayers = activePlayers.filter(p => p.username !== session.host);
+            const firstTurn = guestPlayers.length > 0 ? guestPlayers[0].username : session.host;
+
+            const initialState = {
+                word: word,
+                guessedLetters: [],
+                wrongGuesses: 0,
+                currentTurn: firstTurn,
+                playersOrder: activePlayers.map(p => p.username)
+            };
+
+            await updateServerState(initialState, 'active');
+        }
+
+        async function makeGuess(letter) {
+            if (session.state.currentTurn !== username) return;
+            
+            const state = session.state;
+            state.guessedLetters.push(letter);
+            
+            let isCorrect = state.word.includes(letter);
+            if (!isCorrect) {
+                state.wrongGuesses++;
+            }
+
+            // Check Win/Loss
+            const isWon = state.word.split('').every(char => state.guessedLetters.includes(char));
+            const isLost = state.wrongGuesses >= 6;
+
+            if (isWon || isLost) {
+                await updateServerState(state, 'finished');
+            } else {
+                // Next turn
+                const players = state.playersOrder;
+                const currentIdx = players.indexOf(username);
+                // Cycle turn - skip host if multiple players
+                let nextIdx = (currentIdx + 1) % players.length;
+                if (players.length > 1 && players[nextIdx] === session.host) {
+                    nextIdx = (nextIdx + 1) % players.length;
+                }
+                state.currentTurn = players[nextIdx];
+                await updateServerState(state);
+            }
+        }
+
+        async function updateServerState(state, status = null) {
+            try {
+                await fetch('/api/games/update', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        state: state,
+                        status: status || session.status
+                    })
+                });
+                await fetchSession();
+            } catch (e) { console.error(e); }
+        }
+
+        function showGameOver() {
+            const overlay = document.getElementById('gameOverlay');
+            const title = document.getElementById('overlayTitle');
+            const msg = document.getElementById('overlayMessage');
+            
+            const state = session.state;
+            const isWon = state.word.split('').every(char => state.guessedLetters.includes(char));
+            
+            overlay.style.display = 'flex';
+            if (isWon) {
+                title.textContent = "WORD GUESSED!";
+                title.style.color = "#28a745";
+                msg.textContent = `The word was ${state.word}. Well done team!`;
+            } else {
+                title.textContent = "HUNG!";
+                title.style.color = "#dc3545";
+                msg.textContent = `Game Over. The word was ${state.word}.`;
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

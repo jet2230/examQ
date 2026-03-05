@@ -195,21 +195,31 @@
                 document.getElementById('onlineCount').textContent = `Online: ${onlineCount}`;
                 const container = document.getElementById('usersContainer');
                 if (container) {
-                    container.innerHTML = data.users.map(u => {
+                    let displayUsers = [...data.users];
+                    
+                    // Add "System" if there are unread messages from it
+                    if (unreadBySender['System'] && !displayUsers.find(u => u.username === 'System')) {
+                        displayUsers.push({ username: 'System', is_online: true, role: 'system', last_online: new Date().toISOString() });
+                    }
+
+                    container.innerHTML = displayUsers.map(u => {
                         const displayUser = u.username.length > 10 ? u.username.substring(0, 10) + '...' : u.username;
                         const unreadCount = unreadBySender[u.username] || 0;
                         const unreadBadge = unreadCount > 0 ? `<span style="background:#dc3545; color:white; font-size:0.7em; padding:1px 5px; border-radius:10px; margin-left:5px;">${unreadCount}</span>` : '';
                         
+                        const isSystem = u.username === 'System' || u.role === 'system';
+                        const statusColor = isSystem ? '#1e3c72' : (u.is_online ? '#28a745' : '#ccc');
+                        
                         return `
                             <div onclick="openChat('${u.username}')" style="display: flex; flex-direction: column; gap: 2px; margin-bottom: 10px; cursor: pointer; padding: 5px; border-radius: 5px; transition: background 0.2s; min-width: 0;" onmouseover="this.style.background='#f0f4f9'" onmouseout="this.style.background='transparent'">
                                 <div style="display: flex; align-items: center; gap: 8px; width: 100%;">
-                                    <div style="width: 8px; height: 8px; background: ${u.is_online ? '#28a745' : '#ccc'}; border-radius: 50%; ${u.is_online ? 'box-shadow: 0 0 3px #28a745;' : ''} flex-shrink: 0;"></div>
+                                    <div style="width: 8px; height: 8px; background: ${statusColor}; border-radius: 50%; ${u.is_online ? 'box-shadow: 0 0 3px ' + statusColor + ';' : ''} flex-shrink: 0;"></div>
                                     <strong style="flex:1; color: ${u.is_online ? '#333' : '#666'}; font-size: 0.95em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${u.username}">${displayUser}</strong>
                                     ${unreadBadge}
-                                    ${u.role === 'admin' ? '<span style="font-size: 0.65em; background: #d63384; color: white; padding: 1px 5px; border-radius: 4px; flex-shrink: 0;">ADMIN</span>' : ''}
+                                    ${isSystem ? '<span style="font-size: 0.65em; background: #1e3c72; color: white; padding: 1px 5px; border-radius: 4px; flex-shrink: 0;">SYSTEM</span>' : (u.role === 'admin' ? '<span style="font-size: 0.65em; background: #d63384; color: white; padding: 1px 5px; border-radius: 4px; flex-shrink: 0;">ADMIN</span>' : '')}
                                 </div>
                                 <div style="font-size: 0.75em; color: #999; margin-left: 16px;">
-                                    ${u.is_online ? 'Online now' : 'Last active: ' + formatRelativeTime(u.last_online)}
+                                    ${isSystem ? 'Always active' : (u.is_online ? 'Online now' : 'Last active: ' + formatRelativeTime(u.last_online))}
                                 </div>
                             </div>
                         `;
