@@ -39,19 +39,40 @@
             justify-content: center;
         }
         .word-display {
-            font-size: 2.5em;
+            font-size: 2.2em;
             font-family: monospace;
-            letter-spacing: 15px;
             margin-bottom: 30px;
             color: var(--primary-color);
             font-weight: 800;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px 8px;
+            line-height: 1.4;
+            max-width: 100%;
         }
         .peek-highlight {
             background-color: #ffeb3b;
             border-radius: 4px;
-            padding: 0 5px;
-            margin: 0 -5px;
+            padding: 0 4px;
             color: #000;
+        }
+        .word-char {
+            min-width: 0.8em;
+            text-align: center;
+            display: inline-block;
+        }
+        .word-space {
+            color: #ccc;
+            margin: 0 10px;
+        }
+        @keyframes timer-pulse {
+            0% { transform: scale(1); color: #dc3545; }
+            50% { transform: scale(1.1); color: #ff0000; text-shadow: 0 0 10px rgba(220,53,69,0.3); }
+            100% { transform: scale(1); color: #dc3545; }
+        }
+        .timer-warning {
+            animation: timer-pulse 0.5s infinite;
         }
         .keyboard {
             display: grid;
@@ -225,7 +246,7 @@
                 <div id="hostControls" style="display:none;">
                     <h3 style="margin-bottom:20px;">Lobby: You are the Host</h3>
                     <p style="margin-bottom:20px;">Choose a word for your friends to guess:</p>
-                    <input type="text" id="secretWordInput" maxlength="15" style="padding:12px; border-radius:8px; border:1px solid #ddd; margin-bottom:15px; width:250px; text-transform:uppercase;" placeholder="ENTER SECRET WORD">
+                    <input type="text" id="secretWordInput" maxlength="255" style="padding:12px; border-radius:8px; border:1px solid #ddd; margin-bottom:15px; width:100%; max-width:500px; text-transform:uppercase;" placeholder="ENTER SECRET WORD OR PHRASE">
                     
                     <div style="margin-bottom:20px; display:flex; align-items:center; justify-content:center; gap:10px;">
                         <label class="switch" style="position:relative; display:inline-block; width:40px; height:20px;">
@@ -287,6 +308,7 @@
                         </g>
                     </svg>
                 </div>
+                <div id="timerDisplay" style="font-size: 1.4em; font-weight: 800; color: #dc3545; margin-bottom: 20px; display: none;">⏱️ <span id="timerSeconds">60</span>s</div>
                 <div id="wordContainer" class="word-display"></div>
                 
                 <div id="clueDisplay" style="display:none; margin-bottom:20px; padding:15px; background:#f8f9fa; border-radius:12px; border:1px solid #ddd; text-align:left; max-height:160px; overflow-y:auto; scroll-behavior: smooth;">
@@ -370,13 +392,42 @@
         }
 
         async function fetchSession() {
-            if (isUpdating) return;
             try {
                 const res = await fetch(`/api/games/session/${sessionId}`);
+                if (res.status === 404) {
+                    clearInterval(pollInterval);
+                    document.getElementById('gameView').style.display = 'none';
+                    document.getElementById('lobbyView').style.display = 'none';
+                    document.getElementById('gameOverlay').style.display = 'flex';
+                    document.getElementById('overlayTitle').textContent = "HOST LEFT";
+                    document.getElementById('overlayTitle').style.color = "#dc3545";
+                    document.getElementById('overlayMessage').innerHTML = "The host has left the game session.<br>The game has been terminated.";
+                    document.getElementById('playAgainBtn').style.display = 'none';
+                    return;
+                }
                 const data = await res.json();
                 if (data.success) {
-                    session = data.session;
-                    updateUI();
+                    // Stale Data Protection:
+                    // Only overwrite if we aren't currently updating OR if the server state is strictly newer
+                    if (isUpdating) {
+                        if (session && session.state && data.session.state && data.session.state.updatedAt > session.state.updatedAt) {
+                            // Server actually has a newer state than our "in-flight" update, so we accept it
+                            session = data.session;
+                            updateUI();
+                        }
+                    } else {
+                        // Not updating, check timestamps if both exist
+                        if (session && session.state && data.session.state) {
+                            if (data.session.state.updatedAt >= session.state.updatedAt) {
+                                session = data.session;
+                                updateUI();
+                            }
+                        } else {
+                            // First load or missing state
+                            session = data.session;
+                            updateUI();
+                        }
+                    }
                 }
             } catch (e) { console.error("Fetch error:", e); }
         }
@@ -468,7 +519,12 @@
                 document.getElementById('clueControls').style.display = 'flex';
                 renderActiveGame(acceptedPlayers);
             } else if (session.status === 'finished') {
+                document.getElementById('timerDisplay').style.display = 'none';
+                if (turnTimer) { clearInterval(turnTimer); turnTimer = null; }
                 showGameOver();
+            } else {
+                document.getElementById('timerDisplay').style.display = 'none';
+                if (turnTimer) { clearInterval(turnTimer); turnTimer = null; }
             }
         }
 
@@ -543,6 +599,8 @@
         }
 
         let isPeeking = false;
+        let turnTimer = null;
+        let lastTurnAt = 0;
 
         function showPeek() {
             if (session && session.state && session.state.word) {
@@ -560,19 +618,35 @@
             if (!session || !session.state || !session.state.word) return;
             const state = session.state;
             const html = state.word.split('').map(char => {
-                if (char === ' ') return '/';
-                const isGuessed = state.guessedLetters.includes(char);
+                if (char === ' ') return '<span class="word-space">/</span>';
+                const isGuessed = state.guessedLetters.some(l => l.toUpperCase() === char.toUpperCase());
+                let content = '_';
+                let classes = 'word-char';
+                
                 if (isPeeking && !isGuessed) {
-                    return `<span class="peek-highlight">${char}</span>`;
+                    content = char;
+                    classes += ' peek-highlight';
                 } else if (isGuessed) {
-                    return char;
-                } else if (/[0-9]/.test(char)) {
-                    return state.allowNumbers ? '#' : char;
-                } else {
-                    return '_';
+                    content = char;
+                } else if (/[0-9]/.test(char) && !state.allowNumbers) {
+                    content = char; 
+                } else if (/[0-9]/.test(char) && state.allowNumbers) {
+                    content = '#'; 
                 }
-            }).join(' ');
+
+                return `<span class="${classes}">${content}</span>`;
+            }).join('');
             document.getElementById('wordContainer').innerHTML = html;
+            
+            // Adjust font size for very long words
+            const container = document.getElementById('wordContainer');
+            if (state.word.length > 50) {
+                container.style.fontSize = '1.2em';
+            } else if (state.word.length > 25) {
+                container.style.fontSize = '1.6em';
+            } else {
+                container.style.fontSize = '2.2em';
+            }
         }
 
         function renderActiveGame(acceptedPlayers) {
@@ -581,6 +655,54 @@
 
             renderWordDisplay();
 
+            // Timer management
+            const isMyTurn = state.currentTurn && username && state.currentTurn.toLowerCase() === username.toLowerCase();
+            const isHost = session.host && username && session.host.toLowerCase() === username.toLowerCase();
+            const timerDisplay = document.getElementById('timerDisplay');
+            const timerSeconds = document.getElementById('timerSeconds');
+            
+            if (state.turnStartedAt) {
+                timerDisplay.style.display = 'block';
+                const start = state.turnStartedAt;
+                
+                // If turn just changed, reset local interval if needed
+                if (lastTurnAt !== start) {
+                    lastTurnAt = start;
+                    if (turnTimer) clearInterval(turnTimer);
+                    
+                    turnTimer = setInterval(() => {
+                        const elapsed = Math.floor((Date.now() - start) / 1000);
+                        const remaining = Math.max(0, 60 - elapsed);
+                        timerSeconds.textContent = remaining;
+                        
+                        if (remaining <= 10) {
+                            timerDisplay.classList.add('timer-warning');
+                        } else {
+                            timerDisplay.classList.remove('timer-warning');
+                        }
+                        
+                        // Current player handles their own timeout. 
+                        // FALLBACK: If current player doesn't act (e.g., disconnected), the host handles it after a 5s grace period.
+                        if (remaining <= 0 && !isUpdating) {
+                            if (isMyTurn) {
+                                clearInterval(turnTimer);
+                                handleTimeout();
+                            } else if (isHost && elapsed >= 65) { // Host fallback with 5s grace
+                                clearInterval(turnTimer);
+                                handleGuestTimeout(state.currentTurn);
+                            }
+                        }
+                    }, 1000);
+                    
+                    // Initial update
+                    const elapsed = Math.floor((Date.now() - start) / 1000);
+                    timerSeconds.textContent = Math.max(0, 60 - elapsed);
+                }
+            } else {
+                timerDisplay.style.display = 'none';
+                if (turnTimer) { clearInterval(turnTimer); turnTimer = null; }
+            }
+
             const clueDisplay = document.getElementById('clueDisplay');
             if (state.clueStack && state.clueStack.length > 0) {
                 clueDisplay.style.display = 'block';
@@ -588,9 +710,9 @@
                     const borderTop = idx > 0 ? 'border-top:1px dashed #ddd; margin-top:8px; padding-top:8px;' : '';
                     if (item.type === 'request') {
                         const disp = item.user.length > 10 ? item.user.substring(0,10)+'...' : item.user;
-                        return `<div style="${borderTop} color: #856404; font-weight: bold; font-size: 0.85em;">🙋 ${disp} requested a clue</div>`;
+                        return `<div style="${borderTop} color: #856404; font-weight: bold; font-size: 0.9em;">🙋 ${disp} requested a clue</div>`;
                     } else {
-                        return `<div style="${borderTop} color: #1e3c72; font-size: 0.95em;">💡 Clue: <strong>${item.text}</strong></div>`;
+                        return `<div style="${borderTop} color: #1e3c72; font-size: 1.1em;">💡 Clue: <strong>${item.text}</strong></div>`;
                     }
                 }).join('');
                 setTimeout(() => { clueDisplay.scrollTop = clueDisplay.scrollHeight; }, 50);
@@ -600,7 +722,6 @@
 
             const requestBtn = document.getElementById('requestClueBtn');
             const hostBox = document.getElementById('hostClueBox');
-            const isHost = session.host && username && session.host.toLowerCase() === username.toLowerCase();
             
             if (isHost) {
                 requestBtn.style.display = 'none';
@@ -620,16 +741,17 @@
             let alphabetStr = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
             if (state.allowNumbers) alphabetStr += '0123456789';
             const alphabet = alphabetStr.split('');
-            const isMyTurn = state.currentTurn === username;
             document.getElementById('gameStatus').textContent = isMyTurn ? "IT'S YOUR TURN!" : `Waiting for ${state.currentTurn.substring(0,10)}...`;
 
             alphabet.forEach(letter => {
                 const btn = document.createElement('button');
                 btn.className = 'key';
                 btn.textContent = letter;
-                if (state.guessedLetters.includes(letter)) {
+                const isGuessed = state.guessedLetters.some(l => l.toUpperCase() === letter.toUpperCase());
+                if (isGuessed) {
                     btn.classList.add('used');
-                    btn.classList.add(state.word.includes(letter) ? 'correct' : 'wrong');
+                    const isInWord = state.word.toUpperCase().includes(letter.toUpperCase());
+                    btn.classList.add(isInWord ? 'correct' : 'wrong');
                     btn.disabled = true;
                 } else if (!isMyTurn) {
                     btn.disabled = true;
@@ -688,56 +810,115 @@
             const initialState = {
                 word: word, guessedLetters: [], wrongGuesses: 0,
                 currentTurn: firstTurn, playersOrder: activePlayers.map(p => p.username),
-                allowNumbers: allowNumbers, restarting: false, cluesRequestedBy: [], clueStack: []
+                allowNumbers: allowNumbers, restarting: false, cluesRequestedBy: [], clueStack: [],
+                turnStartedAt: Date.now(),
+                updatedAt: Date.now()
             };
-            await updateServerState(initialState, 'active');
+            
+            isUpdating = true;
+            try {
+                await updateServerState(initialState, 'active');
+            } finally {
+                setTimeout(() => { isUpdating = false; }, 1000);
+            }
         }
 
         async function requestClue() {
+            if (!session || !session.state || isUpdating) return;
             const state = JSON.parse(JSON.stringify(session.state));
             if (!state.cluesRequestedBy) state.cluesRequestedBy = [];
             if (state.cluesRequestedBy.includes(username)) return;
+            
+            isUpdating = true;
             state.cluesRequestedBy.push(username);
             if (!state.clueStack) state.clueStack = [];
             state.clueStack.push({ type: 'request', user: username });
-            await updateServerState(state);
+            state.updatedAt = Date.now();
+            
+            // Update local state and UI immediately
+            session.state = state;
+            updateUI();
+            
+            try {
+                await updateServerState(state);
+            } finally {
+                setTimeout(() => { isUpdating = false; }, 1000);
+            }
         }
 
         async function sendClue() {
             const input = document.getElementById('clueInput');
             const clue = input.value.trim();
-            if (!clue) return;
+            if (!clue || isUpdating) return;
             const state = JSON.parse(JSON.stringify(session.state));
-            if (!state.clueStack) state.clueStack = [];
-            state.clueStack.push({ type: 'clue', text: clue });
-            input.value = '';
-            await updateServerState(state);
-        }
-
-        async function makeGuess(letter) {
-            if (!session || !session.state || (session.state.currentTurn && session.state.currentTurn.toLowerCase() !== username.toLowerCase()) || isUpdating) return;
-            const state = JSON.parse(JSON.stringify(session.state));
-            if (state.guessedLetters.includes(letter)) return;
             
             isUpdating = true;
-            state.guessedLetters.push(letter);
-            let isCorrect = state.word.includes(letter);
+            if (!state.clueStack) state.clueStack = [];
+            state.clueStack.push({ type: 'clue', text: clue });
+            state.updatedAt = Date.now();
+            input.value = '';
+            
+            // Update local state and UI immediately
+            session.state = state;
+            updateUI();
+            
+            try {
+                await updateServerState(state);
+            } finally {
+                setTimeout(() => { isUpdating = false; }, 1000);
+            }
+        }
+
+        async function handleTimeout() {
+            // Treat as a wrong guess
+            console.log("Turn timed out for me:", username);
+            await makeGuess(null);
+        }
+
+        async function handleGuestTimeout(guestName) {
+            // Host fallback for disconnected players
+            console.log("Turn timed out for guest:", guestName, "(Host fallback)");
+            await makeGuess(null, guestName);
+        }
+
+        async function makeGuess(letter, targetUser = null) {
+            const actor = targetUser || username;
+            if (!session || !session.state || (session.state.currentTurn && session.state.currentTurn.toLowerCase() !== actor.toLowerCase()) || isUpdating) return;
+            const state = JSON.parse(JSON.stringify(session.state));
+            
+            // If letter is provided, check if already guessed. If null, it's a timeout.
+            if (letter && state.guessedLetters.some(l => l.toUpperCase() === letter.toUpperCase())) return;
+            
+            isUpdating = true;
+            let isCorrect = false;
+            if (letter) {
+                state.guessedLetters.push(letter);
+                isCorrect = state.word.toUpperCase().includes(letter.toUpperCase());
+            } else {
+                // Timeout case: just mark as wrong guess
+                isCorrect = false;
+            }
+
             if (!isCorrect) state.wrongGuesses++;
 
-            const isWon = state.word.split('').every(char => char === ' ' || state.guessedLetters.includes(char));
+            const isWon = state.word.split('').every(char => char === ' ' || state.guessedLetters.some(l => l.toUpperCase() === char.toUpperCase()));
             const isLost = state.wrongGuesses >= 6;
+
+            state.turnStartedAt = Date.now(); // Reset timer for next turn
+            state.updatedAt = Date.now();
 
             session.state = state;
             updateUI();
 
             try {
                 if (isWon || isLost) {
-                    if (isWon) state.winner = username;
+                    if (isWon) state.winner = actor;
                     await updateServerState(state, 'finished');
                 } else {
+                    // Only change turn if it was a wrong guess OR a timeout
                     if (!isCorrect) {
                         const players = state.playersOrder;
-                        let currentIdx = players.findIndex(u => u.toLowerCase() === username.toLowerCase());
+                        let currentIdx = players.findIndex(u => u.toLowerCase() === actor.toLowerCase());
                         if (currentIdx === -1) currentIdx = 0; // Fallback
                         let nextIdx = (currentIdx + 1) % players.length;
                         
@@ -750,7 +931,7 @@
                     await updateServerState(state);
                 }
             } catch (e) { console.error("Guess failed:", e); }
-            finally { setTimeout(() => { isUpdating = false; }, 500); }
+            finally { setTimeout(() => { isUpdating = false; }, 1000); }
         }
 
         async function updateServerState(state, status = null) {
