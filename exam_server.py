@@ -185,6 +185,61 @@ def clean_ai_json(text):
 
 # --- GAME API ---
 
+@app.route('/api/games/leave', methods=['POST'])
+def leave_game_session():
+    try:
+        data = request.json
+        session_id = data.get('session_id')
+        username = data.get('username')
+        
+        conn = get_db(); cursor = conn.cursor()
+        cursor.execute("SELECT players_json, host_username, status FROM game_sessions WHERE id = ?", (session_id,))
+        row = cursor.fetchone()
+        if not row: return jsonify({'success': False, 'error': 'Session not found'}), 404
+        
+        players = json.loads(row['players_json'])
+        # Filter out the leaving player
+        new_players = [p for p in players if p['username'] != username]
+        
+        if row['host_username'] == username:
+            # If host leaves, delete the session
+            cursor.execute("DELETE FROM game_sessions WHERE id = ?", (session_id,))
+        else:
+            # If guest leaves, just update players list
+            cursor.execute("UPDATE game_sessions SET players_json = ? WHERE id = ?", (json.dumps(new_players), session_id))
+            
+        conn.commit(); conn.close()
+        return jsonify({'success': True}), 200
+    except Exception as e: return jsonify({'error': str(e)}), 500
+
+@app.route('/api/games/create', methods=['POST'])
+def game_create():
+    try:
+        data = request.json
+        host = data.get('host')
+        game_type = data.get('game_type')
+        if not host or not game_type: return jsonify({'error': 'Missing data'}), 400
+        
+        conn = get_db(); cursor = conn.cursor()
+        
+        # Check if user already has an active session
+        cursor.execute("SELECT id FROM game_sessions WHERE host_username = ? AND status != 'finished'", (host,))
+        existing = cursor.fetchone()
+        if existing:
+            conn.close()
+            return jsonify({'success': False, 'error': 'You already have an active game session. Please finish or delete it first.'}), 400
+
+        session_id = str(uuid.uuid4())[:8]
+        players = [{'username': host, 'status': 'accepted'}]
+            
+        cursor.execute(
+            "INSERT INTO game_sessions (id, game_type, host_username, players_json, status, expires_at) VALUES (?, ?, ?, ?, ?, datetime('now', '+10 minutes'))",
+            (session_id, game_type, host, json.dumps(players), 'pending')
+        )
+        conn.commit(); conn.close()
+        return jsonify({'success': True, 'session_id': session_id}), 201
+    except Exception as e: return jsonify({'error': str(e)}), 500
+
 @app.route('/api/games/invite', methods=['POST'])
 def game_invite():
     try:
@@ -192,19 +247,32 @@ def game_invite():
         host = data.get('host')
         game_type = data.get('game_type')
         invitees = data.get('invitees', []) # List of usernames
+        session_id = data.get('session_id') # Optional: invite to existing session
         
-        if not host or not invitees: return jsonify({'error': 'Missing data'}), 400
+        if not host: return jsonify({'error': 'Missing host'}), 400
         
-        session_id = str(uuid.uuid4())[:8]
-        players = [{'username': host, 'status': 'accepted'}]
-        for u in invitees:
-            players.append({'username': u, 'status': 'invited'})
-            
         conn = get_db(); cursor = conn.cursor()
-        cursor.execute(
-            "INSERT INTO game_sessions (id, game_type, host_username, players_json, status, expires_at) VALUES (?, ?, ?, ?, ?, datetime('now', '+10 minutes'))",
-            (session_id, game_type, host, json.dumps(players), 'pending')
-        )
+        
+        if not session_id:
+            session_id = str(uuid.uuid4())[:8]
+            players = [{'username': host, 'status': 'accepted'}]
+            for u in invitees:
+                players.append({'username': u, 'status': 'invited'})
+            cursor.execute(
+                "INSERT INTO game_sessions (id, game_type, host_username, players_json, status, expires_at) VALUES (?, ?, ?, ?, ?, datetime('now', '+10 minutes'))",
+                (session_id, game_type, host, json.dumps(players), 'pending')
+            )
+        else:
+            # Adding invitees to existing session
+            cursor.execute("SELECT players_json FROM game_sessions WHERE id = ?", (session_id,))
+            row = cursor.fetchone()
+            if not row: return jsonify({'error': 'Session not found'}), 404
+            players = json.loads(row['players_json'])
+            existing_users = [p['username'] for p in players]
+            for u in invitees:
+                if u not in existing_users:
+                    players.append({'username': u, 'status': 'invited'})
+            cursor.execute("UPDATE game_sessions SET players_json = ? WHERE id = ?", (json.dumps(players), session_id))
         
         # Send messages to invitees
         invite_msg = f"🎮 {host} invited you to play {game_type}! Click here to join: {request.host_url}games.html?join={session_id}"
@@ -234,6 +302,11 @@ def game_respond():
             if p['username'] == username:
                 p['status'] = 'accepted' if action == 'accept' else 'declined'
                 found = True; break
+        
+        if not found and action == 'accept':
+            # Allow "joining" via link even if not invited
+            players.append({'username': username, 'status': 'accepted'})
+            found = True
         
         if not found: return jsonify({'error': 'User not in invite list'}), 403
         
@@ -270,14 +343,44 @@ def update_game_state():
         session_id = data.get('session_id')
         state = data.get('state')
         status = data.get('status') # optional
+        new_host = data.get('new_host') # optional
         
         conn = get_db(); cursor = conn.cursor()
+        
+        updates = []
+        params = []
+        
+        if state is not None:
+            updates.append("state_json = ?")
+            params.append(json.dumps(state))
         if status:
-            cursor.execute("UPDATE game_sessions SET state_json = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(state), status, session_id))
-        else:
-            cursor.execute("UPDATE game_sessions SET state_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(state), session_id))
+            updates.append("status = ?")
+            params.append(status)
+        if new_host:
+            updates.append("host_username = ?")
+            params.append(new_host)
+            
+        if not updates: return jsonify({'error': 'No updates provided'}), 400
+        
+        params.append(session_id)
+        query = f"UPDATE game_sessions SET {', '.join(updates)}, updated_at = CURRENT_TIMESTAMP WHERE id = ?"
+        cursor.execute(query, tuple(params))
+        
         conn.commit(); conn.close()
         return jsonify({'success': True}), 200
+    except Exception as e: return jsonify({'error': str(e)}), 500
+
+@app.route('/api/games/available')
+def get_available_games():
+    try:
+        conn = get_db(); cursor = conn.cursor()
+        # Cleanup: Delete pending sessions that have expired
+        cursor.execute("DELETE FROM game_sessions WHERE status = 'pending' AND expires_at < datetime('now')")
+        conn.commit()
+        # Find all pending sessions
+        cursor.execute("SELECT * FROM game_sessions WHERE status = 'pending'")
+        rows = cursor.fetchall(); conn.close()
+        return jsonify({'success': True, 'sessions': [dict(r) for r in rows]}), 200
     except Exception as e: return jsonify({'error': str(e)}), 500
 
 @app.route('/api/games/my-active')

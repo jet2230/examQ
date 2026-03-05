@@ -131,8 +131,8 @@
                 <div class="game-card">
                     <div class="game-icon">😵</div>
                     <div class="game-title">Multiplayer Hangman</div>
-                    <div class="game-desc">Invite classmates to a classic word-guessing challenge!</div>
-                    <button class="btn-play" onclick="openInviteModal('Hangman')">Start New Game</button>
+                    <div class="game-desc">Instantly host a word-guessing challenge and invite classmates!</div>
+                    <button class="btn-play" onclick="createInstantGame('Hangman')">Start New Game</button>
                 </div>
                 <div class="game-card" style="opacity: 0.5;">
                     <div class="game-icon">🧩</div>
@@ -143,7 +143,14 @@
             </div>
 
             <div class="sessions-section">
-                <h2 style="color: var(--primary-color); margin-bottom: 20px;">Your Active Sessions</h2>
+                <h2 style="color: var(--primary-color); margin-bottom: 20px;">Available Games to Join</h2>
+                <div id="availableList">
+                    <div style="text-align:center; color:#999; padding:20px;">No open lobbies found.</div>
+                </div>
+            </div>
+
+            <div class="sessions-section">
+                <h2 style="color: var(--primary-color); margin-bottom: 20px;">Your Active & Past Sessions</h2>
                 <div id="sessionsList">
                     <div style="text-align:center; color:#999; padding:20px;">No active game sessions found.</div>
                 </div>
@@ -155,7 +162,7 @@
     <div id="inviteModal" class="modal">
         <div class="modal-content">
             <h2 id="modalTitle">Invite Players</h2>
-            <p style="color: #666; font-size: 0.9em; margin-top: 5px;">Select at least 1 student to play with.</p>
+            <p style="color: #666; font-size: 0.9em; margin-top: 5px;">Select students to send an invitation chat.</p>
             
             <div id="userList" class="user-list">
                 <div style="padding:20px; text-align:center; color:#999;">Loading students...</div>
@@ -171,6 +178,7 @@
     <script>
         let selectedUsers = new Set();
         let currentGameType = '';
+        let currentSessionIdForInvite = null;
         const username = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
 
         async function init() {
@@ -200,7 +208,6 @@
                     window.location.href = `hangman.html?id=${sessionId}`;
                 } else if (data.error === 'Session not found') {
                     alert("This game invitation is no longer active. The host may have removed the session.");
-                    // Clean URL
                     window.history.replaceState({}, document.title, window.location.pathname);
                 } else {
                     alert("Failed to join game: " + data.error);
@@ -208,14 +215,74 @@
             } catch (e) { console.error(e); }
         }
 
-        async function loadSessions() {
+        async function createInstantGame(gameType) {
             try {
-                const res = await fetch(`/api/games/my-active?username=${username}`);
+                const res = await fetch('/api/games/create', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ host: username, game_type: gameType })
+                });
                 const data = await res.json();
                 if (data.success) {
-                    renderSessions(data.sessions);
+                    window.location.href = `hangman.html?id=${data.session_id}`;
+                } else {
+                    alert(data.error || "Failed to create game.");
                 }
             } catch (e) { console.error(e); }
+        }
+
+        async function loadSessions() {
+            try {
+                // Fetch My Sessions
+                const resMy = await fetch(`/api/games/my-active?username=${username}`);
+                const dataMy = await resMy.json();
+                if (dataMy.success) renderSessions(dataMy.sessions);
+
+                // Fetch All Available (Pending) Sessions
+                const resAll = await fetch('/api/games/available');
+                const dataAll = await resAll.json();
+                if (dataAll.success) renderAvailableGames(dataAll.sessions);
+            } catch (e) { console.error(e); }
+        }
+
+        function renderAvailableGames(sessions) {
+            const container = document.getElementById('availableList');
+            
+            // Filter out sessions I'm already a player in
+            const available = sessions.filter(s => {
+                try {
+                    const players = JSON.parse(s.players_json);
+                    return !players.some(p => p.username === username);
+                } catch(e) { return false; }
+            });
+
+            if (available.length === 0) {
+                container.innerHTML = '<div style="text-align:center; color:#999; padding:20px;">No open lobbies found.</div>';
+                return;
+            }
+
+            container.innerHTML = available.map(s => {
+                const players = JSON.parse(s.players_json);
+                const accepted = players.filter(p => p.status === 'accepted').length;
+                const displayHost = s.host_username.length > 10 ? s.host_username.substring(0, 10) + '...' : s.host_username;
+                
+                let expiryHtml = s.expires_at ? `<div class="expiry-timer" data-expires="${s.expires_at}" id="timer_avail_${s.id}" style="font-size:0.75em; color:#dc3545; font-weight:bold; margin-top:5px;">Expires in: --:--</div>` : '';
+
+                return `
+                    <div class="session-item">
+                        <div>
+                            <strong style="color:var(--primary-color);">${s.game_type}</strong>
+                            <div style="font-size:0.8em; color:#666;" title="${s.host_username}">Started by: <strong style="color:#1e3c72;">${displayHost}</strong> | Players: ${accepted}</div>
+                            ${expiryHtml}
+                        </div>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <button class="btn-play" style="background:#28a745;" onclick="respondInvite('${s.id}', 'accept')">Join Game</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            startExpiryTimers();
         }
 
         function renderSessions(sessions) {
@@ -238,17 +305,20 @@
                     const myStatus = players.find(p => p.username === username)?.status;
                     if (myStatus === 'invited') {
                         actionBtn = `<button class="btn-play" onclick="respondInvite('${s.id}', 'accept')">Accept</button>`;
-                    } else if (s.host_username === username && accepted > 1) {
-                        actionBtn = `<a href="hangman.html?id=${s.id}" class="btn-play" style="background:#28a745;">Start Game</a>`;
                     } else {
-                        actionBtn = `<span style="font-size:0.8em; color:#888;">Waiting for players (${accepted}/${total})</span>`;
+                        actionBtn = `<a href="hangman.html?id=${s.id}" class="btn-play" style="background:#28a745;">Lobby</a>`;
                     }
                 } else {
                     actionBtn = `<a href="hangman.html?id=${s.id}" class="btn-play">Resume</a>`;
                 }
 
                 const canDelete = isAdmin || s.host_username === username;
+                const canShare = s.host_username === username && s.status === 'pending';
                 
+                let shareBtn = canShare ? `
+                    <button onclick="openInviteModal('${s.game_type}', '${s.id}')" style="background:none; border:none; color:#1e3c72; cursor:pointer; font-size:1.1em; padding:5px;" title="Invite Players">🔗</button>
+                ` : '';
+
                 let expiryHtml = '';
                 if (s.status === 'pending' && s.expires_at) {
                     expiryHtml = `<div class="expiry-timer" data-expires="${s.expires_at}" id="timer_${s.id}" style="font-size:0.75em; color:#dc3545; font-weight:bold; margin-top:5px;">Expires in: --:--</div>`;
@@ -269,12 +339,13 @@
                     <div class="session-item">
                         <div>
                             <strong style="color:var(--primary-color);">${s.game_type}</strong>
-                            <div style="font-size:0.8em; color:#666;" title="${s.host_username}">Host: ${displayHost} | Players: ${total}</div>
+                            <div style="font-size:0.8em; color:#666;" title="${s.host_username}">Started by: <strong style="color:#1e3c72;">${displayHost}</strong> | Players: ${accepted}</div>
                             ${expiryHtml}
                         </div>
                         <div style="display:flex; align-items:center; gap:10px;">
                             <span class="status-badge status-${s.status}">${s.status}</span>
                             ${actionBtn}
+                            ${shareBtn}
                             ${deleteHtml}
                         </div>
                     </div>
@@ -290,12 +361,7 @@
                     const expiresAt = new Date(el.getAttribute('data-expires').replace(' ', 'T') + 'Z');
                     const now = new Date();
                     const diff = expiresAt - now;
-                    
-                    if (diff <= 0) {
-                        el.textContent = 'Expired';
-                        return;
-                    }
-                    
+                    if (diff <= 0) { el.textContent = 'Expired'; return; }
                     const mins = Math.floor(diff / 60000);
                     const secs = Math.floor((diff % 60000) / 1000);
                     el.textContent = `Expires in: ${mins}:${secs.toString().padStart(2, '0')}`;
@@ -307,61 +373,36 @@
         }
 
         function showDeleteConfirm(event, sessionId) {
-            event.preventDefault();
-            event.stopPropagation();
+            event.preventDefault(); event.stopPropagation();
             document.querySelectorAll('[id^="del_confirm_"]').forEach(p => p.style.display = 'none');
             document.getElementById(`del_confirm_${sessionId}`).style.display = 'inline-flex';
         }
 
         function hideDeleteConfirm(event, sessionId) {
-            if (event) {
-                event.preventDefault();
-                event.stopPropagation();
-            }
+            if (event) { event.preventDefault(); event.stopPropagation(); }
             document.getElementById(`del_confirm_${sessionId}`).style.display = 'none';
         }
 
         async function confirmDelete(event, sessionId) {
-            event.preventDefault();
-            event.stopPropagation();
+            event.preventDefault(); event.stopPropagation();
             try {
-                const res = await fetch('/api/games/delete', {
+                await fetch('/api/games/delete', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ session_id: sessionId, username })
                 });
-                const data = await res.json();
-                if (data.success) {
-                    loadSessions();
-                }
+                loadSessions();
             } catch (e) { console.error(e); }
         }
 
-        async function respondInvite(sessionId, action) {
-            try {
-                const res = await fetch('/api/games/respond', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ session_id: sessionId, username, action })
-                });
-                const data = await res.json();
-                if (data.success && action === 'accept') {
-                    window.location.href = `hangman.html?id=${sessionId}`;
-                } else {
-                    loadSessions();
-                }
-            } catch (e) { console.error(e); }
-        }
-
-        async function openInviteModal(gameType) {
+        async function openInviteModal(gameType, sessionId = null) {
             currentGameType = gameType;
+            currentSessionIdForInvite = sessionId;
             selectedUsers.clear();
             const modal = document.getElementById('inviteModal');
             modal.style.display = 'block';
-            
             const list = document.getElementById('userList');
             list.innerHTML = '<div style="padding:20px; text-align:center; color:#999;">Loading students...</div>';
-            
             try {
                 const res = await fetch('/api/users/all');
                 const data = await res.json();
@@ -382,21 +423,12 @@
         }
 
         function toggleUserSelection(el, user) {
-            if (selectedUsers.has(user)) {
-                selectedUsers.delete(user);
-                el.classList.remove('selected');
-            } else {
-                selectedUsers.add(user);
-                el.classList.add('selected');
-            }
+            if (selectedUsers.has(user)) { selectedUsers.delete(user); el.classList.remove('selected'); }
+            else { selectedUsers.add(user); el.classList.add('selected'); }
         }
 
         async function sendInvitations() {
-            if (selectedUsers.size === 0) {
-                alert("Please select at least 1 player.");
-                return;
-            }
-
+            if (selectedUsers.size === 0) { alert("Please select at least 1 player."); return; }
             try {
                 const res = await fetch('/api/games/invite', {
                     method: 'POST',
@@ -404,20 +436,29 @@
                     body: JSON.stringify({
                         host: username,
                         game_type: currentGameType,
-                        invitees: Array.from(selectedUsers)
+                        invitees: Array.from(selectedUsers),
+                        session_id: currentSessionIdForInvite
                     })
                 });
                 const data = await res.json();
-                if (data.success) {
-                    alert("Invitations sent!");
-                    closeModal();
-                    loadSessions();
-                }
+                if (data.success) { alert("Invitations sent!"); closeModal(); loadSessions(); }
+            } catch (e) { console.error(e); }
+        }
+
+        async function respondInvite(sessionId, action) {
+            try {
+                const res = await fetch('/api/games/respond', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ session_id: sessionId, username, action })
+                });
+                const data = await res.json();
+                if (data.success && action === 'accept') { window.location.href = `hangman.html?id=${sessionId}`; }
+                else { loadSessions(); }
             } catch (e) { console.error(e); }
         }
 
         function closeModal() { document.getElementById('inviteModal').style.display = 'none'; }
-        
         window.addEventListener('click', (e) => {
             if (e.target == document.getElementById('inviteModal')) closeModal();
             if (!e.target.closest('[id^="del_confirm_"]') && !e.target.closest('[onclick^="showDeleteConfirm"]')) {

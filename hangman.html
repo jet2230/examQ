@@ -117,6 +117,33 @@
             margin-top: 20px;
         }
 
+        .share-link-box {
+            background: #f0f4f9;
+            border: 1px dashed #1e3c72;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: inline-block;
+        }
+
+        /* Toggle Switch CSS */
+        .switch input:checked + .slider { background-color: #28a745; }
+        .switch input:focus + .slider { box-shadow: 0 0 1px #28a745; }
+        .switch input:checked + .slider:before { transform: translateX(20px); }
+        .slider { background-color: #ccc; border: 1px solid #ddd; }
+        .slider:before {
+            position: absolute; content: ""; height: 14px; width: 14px;
+            left: 2px; bottom: 2px; background-color: white;
+            transition: .4s; border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+
         /* SVG Hangman Parts */
         .hangman-svg line, .hangman-svg circle { 
             stroke: #333; 
@@ -133,50 +160,103 @@
         <div class="header">
             <div>
                 <h2 style="color: var(--primary-color);">Multiplayer Hangman</h2>
-                <div id="gameStatus" style="font-size: 0.8em; color: #666;">Waiting for turn...</div>
+                <div id="gameStatus" style="font-size: 0.8em; color: #666;">Initializing...</div>
             </div>
-            <a href="/games.html" style="text-decoration:none; color:#1e3c72; font-weight:700;">⬅ Back</a>
+            <div style="display:flex; gap:15px; align-items:center;">
+                <button id="restartBtn" class="btn-action" style="background:#ffc107; color:#000; margin:0; padding:8px 15px; font-size:0.8em; display:none;" onclick="resetGame()">🔄 Change Word</button>
+            </div>
         </div>
 
         <div class="content">
-            <div id="setupView" style="display:none;">
-                <h3 style="margin-bottom:20px;">You are the host!</h3>
-                <p style="margin-bottom:20px;">Choose a word for your friends to guess:</p>
-                <input type="text" id="secretWordInput" maxlength="15" style="padding:12px; border-radius:8px; border:1px solid #ddd; margin-bottom:20px; width:250px; text-transform:uppercase;" placeholder="ENTER SECRET WORD">
-                <br>
-                <button class="btn-action" onclick="startGame()">Start Game</button>
+            <!-- Lobby View -->
+            <div id="lobbyView" style="display:none;">
+                <div id="hostControls" style="display:none;">
+                    <h3 style="margin-bottom:20px;">Lobby: You are the Host</h3>
+                    <p style="margin-bottom:20px;">Choose a word for your friends to guess:</p>
+                    <input type="text" id="secretWordInput" maxlength="15" style="padding:12px; border-radius:8px; border:1px solid #ddd; margin-bottom:15px; width:250px; text-transform:uppercase;" placeholder="ENTER SECRET WORD">
+                    
+                    <div style="margin-bottom:20px; display:flex; align-items:center; justify-content:center; gap:10px;">
+                        <label class="switch" style="position:relative; display:inline-block; width:40px; height:20px;">
+                            <input type="checkbox" id="allowNumbersToggle" style="opacity:0; width:0; height:0;">
+                            <span class="slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; transition:.4s; border-radius:20px;"></span>
+                        </label>
+                        <span style="font-size:0.9em; font-weight:600; color:#666;">Allow Numbers (0-9)</span>
+                    </div>
+
+                    <button id="startBtn" class="btn-action" onclick="startGame()" disabled>Waiting for players to join...</button>
+                </div>
+                <div id="guestWait" style="display:none;">
+                    <h3 id="guestWaitTitle">Waiting for Host...</h3>
+                    <div id="restartNotice" style="display:none; margin-top:15px; padding:15px; background:#fff3cd; color:#856404; border-radius:10px; border:1px solid #ffeeba; font-weight:700; animation: pulse 2s infinite;">
+                        🔄 The host is restarting the game with a different guess word!
+                    </div>
+                    <p style="color:#666; margin-top:10px;">The game will start as soon as the host picks a word.</p>
+                </div>
+                
+                <div class="players-panel" id="lobbyPlayers" style="margin-top:40px;"></div>
+
+                <!-- Game Rules -->
+                <div style="margin-top:40px; text-align:left; background:#f1f4f9; padding:20px; border-radius:15px; border:1px solid #ddd;">
+                    <h4 style="color:var(--primary-color); margin-bottom:10px; display:flex; align-items:center; gap:8px;">📜 How to Play</h4>
+                    <ul style="font-size:0.85em; color:#555; line-height:1.6; padding-left:20px;">
+                        <li><strong>Host:</strong> Chooses a secret word/phrase. Spaces become slashes (/).</li>
+                        <li><strong>Players:</strong> Take turns guessing letters or numbers (if enabled).</li>
+                        <li><strong>Winning:</strong> Reveal the full word before the hangman is complete!</li>
+                        <li><strong>Winner becomes Host:</strong> The person who makes the final guess sets the next word.</li>
+                        <li><strong>Clues:</strong> Guests can request 1 clue per game. The host can send multiple hints.</li>
+                    </ul>
+                </div>
             </div>
 
+            <!-- Game View -->
             <div id="gameView" style="display:none;">
                 <div class="hangman-drawing">
                     <svg class="hangman-svg" width="200" height="250">
-                        <!-- Scaffold -->
-                        <line x1="20" y1="230" x2="180" y2="230" style="display:block;" /> <!-- Base -->
-                        <line x1="50" y1="230" x2="50" y2="20" style="display:block;" />  <!-- Post -->
-                        <line x1="50" y1="20" x2="130" y2="20" style="display:block;" />  <!-- Top -->
-                        <line x1="130" y1="20" x2="130" y2="50" style="display:block;" /> <!-- Rope -->
-                        
-                        <!-- Body Parts -->
-                        <circle id="part_0" cx="130" cy="70" r="20" /> <!-- Head -->
-                        <line id="part_1" x1="130" y1="90" x2="130" y2="160" /> <!-- Body -->
-                        <line id="part_2" x1="130" y1="110" x2="100" y2="140" /> <!-- Left Arm -->
-                        <line id="part_3" x1="130" y1="110" x2="160" y2="140" /> <!-- Right Arm -->
-                        <line id="part_4" x1="130" y1="160" x2="100" y2="200" /> <!-- Left Leg -->
-                        <line id="part_5" x1="130" y1="160" x2="160" y2="200" /> <!-- Right Leg -->
+                        <line x1="20" y1="230" x2="180" y2="230" style="stroke:#333; stroke-width:4; display:block;" />
+                        <line x1="50" y1="230" x2="50" y2="20" style="stroke:#333; stroke-width:4; display:block;" />
+                        <line x1="50" y1="20" x2="130" y2="20" style="stroke:#333; stroke-width:4; display:block;" />
+                        <line x1="130" y1="20" x2="130" y2="50" style="stroke:#333; stroke-width:4; display:block;" />
+                        <circle id="part_0" cx="130" cy="70" r="20" />
+                        <line id="part_1" x1="130" y1="90" x2="130" y2="160" />
+                        <line id="part_2" x1="130" y1="110" x2="100" y2="140" />
+                        <line id="part_3" x1="130" y1="110" x2="160" y2="140" />
+                        <line id="part_4" x1="130" y1="160" x2="100" y2="200" />
+                        <line id="part_5" x1="130" y1="160" x2="160" y2="200" />
                     </svg>
                 </div>
-
-                <div id="wordContainer" class="word-display">_ _ _ _ _</div>
+                <div id="wordContainer" class="word-display"></div>
                 
-                <div id="keyboard" class="keyboard"></div>
+                <div id="clueDisplay" style="display:none; margin-bottom:20px; padding:15px; background:#f8f9fa; border-radius:12px; border:1px solid #ddd; text-align:left; max-height:160px; overflow-y:auto; scroll-behavior: smooth;">
+                </div>
 
-                <div id="playersPanel" class="players-panel"></div>
+                <div id="clueControls" style="margin-bottom:20px; display:flex; flex-direction:column; align-items:center; gap:10px;">
+                    <!-- Guest View -->
+                    <button id="requestClueBtn" class="btn-action" style="background:#6c757d; margin:0; padding:8px 15px; font-size:0.8em;" onclick="requestClue()">💡 Request Clue</button>
+                    
+                    <!-- Host View -->
+                    <div id="hostClueBox" style="display:none; flex-direction:column; gap:10px; align-items:center; width:100%;">
+                        <div style="display:flex; gap:10px; align-items:center;">
+                            <input type="text" id="clueInput" placeholder="Enter a clue..." style="padding:8px; border-radius:5px; border:1px solid #ddd; width:200px;">
+                            <button class="btn-action" style="background:#1e3c72; margin:0; padding:8px 15px; font-size:0.8em;" onclick="sendClue()">Send Clue</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="keyboard" class="keyboard"></div>
+                <div id="gamePlayers" class="players-panel"></div>
             </div>
 
             <div id="gameOverlay">
                 <div class="overlay-title" id="overlayTitle">GAME OVER</div>
                 <p id="overlayMessage" style="font-size: 1.2em; color: #666;"></p>
-                <button class="btn-action" onclick="window.location.href='/games.html'">Back to Games</button>
+                <div style="display:flex; gap:15px; justify-content:center;">
+                    <button id="playAgainBtn" class="btn-action" style="background:#28a745; display:none;" onclick="resetGame()">🎮 Play Again</button>
+                    <button class="btn-action" onclick="window.location.href='/games.html'">🏠 Back to Games</button>
+                </div>
+            </div>
+
+            <div style="margin-top:40px; padding-top:20px; border-top:1px solid #eee;">
+                <button class="btn-action" style="background:#dc3545; margin:0; padding:10px 20px; font-size:0.9em; width:100%; max-width:200px;" onclick="leaveGame()">🚪 Leave Game</button>
             </div>
         </div>
     </div>
@@ -189,8 +269,31 @@
         let session = null;
         let pollInterval = null;
 
+        async function leaveGame() {
+            if (!confirm("Are you sure you want to leave this game?")) return;
+            try {
+                const res = await fetch('/api/games/leave', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ session_id: sessionId, username })
+                });
+                window.location.href = 'games.html';
+            } catch (e) { console.error(e); }
+        }
+
         async function init() {
             if (!sessionId || !username) { window.location.href = 'games.html'; return; }
+            
+            // First attempt to "join" (in case we clicked a link)
+            try {
+                const res = await fetch('/api/games/respond', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ session_id: sessionId, username, action: 'accept' })
+                });
+                console.log("Join response:", await res.json());
+            } catch (e) { console.error("Join error:", e); }
+
             await fetchSession();
             pollInterval = setInterval(fetchSession, 2000);
         }
@@ -207,38 +310,157 @@
         }
 
         function updateUI() {
+            if (!session) return;
+            const acceptedPlayers = session.players.filter(p => p.status === 'accepted');
+            const restartBtn = document.getElementById('restartBtn');
+            
+            // Hide game over overlay if we are no longer in finished status
+            if (session.status !== 'finished') {
+                document.getElementById('gameOverlay').style.display = 'none';
+            }
+
+            // Show restart button only to host and only if session is active or finished
+            if (session.host === username && (session.status === 'active' || session.status === 'finished')) {
+                restartBtn.style.display = 'block';
+            } else {
+                restartBtn.style.display = 'none';
+            }
+            
+            console.log("Update UI. Status:", session.status, "Accepted Players:", acceptedPlayers.length);
+            
             if (session.status === 'pending') {
+                document.getElementById('lobbyView').style.display = 'block';
+                document.getElementById('gameView').style.display = 'none';
+                document.getElementById('clueDisplay').style.display = 'none';
+                document.getElementById('clueControls').style.display = 'none';
+                
+                const playersList = document.getElementById('lobbyPlayers');
+                playersList.innerHTML = acceptedPlayers.map(p => {
+                    const display = p.username.length > 10 ? p.username.substring(0,10)+'...' : p.username;
+                    const isHost = p.username === session.host;
+                    return `
+                        <div class="player-chip" title="${p.username}">
+                            <div style="width:8px; height:8px; background:#28a745; border-radius:50%;"></div>
+                            <strong>${display}</strong>
+                            ${isHost ? '<span style="font-size:0.65em; background:#1e3c72; color:white; padding:1px 5px; border-radius:4px; margin-left:5px;">HOST</span>' : ''}
+                        </div>`;
+                }).join('');
+
                 if (session.host === username) {
-                    document.getElementById('setupView').style.display = 'block';
-                    document.getElementById('gameView').style.display = 'none';
+                    document.getElementById('hostControls').style.display = 'block';
+                    document.getElementById('guestWait').style.display = 'none';
+                    document.getElementById('gameStatus').textContent = "You are the host. Choose a word to begin!";
+                    
+                    const wordInput = document.getElementById('secretWordInput');
+                    const startBtn = document.getElementById('startBtn');
+                    
+                    // Add input listener if not already added
+                    if (!wordInput.oninput) {
+                        wordInput.oninput = () => updateUI();
+                    }
+
+                    const word = wordInput.value.trim();
+                    const hasGuests = acceptedPlayers.length > 1;
+                    const isWordValid = word.length >= 3;
+
+                    if (!hasGuests) {
+                        startBtn.disabled = true;
+                        startBtn.textContent = "Waiting for players to join...";
+                        startBtn.style.background = "#ccc";
+                    } else if (!isWordValid) {
+                        startBtn.disabled = true;
+                        startBtn.textContent = "Enter a word (3+ letters)";
+                        startBtn.style.background = "#ffc107"; // Warning color
+                    } else {
+                        startBtn.disabled = false;
+                        startBtn.textContent = "Start Game Now";
+                        startBtn.style.background = "var(--main-gradient)";
+                    }
                 } else {
-                    document.getElementById('gameStatus').textContent = "Waiting for host to choose a word...";
-                    document.getElementById('setupView').style.display = 'none';
-                    document.getElementById('gameView').style.display = 'none';
+                    document.getElementById('hostControls').style.display = 'none';
+                    document.getElementById('guestWait').style.display = 'block';
+                    
+                    const displayHost = session.host.length > 10 ? session.host.substring(0,10)+'...' : session.host;
+                    document.getElementById('guestWaitTitle').innerHTML = `Waiting for <strong style="color:#1e3c72;">${displayHost}</strong>...`;
+                    
+                    const isRestarting = session.state && session.state.restarting;
+                    document.getElementById('restartNotice').style.display = isRestarting ? 'block' : 'none';
+                    
+                    document.getElementById('gameStatus').textContent = isRestarting ? `Host (${displayHost}) is choosing a new word...` : `Waiting for ${displayHost} to start...`;
                 }
             } else if (session.status === 'active') {
-                document.getElementById('setupView').style.display = 'none';
+                document.getElementById('lobbyView').style.display = 'none';
                 document.getElementById('gameView').style.display = 'block';
-                renderGame();
+                document.getElementById('clueControls').style.display = 'flex';
+                renderActiveGame(acceptedPlayers);
             } else if (session.status === 'finished') {
                 showGameOver();
             }
         }
 
-        function renderGame() {
+        function renderActiveGame(acceptedPlayers) {
             const state = session.state;
-            const wordDisplay = state.word.split('').map(char => 
-                state.guessedLetters.includes(char) ? char : '_'
-            ).join(' ');
+            const wordDisplay = state.word.split('').map(char => {
+                if (char === ' ') return '/'; // Show space as slash
+                if (state.guessedLetters.includes(char)) return char; // Show correctly guessed chars
+                if (/[0-9]/.test(char)) return state.allowNumbers ? '#' : char; // If numbers not part of game, show them immediately or as # if they are
+                return '_'; // Show letters as _ when unguessed
+            }).join(' ');
             document.getElementById('wordContainer').textContent = wordDisplay;
 
-            // Render keyboard
+            // --- Clue Logic ---
+            const clueDisplay = document.getElementById('clueDisplay');
+            if (state.clueStack && state.clueStack.length > 0) {
+                clueDisplay.style.display = 'block';
+                clueDisplay.innerHTML = state.clueStack.map((item, idx) => {
+                    const borderTop = idx > 0 ? 'border-top:1px dashed #ddd; margin-top:8px; padding-top:8px;' : '';
+                    if (item.type === 'request') {
+                        const disp = item.user.length > 10 ? item.user.substring(0,10)+'...' : item.user;
+                        return `<div style="${borderTop} color: #856404; font-weight: bold; font-size: 0.85em;">🙋 ${disp} requested a clue</div>`;
+                    } else {
+                        return `<div style="${borderTop} color: #1e3c72; font-size: 0.95em;">💡 Clue: <strong>${item.text}</strong></div>`;
+                    }
+                }).join('');
+                // Auto-scroll to bottom of clues
+                setTimeout(() => {
+                    clueDisplay.scrollTop = clueDisplay.scrollHeight;
+                }, 50);
+            } else {
+                clueDisplay.style.display = 'none';
+            }
+
+            const requestBtn = document.getElementById('requestClueBtn');
+            const hostBox = document.getElementById('hostClueBox');
+            
+            if (session.host === username) {
+                requestBtn.style.display = 'none';
+                hostBox.style.display = 'flex';
+            } else {
+                hostBox.style.display = 'none';
+                requestBtn.style.display = 'block';
+                // Disable if already used
+                if (state.cluesRequestedBy && state.cluesRequestedBy.includes(username)) {
+                    requestBtn.disabled = true;
+                    requestBtn.textContent = "💡 Clue Requested";
+                    requestBtn.style.opacity = '0.5';
+                } else {
+                    requestBtn.disabled = false;
+                    requestBtn.textContent = "💡 Request Clue";
+                    requestBtn.style.opacity = '1';
+                }
+            }
+            // ------------------
+
             const keyboard = document.getElementById('keyboard');
             keyboard.innerHTML = '';
-            const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+            
+            let alphabetStr = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            if (state.allowNumbers) alphabetStr += '0123456789';
+            const alphabet = alphabetStr.split('');
             
             const isMyTurn = state.currentTurn === username;
-            document.getElementById('gameStatus').textContent = isMyTurn ? "IT'S YOUR TURN! Pick a letter." : `Waiting for ${state.currentTurn}...`;
+            
+            document.getElementById('gameStatus').textContent = isMyTurn ? "IT'S YOUR TURN!" : `Waiting for ${state.currentTurn.substring(0,10)}...`;
 
             alphabet.forEach(letter => {
                 const btn = document.createElement('button');
@@ -246,8 +468,7 @@
                 btn.textContent = letter;
                 if (state.guessedLetters.includes(letter)) {
                     btn.classList.add('used');
-                    const isCorrect = state.word.includes(letter);
-                    btn.classList.add(isCorrect ? 'correct' : 'wrong');
+                    btn.classList.add(state.word.includes(letter) ? 'correct' : 'wrong');
                     btn.disabled = true;
                 } else if (!isMyTurn) {
                     btn.disabled = true;
@@ -256,25 +477,20 @@
                 keyboard.appendChild(btn);
             });
 
-            // Update Hangman Drawing
             for (let i = 0; i < 6; i++) {
                 const part = document.getElementById(`part_${i}`);
-                if (i < state.wrongGuesses) {
-                    part.classList.add('show-part');
-                } else {
-                    part.classList.remove('show-part');
-                }
+                if (part) part.style.display = i < state.wrongGuesses ? 'block' : 'none';
             }
 
-            // Players list
-            const playersPanel = document.getElementById('playersPanel');
-            playersPanel.innerHTML = session.players.filter(p => p.status === 'accepted').map(p => {
-                const display = p.username.length > 10 ? p.username.substring(0, 10) + '...' : p.username;
+            const playersPanel = document.getElementById('gamePlayers');
+            playersPanel.innerHTML = acceptedPlayers.map(p => {
+                const display = p.username.length > 10 ? p.username.substring(0,10)+'...' : p.username;
+                const isHost = p.username === session.host;
                 return `
                     <div class="player-chip ${p.username === state.currentTurn ? 'active-turn' : ''}" title="${p.username}">
                         <div style="width:8px; height:8px; background:#28a745; border-radius:50%;"></div>
                         <strong>${display}</strong>
-                        ${p.username === session.host ? '👑' : ''}
+                        ${isHost ? '<span style="font-size:0.65em; background:#1e3c72; color:white; padding:1px 5px; border-radius:4px; margin-left:5px;">HOST</span>' : ''}
                     </div>
                 `;
             }).join('');
@@ -282,12 +498,15 @@
 
         async function startGame() {
             const word = document.getElementById('secretWordInput').value.trim().toUpperCase();
-            if (!word || word.length < 3) {
-                alert("Please enter a valid word (at least 3 letters).");
+            if (!word || word.length < 3) { alert("Please enter a valid word (3+ letters)."); return; }
+
+            const allowNumbers = document.getElementById('allowNumbersToggle').checked;
+            // If numbers not allowed but used in word, alert and stop
+            if (!allowNumbers && /[0-9]/.test(word)) {
+                alert("Numbers are not allowed in the secret word when 'Allow Numbers' is turned off. Please remove them or turn on the toggle.");
                 return;
             }
 
-            // Find first guesser (not the host)
             const activePlayers = session.players.filter(p => p.status === 'accepted');
             const guestPlayers = activePlayers.filter(p => p.username !== session.host);
             const firstTurn = guestPlayers.length > 0 ? guestPlayers[0].username : session.host;
@@ -297,38 +516,57 @@
                 guessedLetters: [],
                 wrongGuesses: 0,
                 currentTurn: firstTurn,
-                playersOrder: activePlayers.map(p => p.username)
+                playersOrder: activePlayers.map(p => p.username),
+                allowNumbers: allowNumbers,
+                restarting: false,
+                cluesRequestedBy: [],
+                clueStack: [] // Unified array for both requests and clues
             };
-
             await updateServerState(initialState, 'active');
+        }
+
+        async function requestClue() {
+            const state = session.state;
+            if (!state.cluesRequestedBy) state.cluesRequestedBy = [];
+            if (state.cluesRequestedBy.includes(username)) return;
+            
+            state.cluesRequestedBy.push(username);
+            if (!state.clueStack) state.clueStack = [];
+            state.clueStack.push({ type: 'request', user: username });
+            
+            await updateServerState(state);
+        }
+
+        async function sendClue() {
+            const input = document.getElementById('clueInput');
+            const clue = input.value.trim();
+            if (!clue) return;
+
+            const state = session.state;
+            if (!state.clueStack) state.clueStack = [];
+            state.clueStack.push({ type: 'clue', text: clue });
+            input.value = '';
+            await updateServerState(state);
         }
 
         async function makeGuess(letter) {
             if (session.state.currentTurn !== username) return;
-            
             const state = session.state;
-            state.guessedLetters.push(letter);
+            if (state.guessedLetters.includes(letter)) return;
             
-            let isCorrect = state.word.includes(letter);
-            if (!isCorrect) {
-                state.wrongGuesses++;
-            }
+            state.guessedLetters.push(letter);
+            if (!state.word.includes(letter)) state.wrongGuesses++;
 
-            // Check Win/Loss
-            const isWon = state.word.split('').every(char => state.guessedLetters.includes(char));
+            const isWon = state.word.split('').every(char => char === ' ' || state.guessedLetters.includes(char));
             const isLost = state.wrongGuesses >= 6;
 
             if (isWon || isLost) {
+                if (isWon) state.winner = username; // Track who made the final winning guess
                 await updateServerState(state, 'finished');
             } else {
-                // Next turn
                 const players = state.playersOrder;
-                const currentIdx = players.indexOf(username);
-                // Cycle turn - skip host if multiple players
-                let nextIdx = (currentIdx + 1) % players.length;
-                if (players.length > 1 && players[nextIdx] === session.host) {
-                    nextIdx = (nextIdx + 1) % players.length;
-                }
+                let nextIdx = (players.indexOf(username) + 1) % players.length;
+                if (players.length > 1 && players[nextIdx] === session.host) nextIdx = (nextIdx + 1) % players.length;
                 state.currentTurn = players[nextIdx];
                 await updateServerState(state);
             }
@@ -339,35 +577,87 @@
                 await fetch('/api/games/update', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ session_id: sessionId, state: state, status: status || session.status })
+                });
+                await fetchSession();
+            } catch (e) {}
+        }
+
+        function copyShareLink() {
+            const url = document.getElementById('shareUrl').textContent;
+            navigator.clipboard.writeText(url).then(() => alert("Link copied!"));
+        }
+
+        async function resetGame() {
+            try {
+                await fetch('/api/games/update', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
                         session_id: sessionId,
-                        state: state,
-                        status: status || session.status
+                        state: { restarting: true }, // Signal to others
+                        status: 'pending',
+                        new_host: username // Whoever clicks Play Again becomes the host
                     })
                 });
+                document.getElementById('gameOverlay').style.display = 'none';
+                document.getElementById('secretWordInput').value = '';
                 await fetchSession();
             } catch (e) { console.error(e); }
         }
 
         function showGameOver() {
             const overlay = document.getElementById('gameOverlay');
-            const title = document.getElementById('overlayTitle');
-            const msg = document.getElementById('overlayMessage');
-            
             const state = session.state;
-            const isWon = state.word.split('').every(char => state.guessedLetters.includes(char));
+            const isWon = state.word.split('').every(char => char === ' ' || state.guessedLetters.includes(char));
             
             overlay.style.display = 'flex';
+            document.getElementById('overlayTitle').textContent = isWon ? "WORD GUESSED!" : "HUNG!";
+            document.getElementById('overlayTitle').style.color = isWon ? "#28a745" : "#dc3545";
+            
+            const displayWinner = state.winner ? (state.winner.length > 10 ? state.winner.substring(0,10)+'...' : state.winner) : '';
+            const isMeWinner = username === state.winner;
+            
+            const winnerText = isWon ? `Winner: <strong>${displayWinner}</strong>` : 'Host remains the same.';
+            
+            let nextStepText = '';
             if (isWon) {
-                title.textContent = "WORD GUESSED!";
-                title.style.color = "#28a745";
-                msg.textContent = `The word was ${state.word}. Well done team!`;
+                nextStepText = isMeWinner ? `Others are waiting for you to start a new game as the new host` : `Waiting for <strong>${displayWinner}</strong> to start a new game...`;
             } else {
-                title.textContent = "HUNG!";
-                title.style.color = "#dc3545";
-                msg.textContent = `Game Over. The word was ${state.word}.`;
+                nextStepText = `Waiting for <strong>${session.host.length > 10 ? session.host.substring(0,10)+'...' : session.host}</strong> to try again...`;
+            }
+
+            document.getElementById('overlayMessage').innerHTML = `
+                The word was <strong>${state.word}</strong>.<br><br>
+                ${winnerText}<br>
+                <span style="font-size:0.85em; color:#666;">${nextStepText}</span>
+            `;
+            
+            // Logic for who can click "Play Again":
+            const playAgainBtn = document.getElementById('playAgainBtn');
+            if (isWon) {
+                playAgainBtn.style.display = isMeWinner ? 'block' : 'none';
+                playAgainBtn.textContent = "🎮 Start New Game 🎮";
+            } else {
+                playAgainBtn.style.display = (username === session.host) ? 'block' : 'none';
+                playAgainBtn.textContent = "🎮 Try Again (Same Host)";
             }
         }
+
+        // Physical Keyboard Support
+        window.addEventListener('keydown', (e) => {
+            if (session && session.status === 'active' && session.state && session.state.currentTurn === username) {
+                const key = e.key.toUpperCase();
+                const allowedRegex = session.state.allowNumbers ? /^[A-Z0-9]$/ : /^[A-Z]$/;
+                
+                if (allowedRegex.test(key)) {
+                    // Check if already guessed
+                    if (!session.state.guessedLetters.includes(key)) {
+                        makeGuess(key);
+                    }
+                }
+            }
+        });
 
         init();
     </script>
