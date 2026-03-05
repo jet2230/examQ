@@ -46,6 +46,13 @@
             color: var(--primary-color);
             font-weight: 800;
         }
+        .peek-highlight {
+            background-color: #ffeb3b;
+            border-radius: 4px;
+            padding: 0 5px;
+            margin: 0 -5px;
+            color: #000;
+        }
         .keyboard {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
@@ -291,10 +298,13 @@
                     
                     <!-- Host View -->
                     <div id="hostClueBox" style="display:none; flex-direction:column; gap:10px; align-items:center; width:100%;">
-                        <div id="peekDisplay" style="display:none; margin-bottom:5px; padding:8px 15px; background:#fff3cd; color:#856404; border-radius:8px; border:1px solid #ffeeba; font-weight:800; font-family:monospace; letter-spacing:2px; font-size:1.2em;">
-                        </div>
                         <div style="display:flex; gap:10px; align-items:center;">
-                            <button id="peekBtn" class="btn-action" style="background:#6c757d; margin:0; padding:8px 15px; font-size:0.8em; cursor:pointer;" onmousedown="showPeek()" onmouseup="hidePeek()" onmouseleave="hidePeek()" ontouchstart="showPeek()" ontouchend="hidePeek()">👁️ Peek at Word</button>
+                            <button id="peekBtn" class="btn-action" style="background:#6c757d; margin:0; padding:8px 15px; font-size:0.8em; cursor:pointer; user-select:none; touch-action:none;" 
+                                onpointerdown="this.setPointerCapture(event.pointerId); showPeek()" 
+                                onpointerup="hidePeek()" 
+                                onpointerleave="hidePeek()" 
+                                onpointercancel="hidePeek()"
+                                oncontextmenu="return false;">👁️ Peek at Word</button>
                             <input type="text" id="clueInput" placeholder="Enter a clue..." style="padding:8px; border-radius:5px; border:1px solid #ddd; width:200px;" onkeydown="if(event.key==='Enter') sendClue()">
                             <button class="btn-action" style="background:#1e3c72; margin:0; padding:8px 15px; font-size:0.8em;" onclick="sendClue()">Send Clue</button>
                         </div>
@@ -323,10 +333,11 @@
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const sessionId = urlParams.get('id');
-        const username = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
+        const username = (localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username') || '').trim();
         
         let session = null;
         let pollInterval = null;
+        let isUpdating = false;
 
         async function leaveGame() {
             if (!confirm("Are you sure you want to leave this game?")) return;
@@ -341,6 +352,7 @@
         }
 
         async function init() {
+            console.log("Init called. User:", username, "SessionId:", sessionId);
             if (!sessionId || !username) { window.location.href = 'games.html'; return; }
             
             // First attempt to "join" (in case we clicked a link)
@@ -358,6 +370,7 @@
         }
 
         async function fetchSession() {
+            if (isUpdating) return;
             try {
                 const res = await fetch(`/api/games/session/${sessionId}`);
                 const data = await res.json();
@@ -365,13 +378,14 @@
                     session = data.session;
                     updateUI();
                 }
-            } catch (e) { console.error(e); }
+            } catch (e) { console.error("Fetch error:", e); }
         }
 
         function updateUI() {
             if (!session) return;
             const acceptedPlayers = session.players.filter(p => p.status === 'accepted');
             const restartBtn = document.getElementById('restartBtn');
+            const isHost = session.host && username && session.host.toLowerCase() === username.toLowerCase();
             
             // Hide game over overlay if we are no longer in finished status
             if (session.status !== 'finished') {
@@ -379,13 +393,11 @@
             }
 
             // Show restart button only to host and only if session is active or finished
-            if (session.host === username && (session.status === 'active' || session.status === 'finished')) {
+            if (isHost && (session.status === 'active' || session.status === 'finished')) {
                 restartBtn.style.display = 'block';
             } else {
                 restartBtn.style.display = 'none';
             }
-            
-            console.log("Update UI. Status:", session.status, "Accepted Players:", acceptedPlayers.length);
             
             if (session.status === 'pending') {
                 document.getElementById('lobbyView').style.display = 'block';
@@ -396,16 +408,16 @@
                 const playersList = document.getElementById('lobbyPlayers');
                 playersList.innerHTML = acceptedPlayers.map(p => {
                     const display = p.username.length > 10 ? p.username.substring(0,10)+'...' : p.username;
-                    const isHost = p.username === session.host;
+                    const isPHost = p.username.toLowerCase() === session.host.toLowerCase();
                     return `
                         <div class="player-chip" title="${p.username}">
                             <div style="width:8px; height:8px; background:#28a745; border-radius:50%;"></div>
                             <strong>${display}</strong>
-                            ${isHost ? '<span style="font-size:0.65em; background:#1e3c72; color:white; padding:1px 5px; border-radius:4px; margin-left:5px;">HOST</span>' : ''}
+                            ${isPHost ? '<span style="font-size:0.65em; background:#1e3c72; color:white; padding:1px 5px; border-radius:4px; margin-left:5px;">HOST</span>' : ''}
                         </div>`;
                 }).join('');
 
-                if (session.host === username) {
+                if (isHost) {
                     document.getElementById('hostControls').style.display = 'block';
                     document.getElementById('guestWait').style.display = 'none';
                     document.getElementById('gameStatus').textContent = "You are the host. Choose a word to begin!";
@@ -417,7 +429,6 @@
                     const wordInput = document.getElementById('secretWordInput');
                     const startBtn = document.getElementById('startBtn');
                     
-                    // Add input listener if not already added
                     if (!wordInput.oninput) {
                         wordInput.oninput = () => updateUI();
                     }
@@ -433,7 +444,7 @@
                     } else if (!isWordValid) {
                         startBtn.disabled = true;
                         startBtn.textContent = "Enter a word (3+ letters)";
-                        startBtn.style.background = "#ffc107"; // Warning color
+                        startBtn.style.background = "#ffc107";
                     } else {
                         startBtn.disabled = false;
                         startBtn.textContent = "Start Game Now";
@@ -470,8 +481,8 @@
                 const res = await fetch('/api/users/all');
                 const data = await res.json();
                 if (data.success) {
-                    const currentPlayers = session.players.map(p => p.username);
-                    const users = data.users.filter(u => u.username !== username && !currentPlayers.includes(u.username));
+                    const currentPlayers = session.players.map(p => p.username.toLowerCase());
+                    const users = data.users.filter(u => u.username.toLowerCase() !== username.toLowerCase() && !currentPlayers.includes(u.username.toLowerCase()));
                     
                     if (users.length === 0) {
                         list.innerHTML = '<div style="padding:10px; text-align:center; color:#999; font-size:0.85em; grid-column: 1 / -1;">No more students available.</div>';
@@ -488,7 +499,7 @@
                     }
                     list.setAttribute('data-loaded', 'true');
                 }
-            } catch (e) { console.error(e); }
+            } catch (e) { console.error("Invite list error:", e); }
         }
 
         function toggleLobbyUserSelection(el, user) {
@@ -506,11 +517,8 @@
                 alert("Please select at least 1 student to invite.");
                 return;
             }
-
             const btn = document.getElementById('sendInviteBtn');
-            btn.disabled = true;
-            btn.textContent = "Sending...";
-
+            btn.disabled = true; btn.textContent = "Sending...";
             try {
                 const res = await fetch('/api/games/invite', {
                     method: 'POST',
@@ -527,27 +535,52 @@
                     alert("Invitations sent!");
                     lobbySelectedUsers.clear();
                     const list = document.getElementById('inviteUserList');
-                    list.removeAttribute('data-loaded'); // Allow refresh
+                    list.removeAttribute('data-loaded');
                     loadUsersToInvite();
                 }
-            } catch (e) { console.error(e); }
-            finally {
-                btn.disabled = false;
-                btn.textContent = "Send Invitations";
+            } catch (e) { console.error("Send invite error:", e); }
+            finally { btn.disabled = false; btn.textContent = "Send Invitations"; }
+        }
+
+        let isPeeking = false;
+
+        function showPeek() {
+            if (session && session.state && session.state.word) {
+                isPeeking = true;
+                renderWordDisplay();
             }
+        }
+
+        function hidePeek() {
+            isPeeking = false;
+            renderWordDisplay();
+        }
+
+        function renderWordDisplay() {
+            if (!session || !session.state || !session.state.word) return;
+            const state = session.state;
+            const html = state.word.split('').map(char => {
+                if (char === ' ') return '/';
+                const isGuessed = state.guessedLetters.includes(char);
+                if (isPeeking && !isGuessed) {
+                    return `<span class="peek-highlight">${char}</span>`;
+                } else if (isGuessed) {
+                    return char;
+                } else if (/[0-9]/.test(char)) {
+                    return state.allowNumbers ? '#' : char;
+                } else {
+                    return '_';
+                }
+            }).join(' ');
+            document.getElementById('wordContainer').innerHTML = html;
         }
 
         function renderActiveGame(acceptedPlayers) {
             const state = session.state;
-            const wordDisplay = state.word.split('').map(char => {
-                if (char === ' ') return '/'; // Show space as slash
-                if (state.guessedLetters.includes(char)) return char; // Show correctly guessed chars
-                if (/[0-9]/.test(char)) return state.allowNumbers ? '#' : char; // If numbers not part of game, show them immediately or as # if they are
-                return '_'; // Show letters as _ when unguessed
-            }).join(' ');
-            document.getElementById('wordContainer').textContent = wordDisplay;
+            if (!state || !state.word) return;
 
-            // --- Clue Logic ---
+            renderWordDisplay();
+
             const clueDisplay = document.getElementById('clueDisplay');
             if (state.clueStack && state.clueStack.length > 0) {
                 clueDisplay.style.display = 'block';
@@ -560,45 +593,34 @@
                         return `<div style="${borderTop} color: #1e3c72; font-size: 0.95em;">💡 Clue: <strong>${item.text}</strong></div>`;
                     }
                 }).join('');
-                // Auto-scroll to bottom of clues
-                setTimeout(() => {
-                    clueDisplay.scrollTop = clueDisplay.scrollHeight;
-                }, 50);
+                setTimeout(() => { clueDisplay.scrollTop = clueDisplay.scrollHeight; }, 50);
             } else {
                 clueDisplay.style.display = 'none';
             }
 
             const requestBtn = document.getElementById('requestClueBtn');
             const hostBox = document.getElementById('hostClueBox');
+            const isHost = session.host && username && session.host.toLowerCase() === username.toLowerCase();
             
-            if (session.host === username) {
+            if (isHost) {
                 requestBtn.style.display = 'none';
                 hostBox.style.display = 'flex';
             } else {
                 hostBox.style.display = 'none';
                 requestBtn.style.display = 'block';
-                // Disable if already used
                 if (state.cluesRequestedBy && state.cluesRequestedBy.includes(username)) {
-                    requestBtn.disabled = true;
-                    requestBtn.textContent = "💡 Clue Requested";
-                    requestBtn.style.opacity = '0.5';
+                    requestBtn.disabled = true; requestBtn.textContent = "💡 Clue Requested"; requestBtn.style.opacity = '0.5';
                 } else {
-                    requestBtn.disabled = false;
-                    requestBtn.textContent = "💡 Request Clue";
-                    requestBtn.style.opacity = '1';
+                    requestBtn.disabled = false; requestBtn.textContent = "💡 Request Clue"; requestBtn.style.opacity = '1';
                 }
             }
-            // ------------------
 
             const keyboard = document.getElementById('keyboard');
             keyboard.innerHTML = '';
-            
             let alphabetStr = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
             if (state.allowNumbers) alphabetStr += '0123456789';
             const alphabet = alphabetStr.split('');
-            
             const isMyTurn = state.currentTurn === username;
-            
             document.getElementById('gameStatus').textContent = isMyTurn ? "IT'S YOUR TURN!" : `Waiting for ${state.currentTurn.substring(0,10)}...`;
 
             alphabet.forEach(letter => {
@@ -641,12 +663,12 @@
             const playersPanel = document.getElementById('gamePlayers');
             playersPanel.innerHTML = acceptedPlayers.map(p => {
                 const display = p.username.length > 10 ? p.username.substring(0,10)+'...' : p.username;
-                const isHost = p.username === session.host;
+                const isPHost = p.username.toLowerCase() === session.host.toLowerCase();
                 return `
                     <div class="player-chip ${p.username === state.currentTurn ? 'active-turn' : ''}" title="${p.username}">
                         <div style="width:8px; height:8px; background:#28a745; border-radius:50%;"></div>
                         <strong>${display}</strong>
-                        ${isHost ? '<span style="font-size:0.65em; background:#1e3c72; color:white; padding:1px 5px; border-radius:4px; margin-left:5px;">HOST</span>' : ''}
+                        ${isPHost ? '<span style="font-size:0.65em; background:#1e3c72; color:white; padding:1px 5px; border-radius:4px; margin-left:5px;">HOST</span>' : ''}
                     </div>
                 `;
             }).join('');
@@ -655,41 +677,29 @@
         async function startGame() {
             const word = document.getElementById('secretWordInput').value.trim().toUpperCase();
             if (!word || word.length < 3) { alert("Please enter a valid word (3+ letters)."); return; }
-
             const allowNumbers = document.getElementById('allowNumbersToggle').checked;
-            // If numbers not allowed but used in word, alert and stop
             if (!allowNumbers && /[0-9]/.test(word)) {
-                alert("Numbers are not allowed in the secret word when 'Allow Numbers' is turned off. Please remove them or turn on the toggle.");
+                alert("Numbers are not allowed in the secret word when 'Allow Numbers' is turned off.");
                 return;
             }
-
             const activePlayers = session.players.filter(p => p.status === 'accepted');
-            const guestPlayers = activePlayers.filter(p => p.username !== session.host);
+            const guestPlayers = activePlayers.filter(p => p.username.toLowerCase() !== session.host.toLowerCase());
             const firstTurn = guestPlayers.length > 0 ? guestPlayers[0].username : session.host;
-
             const initialState = {
-                word: word,
-                guessedLetters: [],
-                wrongGuesses: 0,
-                currentTurn: firstTurn,
-                playersOrder: activePlayers.map(p => p.username),
-                allowNumbers: allowNumbers,
-                restarting: false,
-                cluesRequestedBy: [],
-                clueStack: [] // Unified array for both requests and clues
+                word: word, guessedLetters: [], wrongGuesses: 0,
+                currentTurn: firstTurn, playersOrder: activePlayers.map(p => p.username),
+                allowNumbers: allowNumbers, restarting: false, cluesRequestedBy: [], clueStack: []
             };
             await updateServerState(initialState, 'active');
         }
 
         async function requestClue() {
-            const state = session.state;
+            const state = JSON.parse(JSON.stringify(session.state));
             if (!state.cluesRequestedBy) state.cluesRequestedBy = [];
             if (state.cluesRequestedBy.includes(username)) return;
-            
             state.cluesRequestedBy.push(username);
             if (!state.clueStack) state.clueStack = [];
             state.clueStack.push({ type: 'request', user: username });
-            
             await updateServerState(state);
         }
 
@@ -697,54 +707,50 @@
             const input = document.getElementById('clueInput');
             const clue = input.value.trim();
             if (!clue) return;
-
-            const state = session.state;
+            const state = JSON.parse(JSON.stringify(session.state));
             if (!state.clueStack) state.clueStack = [];
             state.clueStack.push({ type: 'clue', text: clue });
             input.value = '';
             await updateServerState(state);
         }
 
-        function showPeek() {
-            if (session && session.state && session.host === username) {
-                const peekDisplay = document.getElementById('peekDisplay');
-                peekDisplay.textContent = session.state.word;
-                peekDisplay.style.display = 'block';
-            }
-        }
-
-        function hidePeek() {
-            const peekDisplay = document.getElementById('peekDisplay');
-            if (peekDisplay) {
-                peekDisplay.style.display = 'none';
-                peekDisplay.textContent = '';
-            }
-        }
-
         async function makeGuess(letter) {
-            if (session.state.currentTurn !== username) return;
-            const state = session.state;
+            if (!session || !session.state || (session.state.currentTurn && session.state.currentTurn.toLowerCase() !== username.toLowerCase()) || isUpdating) return;
+            const state = JSON.parse(JSON.stringify(session.state));
             if (state.guessedLetters.includes(letter)) return;
             
+            isUpdating = true;
             state.guessedLetters.push(letter);
-            if (!state.word.includes(letter)) state.wrongGuesses++;
+            let isCorrect = state.word.includes(letter);
+            if (!isCorrect) state.wrongGuesses++;
 
             const isWon = state.word.split('').every(char => char === ' ' || state.guessedLetters.includes(char));
             const isLost = state.wrongGuesses >= 6;
 
-            // Trigger UI update immediately so the last part starts animating
+            session.state = state;
             updateUI();
 
-            if (isWon || isLost) {
-                if (isWon) state.winner = username; // Track who made the final winning guess
-                await updateServerState(state, 'finished');
-            } else {
-                const players = state.playersOrder;
-                let nextIdx = (players.indexOf(username) + 1) % players.length;
-                if (players.length > 1 && players[nextIdx] === session.host) nextIdx = (nextIdx + 1) % players.length;
-                state.currentTurn = players[nextIdx];
-                await updateServerState(state);
-            }
+            try {
+                if (isWon || isLost) {
+                    if (isWon) state.winner = username;
+                    await updateServerState(state, 'finished');
+                } else {
+                    if (!isCorrect) {
+                        const players = state.playersOrder;
+                        let currentIdx = players.findIndex(u => u.toLowerCase() === username.toLowerCase());
+                        if (currentIdx === -1) currentIdx = 0; // Fallback
+                        let nextIdx = (currentIdx + 1) % players.length;
+                        
+                        // Skip host if more than 1 player
+                        if (players.length > 1 && players[nextIdx].toLowerCase() === session.host.toLowerCase()) {
+                            nextIdx = (nextIdx + 1) % players.length;
+                        }
+                        state.currentTurn = players[nextIdx];
+                    }
+                    await updateServerState(state);
+                }
+            } catch (e) { console.error("Guess failed:", e); }
+            finally { setTimeout(() => { isUpdating = false; }, 500); }
         }
 
         async function updateServerState(state, status = null) {
@@ -754,13 +760,7 @@
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ session_id: sessionId, state: state, status: status || session.status })
                 });
-                await fetchSession();
-            } catch (e) {}
-        }
-
-        function copyShareLink() {
-            const url = document.getElementById('shareUrl').textContent;
-            navigator.clipboard.writeText(url).then(() => alert("Link copied!"));
+            } catch (e) { console.error(e); }
         }
 
         async function resetGame() {
@@ -768,14 +768,8 @@
                 await fetch('/api/games/update', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        session_id: sessionId,
-                        state: { restarting: true }, // Signal to others
-                        status: 'pending',
-                        new_host: username // Whoever clicks Play Again becomes the host
-                    })
+                    body: JSON.stringify({ session_id: sessionId, state: { restarting: true }, status: 'pending', new_host: username })
                 });
-                document.getElementById('gameOverlay').style.display = 'none';
                 document.getElementById('secretWordInput').value = '';
                 await fetchSession();
             } catch (e) { console.error(e); }
@@ -799,23 +793,19 @@
             const state = session.state;
             const isWon = state.word.split('').every(char => char === ' ' || state.guessedLetters.includes(char));
             const isLost = state.wrongGuesses >= 6;
-
-            // If lost, wait for the final animation to complete before showing overlay
             const delay = isLost ? 1000 : 0;
 
             setTimeout(() => {
                 const overlay = document.getElementById('gameOverlay');
                 overlay.style.display = 'flex';
-                
-                const isHost = session.host === username;
-                const isMeWinner = username === state.winner;
+                const isHost = session.host && username && session.host.toLowerCase() === username.toLowerCase();
+                const isMeWinner = state.winner && username && state.winner.toLowerCase() === username.toLowerCase();
 
                 if (isWon) {
                     document.getElementById('overlayTitle').textContent = "WORD GUESSED!";
                     document.getElementById('overlayTitle').style.color = "#28a745";
                     if (isMeWinner) triggerCelebration();
                 } else {
-                    // Lost (HUNG)
                     if (isHost) {
                         document.getElementById('overlayTitle').textContent = "YOU WIN!";
                         document.getElementById('overlayTitle').style.color = "#28a745";
@@ -827,38 +817,26 @@
                 
                 const displayWinner = state.winner ? (state.winner.length > 10 ? state.winner.substring(0,10)+'...' : state.winner) : '';
                 const winnerText = isWon ? `Winner: <strong>${displayWinner}</strong>` : 'Host remains the same.';
-                const nextStepText = isWon ? `Others are waiting for you to start a new game as the new host` : `Waiting for <strong>${session.host.length > 10 ? session.host.substring(0,10)+'...' : session.host}</strong> to try again...`;
+                const nextStepText = isWon ? (isMeWinner ? `Others are waiting for you to start a new game as the new host` : `Waiting for <strong>${displayWinner}</strong> to start a new game...`) : `Waiting for <strong>${session.host.length > 10 ? session.host.substring(0,10)+'...' : session.host}</strong> to try again...`;
 
-                document.getElementById('overlayMessage').innerHTML = `
-                    The word was <strong>${state.word}</strong>.<br><br>
-                    ${winnerText}<br>
-                    <span style="font-size:0.85em; color:#666;">${nextStepText}</span>
-                `;
+                document.getElementById('overlayMessage').innerHTML = `The word was <strong>${state.word}</strong>.<br><br>${winnerText}<br><span style=\"font-size:0.85em; color:#666;\">${nextStepText}</span>`;
                 
-                // Logic for who can click "Play Again":
                 const playAgainBtn = document.getElementById('playAgainBtn');
                 if (isWon) {
-                    playAgainBtn.style.display = (username === state.winner) ? 'block' : 'none';
+                    playAgainBtn.style.display = isMeWinner ? 'block' : 'none';
                     playAgainBtn.textContent = "🎮 Start New Game 🎮";
                 } else {
-                    playAgainBtn.style.display = (username === session.host) ? 'block' : 'none';
+                    playAgainBtn.style.display = isHost ? 'block' : 'none';
                     playAgainBtn.textContent = "🎮 Play Again (Same Host)";
                 }
             }, delay);
         }
 
-        // Physical Keyboard Support
         window.addEventListener('keydown', (e) => {
-            if (session && session.status === 'active' && session.state && session.state.currentTurn === username) {
+            if (session && session.status === 'active' && session.state && session.state.currentTurn && session.state.currentTurn.toLowerCase() === username.toLowerCase()) {
                 const key = e.key.toUpperCase();
                 const allowedRegex = session.state.allowNumbers ? /^[A-Z0-9]$/ : /^[A-Z]$/;
-                
-                if (allowedRegex.test(key)) {
-                    // Check if already guessed
-                    if (!session.state.guessedLetters.includes(key)) {
-                        makeGuess(key);
-                    }
-                }
+                if (allowedRegex.test(key) && !session.state.guessedLetters.includes(key)) { makeGuess(key); }
             }
         });
 
