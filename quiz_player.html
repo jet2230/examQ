@@ -214,7 +214,23 @@
                 <h2>Quiz Complete!</h2>
                 <div class="score-value" id="scoreDisplay">0 / 0</div>
                 <p id="feedbackText" style="font-size: 1.2em; color: #555;"></p>
-                <button class="btn-submit" style="background: #1e3c72;" onclick="window.location.href='/results'">View History</button>
+                <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px; position: relative;">
+                    <button class="btn-submit" style="background: #1e3c72; width: auto; margin: 0;" onclick="window.location.href='/results'">View History</button>
+                    
+                    <div style="position: relative;">
+                        <button class="btn-submit" style="background: #28a745; width: auto; margin: 0;" onclick="toggleShare(event)">🔗 Share Results</button>
+                        
+                        <div id="sharePanel" class="share-panel" style="display:none; padding:15px; background:white; border-radius:12px; border:1px solid #ddd; position:absolute; left:50%; bottom:60px; transform:translateX(-50%); z-index:1001; box-shadow:0 10px 30px rgba(0,0,0,0.15); width:220px; text-align:left;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:5px;">
+                                <label style="font-size:0.85em; font-weight:700; color:#1e3c72;">Share With:</label>
+                                <span onclick="toggleShare(event)" style="cursor:pointer; font-size:1.2em; color:#999;">&times;</span>
+                            </div>
+                            <div id="shareUserList" style="max-height:200px; overflow-y:auto; display:flex; flex-direction:column; gap:5px; margin-bottom:5px;">
+                                <div style="font-size:0.8em; color:#888; text-align:center; padding:10px;">Loading users...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -270,7 +286,26 @@
                 const data = await res.json();
                 if (data.success) {
                     quizData = data.quiz;
-                    currentQuestions = quizData.questions || [];
+                    let rawQuestions = quizData.questions || [];
+                    
+                    // Normalize questions structure (AI sometimes produces different formats)
+                    currentQuestions = rawQuestions.map(q => {
+                        let normalized = { ...q };
+                        
+                        // Handle 'options' being an object {"A": "...", "B": "..."} instead of an array
+                        if (normalized.options && !Array.isArray(normalized.options) && typeof normalized.options === 'object') {
+                            const sortedKeys = Object.keys(normalized.options).sort();
+                            normalized.options = sortedKeys.map(key => normalized.options[key]);
+                        }
+                        
+                        // Handle 'correct' key instead of 'answer'
+                        if (normalized.correct && !normalized.answer) {
+                            normalized.answer = normalized.correct;
+                        }
+                        
+                        return normalized;
+                    });
+
                     if (currentQuestions.length === 0) {
                         showLineAlert("This quiz has no questions.", "error");
                     } else {
@@ -576,18 +611,114 @@
             document.getElementById('feedbackText').textContent = msg;
             const username = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
             try {
-                await fetch('/api/submit-quiz', {
+                const res = await fetch('/api/submit-quiz', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
-                        username, topic: quizData.topic, score: `${score} / ${total}`,
+                        username, quiz_id: quizId, topic: quizData.topic, score: `${score} / ${total}`,
                         percentage: `${pct}%`, questions: currentQuestions.map((q, idx) => ({ ...q, user_answer: userAnswers[idx], is_correct: userAnswers[idx] === q.answer }))
                     })
                 });
-                showLineAlert("Results saved!", "success");
+                const data = await res.json();
+                if (data.success) {
+                    window.currentResultId = data.result_id;
+                    showLineAlert("Results saved!", "success");
+                }
             } catch (e) { console.error("Failed to save results", e); }
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
+        async function toggleShare(event) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            const panel = document.getElementById('sharePanel');
+            const listContainer = document.getElementById('shareUserList');
+            const isOpening = panel.style.display === 'none';
+            
+            if (isOpening) {
+                panel.style.display = 'block';
+                try {
+                    const res = await fetch('/api/users/all');
+                    const data = await res.json();
+                    if (data.success) {
+                        const username = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
+                        const users = data.users
+                            .filter(u => u.username !== username)
+                            .sort((a, b) => {
+                                if (a.is_online === b.is_online) return a.username.localeCompare(b.username);
+                                return a.is_online ? -1 : 1;
+                            });
+                        
+                        if (users.length === 0) {
+                            listContainer.innerHTML = '<div style="font-size:0.8em; color:#888; text-align:center; padding:10px;">No other users found.</div>';
+                        } else {
+                            listContainer.innerHTML = users.map(u => {
+                                const display = u.username.length > 10 ? u.username.substring(0, 10) + '...' : u.username;
+                                const statusDot = u.is_online ? 
+                                    '<div style="width:8px; height:8px; background:#28a745; border-radius:50%; box-shadow:0 0 4px #28a745; margin-right:8px;"></div>' :
+                                    '<div style="width:8px; height:8px; background:#ccc; border-radius:50%; margin-right:8px;"></div>';
+                                
+                                return `
+                                    <button onclick="doShare('${u.username}')" class="share-user-btn" style="text-align:left; padding:8px 12px; border:1px solid #eee; border-radius:8px; background:#f9f9f9; cursor:pointer; font-size:0.85em; transition:all 0.2s; display:flex; align-items:center; width:100%; margin-bottom:5px;">
+                                        ${statusDot}
+                                        <span title="${u.username}" style="font-weight:600; color:${u.is_online ? '#28a745' : '#333'}; flex:1;">${display}</span>
+                                        ${u.role === 'admin' ? '<span style="font-size:0.6em; background:#d63384; color:white; padding:1px 4px; border-radius:3px; margin-left:5px;">ADMIN</span>' : ''}
+                                    </button>
+                                `;
+                            }).join('');
+                            
+                            if (!document.getElementById('shareBtnStyles')) {
+                                const style = document.createElement('style');
+                                style.id = 'shareBtnStyles';
+                                style.textContent = '.share-user-btn:hover { background: #e3f2fd !important; border-color: #1e3c72 !important; color: #1e3c72 !important; }';
+                                document.head.appendChild(style);
+                            }
+                        }
+                    }
+                } catch (e) { console.error("Failed to load users", e); }
+            } else {
+                panel.style.display = 'none';
+            }
+        }
+
+        async function doShare(recipient) {
+            const sender = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
+            const scoreText = document.getElementById('scoreDisplay').textContent;
+            const topic = quizData.topic;
+            
+            // Construct the review URL using the saved result ID
+            let shareLink = `${window.location.origin}/quiz_review.html?id=${window.currentResultId}`;
+            if (!window.currentResultId) {
+                // Fallback to quiz link if result ID isn't available for some reason
+                shareLink = `${window.location.origin}/quiz_${quizId}.html (Attempt finished)`;
+            }
+            
+            const message = `I just finished the quiz: ${topic}!\nScore: ${scoreText}\nReview my attempt here: ${shareLink}`;
+
+            try {
+                const res = await fetch('/api/messages/send', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ sender, recipient, message })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showLineAlert("Results shared with " + recipient, "success");
+                    document.getElementById('sharePanel').style.display = 'none';
+                }
+            } catch (e) { console.error("Share error:", e); }
+        }
+
+        window.addEventListener('click', (e) => {
+            const panel = document.getElementById('sharePanel');
+            if (panel && panel.style.display === 'block') {
+                if (!e.target.closest('#sharePanel') && !e.target.closest('[onclick^="toggleShare"]')) {
+                    panel.style.display = 'none';
+                }
+            }
+        });
+
         init();
     </script>
 </body>

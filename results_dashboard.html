@@ -304,7 +304,7 @@
             const filtered = allResults.filter(r => {
                 const pct = Math.round((r.score / r.total_marks) * 100) || 0;
                 if (topicQuery && !r.topic.toLowerCase().includes(topicQuery)) return false;
-                if (isAdmin && studentQuery && !r.username.toLowerCase().includes(studentQuery)) return false;
+                if (studentQuery && !r.username.toLowerCase().includes(studentQuery)) return false;
                 if (pct < minScorePct) return false;
                 return true;
             });
@@ -314,11 +314,11 @@
             document.getElementById('totalQuizzes').textContent = filtered.length;
             document.getElementById('avgScore').textContent = filtered.length > 0 ? Math.round(totalPct / filtered.length) + '%' : '0%';
             
-            if (filtered.length > 0 && isAdmin) {
+            if (filtered.length > 0) {
                 const topUser = filtered[0].username; // Most recent student in current filter
                 document.getElementById('topTopic').textContent = topUser.length > 6 ? topUser.substring(0,6)+'...' : topUser;
                 document.getElementById('topTopic').title = topUser;
-            } else if (!isAdmin) {
+            } else {
                 document.getElementById('topTopic').textContent = '-';
             }
 
@@ -352,7 +352,23 @@
                     ${studentTd}
                     <td><strong>${r.topic}</strong></td>
                     <td><span class="score-badge ${badgeClass}">${r.score} / ${r.total_marks} (${pct}%)</span></td>
-                    <td><button class="btn-view" onclick="openReview(${originalIdx})">Review</button></td>
+                    <td style="display: flex; gap: 10px; align-items: center; justify-content: center;">
+                        <button class="btn-view" onclick="openReview(${originalIdx})">Review</button>
+                        
+                        <div style="position: relative; display: inline-block;">
+                            <button onclick="toggleShare(event, ${originalIdx})" style="background:none; border:1px solid #ddd; border-radius:6px; color:#1e3c72; cursor:pointer; font-size:1.1em; padding:6px 10px;" title="Share Review">🔗</button>
+                            
+                            <div id="share_panel_${originalIdx}" class="share-panel" style="display:none; padding:15px; background:white; border-radius:12px; border:1px solid #ddd; position:absolute; right:40px; top:50%; transform:translateY(-50%); z-index:1001; box-shadow:0 10px 30px rgba(0,0,0,0.15); width:220px; text-align:left;">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:5px;">
+                                    <label style="font-size:0.85em; font-weight:700; color:#1e3c72;">Share Result:</label>
+                                    <span onclick="toggleShare(event, ${originalIdx})" style="cursor:pointer; font-size:1.2em; color:#999;">&times;</span>
+                                </div>
+                                <div id="share_user_list_${originalIdx}" style="max-height:200px; overflow-y:auto; display:flex; flex-direction:column; gap:5px; margin-bottom:5px;">
+                                    <div style="font-size:0.8em; color:#888; text-align:center; padding:10px;">Loading users...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
                 `;
                 table.appendChild(tr);
             });
@@ -383,13 +399,81 @@
             const modal = document.getElementById('reviewModal');
             const body = document.getElementById('modalBody');
             document.getElementById('modalTitle').textContent = `${r.username} - ${r.topic}`;
-            body.innerHTML = '';
+            
+            let displayScore = String(r.score);
+            if (r.total_marks && !displayScore.includes('/')) {
+                displayScore = `${r.score} / ${r.total_marks}`;
+            }
+
+            body.innerHTML = `<div style="text-align:center; margin-bottom:25px; padding:15px; background:var(--main-gradient); color:white; border-radius:12px; box-shadow:0 4px 15px rgba(30,60,114,0.2);">
+                <div style="font-size:0.9em; opacity:0.9; text-transform:uppercase; font-weight:700; letter-spacing:1px;">Final Score</div>
+                <div style="font-size:2.5em; font-weight:800;">${displayScore}</div>
+            </div>`;
             
             if (Array.isArray(r.answers)) {
                 r.answers.forEach(ans => {
+                    // Normalize the answer object
+                    let normalizedAns = { ...ans };
+                    if (normalizedAns.options && !Array.isArray(normalizedAns.options) && typeof normalizedAns.options === 'object') {
+                        const sortedKeys = Object.keys(normalizedAns.options).sort();
+                        normalizedAns.options = sortedKeys.map(key => normalizedAns.options[key]);
+                    }
+                    if (normalizedAns.correct && !normalizedAns.answer) {
+                        normalizedAns.answer = normalizedAns.correct;
+                    }
+
                     const card = document.createElement('div');
-                    card.className = 'review-q-card ' + (ans.is_correct === false ? 'wrong' : 'correct');
-                    card.innerHTML = `<div class="q-text">Q: ${ans.question || ans.sub_id}</div><div class="ans-text">Answer: ${ans.user_answer || ans.answer || '(empty)'}</div><div class="fb-text">${ans.feedback || 'No feedback.'}</div>`;
+                    card.className = 'review-q-card ' + (normalizedAns.is_correct ? 'correct' : 'wrong');
+                    
+                    const isCorrect = normalizedAns.is_correct;
+                    const userAnsLetter = normalizedAns.user_answer;
+                    const correctAnsLetter = normalizedAns.answer;
+                    
+                    let optionsHtml = '';
+                    if (normalizedAns.options && Array.isArray(normalizedAns.options)) {
+                        optionsHtml = `<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:15px 0;">`;
+                        normalizedAns.options.forEach((opt, i) => {
+                            const label = String.fromCharCode(65 + i);
+                            const isUserChoice = userAnsLetter === label;
+                            const isCorrectChoice = correctAnsLetter === label;
+                            
+                            let border = '1px solid #eee';
+                            let bg = 'white';
+                            let color = '#333';
+                            let icon = '';
+
+                            if (isUserChoice && isCorrectChoice) {
+                                border = '2px solid #28a745';
+                                bg = '#f0fff4';
+                                icon = ' ✓';
+                            } else if (isUserChoice && !isCorrectChoice) {
+                                border = '2px solid #dc3545';
+                                bg = '#fff5f5';
+                                icon = ' ✗';
+                            } else if (isCorrectChoice) {
+                                border = '2px solid #28a745';
+                                bg = '#f0fff4';
+                                icon = ' (Correct)';
+                            }
+
+                            optionsHtml += `
+                                <div style="padding:10px; border:${border}; border-radius:8px; background:${bg}; color:${color}; font-size:0.85em; display:flex; align-items:center;">
+                                    <strong style="margin-right:8px; color:#1e3c72;">${label}.</strong>
+                                    <span style="flex:1;">${opt}</span>
+                                    <span style="font-weight:bold; margin-left:5px;">${icon}</span>
+                                </div>
+                            `;
+                        });
+                        optionsHtml += `</div>`;
+                    }
+                    
+                    let feedbackHtml = normalizedAns.feedback ? `<div class="fb-text" style="margin-top:10px;">${normalizedAns.feedback}</div>` : '';
+                    
+                    card.innerHTML = `
+                        <div class="q-text" style="font-size:1.1em; color:#1e3c72;">Q: ${normalizedAns.question || 'Question'}</div>
+                        ${optionsHtml}
+                        ${feedbackHtml}
+                    `;
                     body.appendChild(card);
                 });
             } else {
@@ -406,6 +490,131 @@
 
         function closeModal() { document.getElementById('reviewModal').style.display = 'none'; }
         window.onclick = (e) => { if (e.target == document.getElementById('reviewModal')) closeModal(); };
+        async function toggleShare(event, resultIdx) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            const panel = document.getElementById(`share_panel_${resultIdx}`);
+            const listContainer = document.getElementById(`share_user_list_${resultIdx}`);
+            const isOpening = panel.style.display === 'none';
+            
+            // Close all other panels first
+            document.querySelectorAll('.share-panel').forEach(p => p.style.display = 'none');
+
+            if (isOpening) {
+                panel.style.display = 'block';
+                
+                // Dynamic Positioning to prevent clipping
+                const rect = panel.getBoundingClientRect();
+                if (rect.bottom > window.innerHeight) {
+                    panel.style.top = 'auto';
+                    panel.style.bottom = '0';
+                    panel.style.transform = 'none';
+                } else if (rect.top < 0) {
+                    panel.style.top = '0';
+                    panel.style.transform = 'none';
+                } else {
+                    panel.style.top = '50%';
+                    panel.style.transform = 'translateY(-50%)';
+                }
+
+                try {
+                    const res = await fetch('/api/users/all');
+                    const data = await res.json();
+                    if (data.success) {
+                        const currentUser = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
+                        const users = data.users
+                            .filter(u => u.username !== currentUser)
+                            .sort((a, b) => {
+                                if (a.is_online === b.is_online) return a.username.localeCompare(b.username);
+                                return a.is_online ? -1 : 1;
+                            });
+                        
+                        if (users.length === 0) {
+                            listContainer.innerHTML = '<div style="font-size:0.8em; color:#888; text-align:center; padding:10px;">No other users found.</div>';
+                        } else {
+                            listContainer.innerHTML = users.map(u => {
+                                const display = u.username.length > 10 ? u.username.substring(0, 10) + '...' : u.username;
+                                const statusDot = u.is_online ? 
+                                    '<div style="width:8px; height:8px; background:#28a745; border-radius:50%; box-shadow:0 0 4px #28a745; margin-right:8px;"></div>' :
+                                    '<div style="width:8px; height:8px; background:#ccc; border-radius:50%; margin-right:8px;"></div>';
+                                
+                                return `
+                                    <button onclick="shareResult(${resultIdx}, '${u.username}')" class="share-user-btn" style="text-align:left; padding:8px 12px; border:1px solid #eee; border-radius:8px; background:#f9f9f9; cursor:pointer; font-size:0.85em; transition:all 0.2s; display:flex; align-items:center; width:100%; margin-bottom:5px;">
+                                        ${statusDot}
+                                        <span title="${u.username}" style="font-weight:600; color:${u.is_online ? '#28a745' : '#333'}; flex:1;">${display}</span>
+                                        ${u.role === 'admin' ? '<span style="font-size:0.6em; background:#d63384; color:white; padding:1px 4px; border-radius:3px; margin-left:5px;">ADMIN</span>' : ''}
+                                    </button>
+                                `;
+                            }).join('');
+                            
+                            if (!document.getElementById('shareBtnStyles')) {
+                                const style = document.createElement('style');
+                                style.id = 'shareBtnStyles';
+                                style.textContent = '.share-user-btn:hover { background: #e3f2fd !important; border-color: #1e3c72 !important; color: #1e3c72 !important; }';
+                                document.head.appendChild(style);
+                            }
+                        }
+                    }
+                } catch (e) { console.error("Failed to load users for sharing", e); }
+            } else {
+                panel.style.display = 'none';
+            }
+        }
+
+        async function shareResult(resultIdx, recipient) {
+            const sender = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
+            const r = allResults[resultIdx];
+            if (!recipient || !r) return;
+
+            const paperId = r.quiz_data ? r.quiz_data.paper_id : null;
+            let shareLink = '';
+            
+            if (paperId) {
+                shareLink = `${window.location.origin}/official_exam_player.html?paper_id=${paperId}&mode=review&student=${r.username}`;
+            } else {
+                // For AI quizzes, use the standalone review page
+                shareLink = `${window.location.origin}/quiz_review.html?id=${r.id}`;
+            }
+
+            const message = `Check out my result for ${r.topic}!\nScore: ${r.score} / ${r.total_marks}\nReview Link: ${shareLink}`;
+
+            try {
+                const res = await fetch('/api/messages/send', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ sender, recipient, message })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showLineAlert("Result shared with " + recipient, "success");
+                    document.getElementById(`share_panel_${resultIdx}`).style.display = 'none';
+                }
+            } catch (e) { console.error("Share error:", e); }
+        }
+
+        function showLineAlert(msg, type='info') {
+            const alertDiv = document.createElement('div');
+            alertDiv.style.position = 'fixed'; alertDiv.style.top = '20px'; alertDiv.style.left = '50%';
+            alertDiv.style.transform = 'translateX(-50%)'; alertDiv.style.padding = '12px 25px';
+            alertDiv.style.borderRadius = '8px'; alertDiv.style.color = 'white'; alertDiv.style.fontWeight = '700';
+            alertDiv.style.zIndex = '9999'; alertDiv.style.boxShadow = '0 5px 15px rgba(0,0,0,0.3)';
+            alertDiv.style.transition = 'all 0.3s';
+            if (type === 'error') alertDiv.style.background = '#dc3545';
+            else if (type === 'success') alertDiv.style.background = '#28a745';
+            else alertDiv.style.background = '#1e3c72';
+            alertDiv.textContent = msg;
+            document.body.appendChild(alertDiv);
+            setTimeout(() => { alertDiv.style.opacity = '0'; setTimeout(() => alertDiv.remove(), 300); }, 3000);
+        }
+
+        window.addEventListener('click', (e) => {
+            if (!e.target.closest('.share-panel') && !e.target.closest('[onclick^="toggleShare"]')) {
+                document.querySelectorAll('.share-panel').forEach(p => p.style.display = 'none');
+            }
+        });
+
         loadResults();
     </script>
 </body>

@@ -466,11 +466,20 @@ def save_quiz():
 
 @app.route('/api/all-quizzes')
 def get_all_quizzes():
-    """Get list of all saved quizzes"""
+    """Get list of all saved quizzes with their attempt counts"""
     try:
         conn = get_db()
         cursor = conn.cursor()
-        cursor.execute("SELECT id, topic, created_by, created_at FROM saved_quizzes ORDER BY created_at DESC")
+        # Count by quiz_id OR matching topic for older results
+        cursor.execute("""
+            SELECT q.id, q.topic, q.created_by, q.created_at,
+            (SELECT COUNT(*) FROM quiz_results r WHERE 
+                r.quiz_data_json LIKE '%"id": ' || q.id || ',%' OR
+                r.quiz_data_json LIKE '%"topic": "' || q.topic || '"%'
+            ) as taken_count
+            FROM saved_quizzes q
+            ORDER BY q.created_at DESC
+        """)
         rows = cursor.fetchall()
         quizzes = [dict(r) for r in rows]
         conn.close()
@@ -585,6 +594,7 @@ def submit_quiz():
     try:
         data = request.json
         username = data.get('username')
+        quiz_id = data.get('quiz_id')
         topic = data.get('topic')
         score_str = data.get('score') # Format: "X / Y"
         percentage = data.get('percentage')
@@ -601,6 +611,7 @@ def submit_quiz():
 
         # Construct quiz_data_json to match results dashboard expectation
         quiz_data = {
+            'id': quiz_id,
             'topic': topic,
             'questions': questions_results
         }
@@ -611,11 +622,16 @@ def submit_quiz():
             "INSERT INTO quiz_results (username, quiz_data_json, answers_json, score, total_marks) VALUES (?, ?, ?, ?, ?)",
             (username, json.dumps(quiz_data), json.dumps(questions_results), score, total)
         )
+        result_id = cursor.lastrowid
         conn.commit()
         conn.close()
-        return jsonify({'success': True}), 201
+        return jsonify({'success': True, 'result_id': result_id}), 201
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/quiz_review.html')
+def quiz_review_page():
+    return send_from_directory('.', 'quiz_review.html')
 
 @app.route('/api/quiz-results/save', methods=['POST'])
 def save_quiz_results():
@@ -1050,12 +1066,35 @@ def get_result_detail():
         })
     return jsonify({'success': False, 'message': 'Result not found'}), 404
 
+@app.route('/api/results/id/<int:result_id>')
+def get_result_by_id(result_id):
+    try:
+        conn = get_db(); cursor = conn.cursor()
+        cursor.execute("SELECT * FROM quiz_results WHERE id = ?", (result_id,))
+        row = cursor.fetchone(); conn.close()
+        if row:
+            quiz_data = json.loads(row['quiz_data_json'])
+            topic = quiz_data.get('topic') or quiz_data.get('title') or 'Quiz'
+            return jsonify({
+                'success': True,
+                'result': {
+                    'id': row['id'],
+                    'username': row['username'],
+                    'topic': topic,
+                    'score': row['score'],
+                    'total_marks': row['total_marks'],
+                    'timestamp': row['timestamp'],
+                    'answers': json.loads(row['answers_json']) if row['answers_json'] else [],
+                    'quiz_data': quiz_data
+                }
+            }), 200
+        return jsonify({'success': False, 'message': 'Result not found'}), 404
+    except Exception as e: return jsonify({'error': str(e)}), 500
+
 @app.route('/api/results')
 def get_results_api():
-    u = request.args.get('username'); conn = get_db(); cursor = conn.cursor()
-    users = load_users(); is_admin = u in users and users[u].get('role') == 'admin'
-    if is_admin: cursor.execute("SELECT * FROM quiz_results ORDER BY timestamp DESC")
-    else: cursor.execute("SELECT * FROM quiz_results WHERE username = ? ORDER BY timestamp DESC", (u,))
+    conn = get_db(); cursor = conn.cursor()
+    cursor.execute("SELECT * FROM quiz_results ORDER BY timestamp DESC")
     rows = cursor.fetchall(); results = []
     for row in rows:
         try:

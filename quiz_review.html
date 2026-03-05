@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ExamQ - Quiz Review</title>
+    <script src="/static/theme_manager.js"></script>
+    <script src="/static/online_status.js"></script>
+    <style>
+        :root {
+            --primary-color: #1e3c72;
+            --secondary-color: #2a5298;
+            --main-gradient: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--main-gradient);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            overflow: hidden;
+        }
+        .navbar {
+            padding: 15px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+            background: white;
+        }
+        .nav-brand { font-weight: 800; color: var(--primary-color); font-size: 1.2em; }
+        .nav-links a { text-decoration: none; color: var(--primary-color); font-weight: 600; margin-left: 20px; }
+        
+        .content { padding: 40px; }
+        .header-section { text-align: center; margin-bottom: 30px; }
+        .topic-title { color: var(--primary-color); font-size: 2em; margin-bottom: 10px; }
+        .meta-info { color: #666; font-size: 1.1em; margin-bottom: 20px; }
+        
+        .score-banner {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: var(--main-gradient);
+            color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(30,60,114,0.2);
+        }
+        .score-label { font-size: 1em; opacity: 0.9; text-transform: uppercase; font-weight: 700; letter-spacing: 1px; }
+        .score-value { font-size: 3em; font-weight: 800; }
+
+        .review-q-card { 
+            background: #f8f9fa; 
+            border-radius: 12px; 
+            padding: 25px; 
+            margin-bottom: 20px; 
+            border-left: 6px solid #ddd;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+        }
+        .review-q-card.correct { border-left-color: #28a745; }
+        .review-q-card.wrong { border-left-color: #dc3545; }
+        
+        .q-text { font-size: 1.2em; font-weight: 700; color: #1e3c72; margin-bottom: 15px; }
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 15px 0; }
+        .option-item {
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            border: 1px solid #eee;
+            background: white;
+        }
+        .fb-text { 
+            background: white; 
+            padding: 15px; 
+            border-radius: 8px; 
+            border: 1px solid #eee; 
+            font-size: 0.95em; 
+            white-space: pre-wrap;
+            margin-top: 15px;
+            line-height: 1.6;
+            color: #444;
+        }
+        
+        .btn-home {
+            display: block;
+            width: 200px;
+            margin: 40px auto 0;
+            padding: 15px;
+            background: var(--primary-color);
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: 700;
+            transition: transform 0.2s;
+        }
+        .btn-home:hover { transform: translateY(-2px); }
+
+        @media (max-width: 600px) {
+            .options-grid { grid-template-columns: 1fr; }
+            .content { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="navbar">
+            <div class="nav-brand">🎓 ExamQ Review</div>
+            <div class="nav-links">
+                <a href="/">🏠 Home</a>
+                <a href="/results">📊 All Results</a>
+            </div>
+        </div>
+
+        <div class="content">
+            <div id="loading" style="text-align:center; padding: 50px;">
+                <h2 style="color:var(--primary-color);">Loading review...</h2>
+            </div>
+
+            <div id="reviewContent" style="display:none;">
+                <div class="header-section">
+                    <h1 class="topic-title" id="topicTitle">Quiz Topic</h1>
+                    <p class="meta-info" id="metaInfo">Completed by User on Date</p>
+                </div>
+
+                <div class="score-banner">
+                    <div class="score-label">Final Result</div>
+                    <div class="score-value" id="scoreValue">0 / 0</div>
+                </div>
+
+                <div id="questionsContainer"></div>
+
+                <a href="/results" class="btn-home">Back to Results</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const resultId = urlParams.get('id');
+
+        async function init() {
+            if (!resultId) {
+                document.getElementById('loading').innerHTML = '<h2 style="color:#dc3545;">No result ID provided.</h2>';
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/results/id/${resultId}`);
+                const data = await res.json();
+                
+                if (data.success) {
+                    renderReview(data.result);
+                } else {
+                    document.getElementById('loading').innerHTML = `<h2 style="color:#dc3545;">${data.message || 'Result not found.'}</h2>`;
+                }
+            } catch (e) {
+                console.error(e);
+                document.getElementById('loading').innerHTML = '<h2 style="color:#dc3545;">Error loading review data.</h2>';
+            }
+        }
+
+        function renderReview(r) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('reviewContent').style.display = 'block';
+            
+            document.getElementById('topicTitle').textContent = r.topic;
+            const ts = new Date(r.timestamp);
+            const dateStr = ts.toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+            document.getElementById('metaInfo').textContent = `Completed by ${r.username} on ${dateStr}`;
+            
+            let displayScore = String(r.score);
+            if (r.total_marks && !displayScore.includes('/')) {
+                displayScore = `${r.score} / ${r.total_marks}`;
+            }
+            document.getElementById('scoreValue').textContent = displayScore;
+
+            const container = document.getElementById('questionsContainer');
+            container.innerHTML = '';
+
+            r.answers.forEach((ans, idx) => {
+                // Normalize
+                let normalized = { ...ans };
+                if (normalized.options && !Array.isArray(normalized.options) && typeof normalized.options === 'object') {
+                    const sortedKeys = Object.keys(normalized.options).sort();
+                    normalized.options = sortedKeys.map(key => normalized.options[key]);
+                }
+                if (normalized.correct && !normalized.answer) normalized.answer = normalized.correct;
+
+                const card = document.createElement('div');
+                card.className = 'review-q-card ' + (normalized.is_correct ? 'correct' : 'wrong');
+                
+                let optionsHtml = '';
+                if (normalized.options && Array.isArray(normalized.options)) {
+                    optionsHtml = '<div class="options-grid">';
+                    normalized.options.forEach((opt, i) => {
+                        const label = String.fromCharCode(65 + i);
+                        const isUserChoice = normalized.user_answer === label;
+                        const isCorrectChoice = normalized.answer === label;
+                        
+                        let style = '';
+                        let icon = '';
+                        if (isUserChoice && isCorrectChoice) {
+                            style = 'border: 2px solid #28a745; background: #f0fff4;';
+                            icon = ' ✓';
+                        } else if (isUserChoice && !isCorrectChoice) {
+                            style = 'border: 2px solid #dc3545; background: #fff5f5;';
+                            icon = ' ✗';
+                        } else if (isCorrectChoice) {
+                            style = 'border: 2px solid #28a745; background: #f0fff4;';
+                            icon = ' (Correct)';
+                        }
+
+                        optionsHtml += `
+                            <div class="option-item" style="${style}">
+                                <strong style="margin-right:8px; color:var(--primary-color);">${label}.</strong>
+                                <span style="flex:1;">${opt}</span>
+                                <span style="font-weight:bold; margin-left:5px;">${icon}</span>
+                            </div>
+                        `;
+                    });
+                    optionsHtml += '</div>';
+                }
+
+                card.innerHTML = `
+                    <div class="q-text">Q${idx+1}: ${normalized.question || 'Question'}</div>
+                    ${optionsHtml}
+                    ${normalized.feedback ? `<div class="fb-text">${normalized.feedback}</div>` : ''}
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        init();
+    </script>
+</body>
+</html>
