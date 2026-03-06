@@ -328,6 +328,28 @@ def apply_uno_move(state, action, username, params):
 
     new_state = json.loads(json.dumps(state)) # Deep copy
     
+    # Pre-action cleanup
+    if action in ['DRAW_CARD', 'PLAY_CARD', 'SELECT_COLOR'] and new_state.get('vulnerableWin'):
+        new_state['winner'] = new_state.get('lastFinisher')
+        new_state.pop('vulnerableWin', None)
+        new_state.pop('lastFinisher', None)
+    
+    if action == 'CALL_UNO':
+        if 'unoCalls' not in new_state: new_state['unoCalls'] = []
+        if username not in new_state['unoCalls']: new_state['unoCalls'].append(username)
+        return new_state, None
+
+    if action == 'DISPUTE':
+        if not new_state.get('vulnerableWin'): return state, "No vulnerable win"
+        target = new_state.get('lastFinisher')
+        for _ in range(2):
+            if not new_state['deck'] and len(new_state['discard']) > 1:
+                top_c = new_state['discard'].pop(); random.shuffle(new_state['discard'])
+                new_state['deck'] = new_state['discard']; new_state['discard'] = [top_c]
+            if new_state['deck']: new_state['hands'][target].append(new_state['deck'].pop())
+        new_state.pop('vulnerableWin', None); new_state.pop('lastFinisher', None)
+        return new_state, None
+
     if action == 'DRAW_CARD':
         if not new_state['deck']:
             if len(new_state['discard']) > 1:
@@ -340,6 +362,10 @@ def apply_uno_move(state, action, username, params):
         
         card = new_state['deck'].pop()
         new_state['hands'][username].append(card)
+        
+        # Reset UNO call if they have > 1 card
+        if 'unoCalls' in new_state and username in new_state['unoCalls']:
+            if len(new_state['hands'][username]) > 1: new_state['unoCalls'].remove(username)
         
         # Check if playable
         top = new_state['discard'][-1]
@@ -361,6 +387,18 @@ def apply_uno_move(state, action, username, params):
             
         card = new_state['hands'][username].pop(card_idx)
         new_state['discard'].append(card)
+        
+        # If they played their last card, check for UNO call
+        is_finished = len(new_state['hands'][username]) == 0
+        has_called = 'unoCalls' in new_state and username in new_state['unoCalls']
+        
+        if is_finished:
+            if has_called:
+                new_state['winner'] = username
+                return new_state, None
+            else:
+                new_state['vulnerableWin'] = True
+                new_state['lastFinisher'] = username
         
         if card['color'] != 'black':
             new_state['currentColor'] = card['color']
@@ -423,8 +461,12 @@ def apply_uno_move(state, action, username, params):
             
         # Check for win (just in case)
         if len(new_state['hands'][username]) == 0:
-            new_state['winner'] = username
-            return new_state, None
+            if 'unoCalls' in new_state and username in new_state['unoCalls']:
+                new_state['winner'] = username
+                return new_state, None
+            else:
+                new_state['vulnerableWin'] = True
+                new_state['lastFinisher'] = username
 
         # Advance turn
         t_idx = (curr_idx + new_state['direction'] + len(order)) % len(order)
@@ -557,6 +599,7 @@ Respond ONLY with a JSON object in this format: {"word": "YOUR CHOICE"}"""
                     'turnStartedAt': int(datetime.now().timestamp() * 1000), 'updatedAt': int(datetime.now().timestamp() * 1000)
                 }
                 cursor.execute("UPDATE game_sessions SET state_json = ?, status = 'active', version = version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(new_state), session_id))
+                log_game_action(cursor, session_id, f"{host} started the game")
                 conn.commit(); conn.close(); return
 
             elif game_type == 'UNO':
@@ -590,6 +633,7 @@ Respond ONLY with a JSON object in this format: {"word": "YOUR CHOICE"}"""
                     'playersOrder': accepted_names, 'updatedAt': int(datetime.now().timestamp() * 1000)
                 }
                 cursor.execute("UPDATE game_sessions SET state_json = ?, status = 'active', version = version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(new_state), session_id))
+                log_game_action(cursor, session_id, f"{host} started the game")
                 conn.commit(); conn.close(); return
 
         # --- ACTIVE GAME LOGIC ---
@@ -641,8 +685,10 @@ Respond ONLY with a JSON object in this format: {"word": "YOUR CHOICE"}"""
                     new_state, err = apply_hangman_move(state, 'GUESS', current_turn, {'letter': letter, 'host_username': host})
                     
                     if not err:
+                        msg = f"{current_turn} guessed {letter}"
                         new_status = 'finished' if new_state.get('winner') or new_state.get('wrongGuesses', 0) >= 6 else 'active'
                         cursor.execute("UPDATE game_sessions SET state_json = ?, status = ?, version = version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(new_state), new_status, session_id))
+                        log_game_action(cursor, session_id, msg)
                         conn.commit()
                         if new_status == 'active' and new_state.get('currentTurn') in AI_PLAYERS:
                             threading.Timer(2.0, process_ai_action, [session_id]).start()
@@ -665,21 +711,42 @@ Respond ONLY with a JSON object in this format: {"word": "YOUR CHOICE"}"""
                         # Pick a card
                         card_idx = random.choice(playable)
                         card = my_hand[card_idx]
+                        val = card['value']
+                        next_p = state.get('currentTurn', 'Unknown') # Initial, will update below
+                        
                         new_state, err = apply_uno_move(state, 'PLAY_CARD', current_turn, {'card_idx': card_idx})
                         
-                        if not err and card['color'] == 'black':
-                            # AI chooses color
-                            counts = {c: 0 for c in ['red', 'blue', 'green', 'yellow']}
-                            for c in my_hand: 
-                                if c['color'] in counts: counts[c['color']] += 1
-                            best_color = max(counts, key=counts.get)
-                            new_state, err = apply_uno_move(new_state, 'SELECT_COLOR', current_turn, {'color': best_color})
+                        if not err:
+                            next_p = new_state.get('currentTurn', 'Unknown')
+                            if val == 'Reverse': msg = f"{current_turn} used reverse card, reversing turn order to {next_p}"
+                            elif val == 'Skip': msg = f"{current_turn} skipped the next player, it is now {next_p}'s turn"
+                            elif val == 'Draw2': msg = f"{current_turn} used a Draw 2, {next_p} draws 2 and is skipped"
+                            elif val == 'WildDraw4': msg = f"{current_turn} used a Wild Draw 4, {next_p} draws 4 and is skipped"
+                            else: msg = f"{current_turn} played {card['color']} {val}, next is {next_p}"
+
+                            if card['color'] == 'black':
+                                # AI chooses color
+                                counts = {c: 0 for c in ['red', 'blue', 'green', 'yellow']}
+                                for c in my_hand: 
+                                    if c['color'] in counts: counts[c['color']] += 1
+                                best_color = max(counts, key=counts.get)
+                                new_state, err = apply_uno_move(new_state, 'SELECT_COLOR', current_turn, {'color': best_color})
+                                if not err:
+                                    next_p = new_state.get('currentTurn', 'Unknown')
+                                    msg += f" and chose {best_color}, next is {next_p}"
                     else:
                         new_state, err = apply_uno_move(state, 'DRAW_CARD', current_turn, {})
+                        if not err:
+                            next_p = new_state.get('currentTurn', 'Unknown')
+                            if new_state.get('currentTurn') == current_turn:
+                                msg = f"{current_turn} drew a playable card and can still move"
+                            else:
+                                msg = f"{current_turn} drew a card, it is now {next_p}'s turn"
 
                     if not err:
                         new_status = 'finished' if new_state.get('winner') else 'active'
                         cursor.execute("UPDATE game_sessions SET state_json = ?, status = ?, version = version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(new_state), new_status, session_id))
+                        log_game_action(cursor, session_id, msg)
                         conn.commit()
                         if new_status == 'active' and new_state.get('currentTurn') in AI_PLAYERS:
                             threading.Timer(2.0, process_ai_action, [session_id]).start()
@@ -828,9 +895,13 @@ def game_action():
                 elif val == 'Skip':
                     msg = f"{username} skipped the next player, it is now {next_p}'s turn"
                 elif val == 'Draw2':
-                    msg = f"{username} used a Draw 2, {next_p} draws 2 and is skipped"
+                    victim_idx = (curr_idx + state['direction'] + len(order)) % len(order)
+                    victim = order[victim_idx]
+                    msg = f"{username} used a Draw 2, {victim} draws 2 and is skipped"
                 elif val == 'WildDraw4':
-                    msg = f"{username} used a Wild Draw 4, {next_p} draws 4 and is skipped"
+                    victim_idx = (curr_idx + state['direction'] + len(order)) % len(order)
+                    victim = order[victim_idx]
+                    msg = f"{username} used a Wild Draw 4, {victim} draws 4 and is skipped"
                 else:
                     msg = f"{username} played {card['color']} {val}, next is {next_p}"
             elif action == 'DRAW_CARD':
@@ -839,12 +910,13 @@ def game_action():
                 else:
                     msg = f"{username} drew a card, it is now {next_p}'s turn"
             elif action == 'SELECT_COLOR':
-                # Determine if this was after a Wild or WildDraw4
-                top = state['discard'][-1]
-                if top['value'] == 'WildDraw4':
-                    msg = f"{username} chose {params.get('color')}, next is {next_p}"
-                else:
-                    msg = f"{username} chose {params.get('color')}, next is {next_p}"
+                # For SELECT_COLOR, the turn has already advanced in apply_uno_move
+                msg = f"{username} chose {params.get('color')}, next is {next_p}"
+            elif action == 'CALL_UNO':
+                msg = f"{username} called UNO!"
+            elif action == 'DISPUTE':
+                target = state.get('lastFinisher', 'someone')
+                msg = f"{username} disputed the win! {target} draws 2 and is back in!"
             else: msg = f"{username} performed {action}"
         elif game_type == 'Hangman':
             if action == 'GUESS':

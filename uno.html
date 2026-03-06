@@ -15,6 +15,36 @@
         .header { background: #f8f9fa; padding: 20px 40px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
         .content { padding: 30px; text-align: center; flex: 1; display: flex; flex-direction: column; }
         .card { width: 80px; height: 120px; border-radius: 10px; display: flex; justify-content: center; align-items: center; font-weight: 900; font-size: 1.5em; color: white; position: relative; cursor: pointer; user-select: none; transition: all 0.2s; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.2); margin: 5px; outline: none; font-family: inherit; }
+        .card:hover .card-tooltip { display: block; }
+        .card-tooltip {
+            display: none;
+            position: absolute;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.85);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.5em;
+            width: 140px;
+            text-align: center;
+            z-index: 100;
+            pointer-events: none;
+            font-weight: normal;
+            line-height: 1.2;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .card-tooltip::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: rgba(0,0,0,0.85) transparent transparent transparent;
+        }
         .card:hover { transform: translateY(-15px) scale(1.1); z-index: 10; box-shadow: 0 10px 20px rgba(0,0,0,0.3); filter: brightness(1.1); }
         .card.disabled { cursor: not-allowed; filter: grayscale(0.5); opacity: 0.8; }
         .card.disabled:hover { transform: none; }
@@ -100,6 +130,11 @@
         .user-card { padding: 8px 12px; border: 1px solid #eee; border-radius: 8px; cursor: pointer; font-size: 0.8em; background: #fdfdfd; }
         .user-card.selected { background: #e3f2fd; border-color: #1e3c72; border-width: 2px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); box-shadow: 0 0 15px rgba(220,53,69,0.4); }
+            100% { transform: scale(1); }
+        }
     </style>
 </head>
 <body>
@@ -126,10 +161,20 @@
                     <div class="deck-area" style="margin:0;">
                         <div><div style="font-size:0.7em; color:#999; margin-bottom:5px;">DRAW</div><button class="draw-pile" onclick="drawCard()">DRAW</button></div>
                         <div><div style="font-size:0.7em; color:#999; margin-bottom:5px;">DISCARD</div><div id="topCard"></div></div>
+                        <button id="disputeBtn" class="btn-action" style="background:#dc3545; height:50px;" onclick="perform('DISPUTE', {})" disabled>Dispute Win</button>
                     </div>
                 </div>
+
                 <div style="margin: 15px 0;"><div id="colorIndicator" style="display:inline-block; padding:5px 15px; border-radius:15px; color:white; font-weight:bold; font-size:0.8em; text-transform:uppercase;"></div></div>
-                <div style="margin-top:20px;"><div style="font-size:0.8em; color:#666; margin-bottom:10px; font-weight:bold;">YOUR HAND</div><div id="myHand" class="hand-area"></div></div>
+
+                <div style="margin-top:20px;">
+                    <div style="display:flex; justify-content:center; align-items:center; gap:20px; margin-bottom:10px;">
+                        <div style="font-size:0.8em; color:#666; font-weight:bold;">YOUR HAND</div>
+                        <button id="unoBtn" class="btn-action" style="background:#28a745; display:none; padding:5px 15px;" onclick="perform('CALL_UNO', {})">CALL UNO!</button>
+                    </div>
+                    <div id="myHand" class="hand-area"></div>
+                </div>
+
             </div>
             <div id="gameOverlay">
                 <div class="overlay-title" id="overlayTitle">GAME OVER</div>
@@ -239,6 +284,22 @@
             document.getElementById('myHand').className = 'hand-area' + (!isMyT ? ' not-my-turn' : '');
             document.querySelector('.draw-pile').className = 'draw-pile' + (!isMyT ? ' not-my-turn' : '');
 
+            // UNO Button: Only if I have 1 card and haven't called it yet
+            const myCardCount = s.hands[username]?.length || 0;
+            const hasCalled = s.unoCalls && s.unoCalls.includes(username);
+            document.getElementById('unoBtn').style.display = (myCardCount === 1 && !hasCalled) ? 'block' : 'none';
+
+            // Dispute Button: Active if a vulnerable win is active
+            const disputeBtn = document.getElementById('disputeBtn');
+            disputeBtn.disabled = !s.vulnerableWin;
+            if (s.vulnerableWin) {
+                disputeBtn.style.opacity = '1';
+                disputeBtn.style.animation = 'pulse 1s infinite';
+            } else {
+                disputeBtn.style.opacity = '0.5';
+                disputeBtn.style.animation = 'none';
+            }
+
             // Action Log
             const logEl = document.getElementById('actionLog');
             if (logEl && session.logs) {
@@ -266,9 +327,10 @@
                 const next = i === nextIdx;
                 const count = s.hands[u]?.length || 0;
                 const disp = u.length > 10 ? u.substring(0,10) + '...' : u;
+                const called = s.unoCalls && s.unoCalls.includes(u);
                 
                 turnHtml += `<div class="player-chip ${active ? 'active-turn' : (next ? 'next-turn' : '')}" title="${u}">
-                    <strong>${disp}</strong> <span>(${count})</span>
+                    <strong>${disp}</strong> <span>(${count})</span> ${called ? '<span style="color:#28a745; font-weight:bold; margin-left:5px;">(Uno)</span>' : ''}
                 </div>`;
             }
 
@@ -279,7 +341,27 @@
             `;
         }
 
-        function createCardHtml(c, i = -1, p = false) { const l = c.value === 'Draw2' ? '+2' : (c.value === 'WildDraw4' ? '+4' : c.value); return `<button class="card card-${c.color} ${!p && i !== -1 ? 'disabled' : ''}" ${p ? `onclick="playCard(${i})"` : ''}><div class="card-inner">${l}</div></button>`; }
+        function createCardHtml(c, i = -1, p = false) { 
+            const l = c.value === 'Draw2' ? '+2' : (c.value === 'WildDraw4' ? '+4' : c.value); 
+            let tooltip = '';
+            if (p && session && session.state) {
+                const s = session.state;
+                const order = s.playersOrder;
+                const curIdx = order.findIndex(u => u.toLowerCase() === username.toLowerCase());
+                const nextIdx = (curIdx + s.direction + order.length) % order.length;
+                const nextP = order[nextIdx];
+                
+                if (c.value === 'Skip') tooltip = `<div class="card-tooltip">Next player ${nextP} will be skipped</div>`;
+                else if (c.value === 'Reverse') {
+                    const prevIdx = (curIdx - s.direction + order.length) % order.length;
+                    const prevP = order[prevIdx];
+                    tooltip = `<div class="card-tooltip">Reverse order, next will be ${prevP}</div>`;
+                }
+                else if (c.value === 'Draw2') tooltip = `<div class="card-tooltip">Next player ${nextP} will draw 2 cards and skip a go</div>`;
+                else if (c.value === 'WildDraw4') tooltip = `<div class="card-tooltip">Next player ${nextP} will draw 4 cards and skip a go</div>`;
+            }
+            return `<button class="card card-${c.color} ${!p && i !== -1 ? 'disabled' : ''}" ${p ? `onclick="playCard(${i})"` : ''}>${tooltip}<div class="card-inner">${l}</div></button>`; 
+        }
         function canPlay(c) { const s = session.state, top = s.discard[s.discard.length - 1], cur = s.currentColor || top.color; return c.color === 'black' || c.color === cur || c.value === top.value; }
         async function playCard(i) { if (isUpdating) return; if (session.state.hands[username][i].color === 'black') { window.pendingPlayIndex = i; document.getElementById('colorPicker').style.display = 'block'; return; } await perform('PLAY_CARD', { card_idx: i }); }
         async function selectColor(c) { document.getElementById('colorPicker').style.display = 'none'; if (window.pendingPlayIndex !== undefined) { const idx = window.pendingPlayIndex; delete window.pendingPlayIndex; isUpdating = true; await perform('PLAY_CARD', { card_idx: idx }); await perform('SELECT_COLOR', { color: c }); } }
