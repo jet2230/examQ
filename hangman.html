@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ExamQ - Hangman</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="/static/theme_manager.js"></script>
     <script src="/static/online_status.js"></script>
     <style>
@@ -33,10 +34,14 @@
         .content { padding: 40px; text-align: center; }
         
         .hangman-drawing {
+            width: 250px;
             height: 250px;
-            margin-bottom: 30px;
-            display: flex;
-            justify-content: center;
+            margin: 0 auto 30px auto;
+            display: block;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.05);
+            background: #fdfdfd;
         }
         .word-display {
             font-size: 2.2em;
@@ -187,46 +192,48 @@
             100% { transform: scale(1); }
         }
 
-        @keyframes draw-part {
-            from { stroke-dashoffset: 150; opacity: 0; }
-            to { stroke-dashoffset: 0; opacity: 1; }
+        /* Advanced Hangman Graphics */
+        .gallows-base { stroke: #5d4037; stroke-width: 8; stroke-linecap: round; }
+        .gallows-wood { stroke: #795548; stroke-width: 6; stroke-linecap: round; }
+        .rope { stroke: #d7ccc8; stroke-width: 3; stroke-dasharray: 2,2; }
+
+        .hangman-part {
+            stroke: #2c3e50;
+            stroke-width: 4;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            opacity: 0;
+            transform: scale(0.5);
+            transform-origin: center;
+            display: block !important;
         }
-        .animate-part {
-            stroke-dasharray: 150;
-            stroke-dashoffset: 150;
-            animation: draw-part 0.8s ease forwards;
+        .hangman-part.visible {
+            opacity: 1;
+            transform: scale(1);
         }
+        .hangman-head {
+            fill: #fff;
+            stroke-width: 3;
+        }
+        .hangman-face {
+            stroke: #2c3e50;
+            stroke-width: 2;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+        .visible .hangman-face { opacity: 1; }
 
         @keyframes swing {
             0% { transform: rotate(-3deg); }
             50% { transform: rotate(3deg); }
             100% { transform: rotate(-3deg); }
         }
-        .swinging {
+        .swinging #hangmanBody {
+            animation: swing 2s ease-in-out infinite;
             transform-origin: 130px 50px;
-            animation: swing 3s ease-in-out infinite;
-        }
-
-        /* Confetti Animation */
-        .confetti {
-            position: fixed; width: 10px; height: 10px; background-color: #f2d74e;
-            top: -10px; z-index: 9999;
-            animation: fall 3s linear forwards;
-        }
-        @keyframes fall {
-            to { transform: translateY(100vh) rotate(720deg); opacity: 0; }
-        }
-
-        /* SVG Hangman Parts */
-        .hangman-svg line, .hangman-svg circle { 
-            stroke: #333; 
-            stroke-width: 4; 
-            fill: none; 
-            stroke-linecap: round;
-            display: none;
-        }
-        .show-part { display: block !important; }
-    </style>
+        }    </style>
 </head>
 <body>
     <div class="container" style="position: relative;">
@@ -292,21 +299,8 @@
 
             <!-- Game View -->
             <div id="gameView" style="display:none;">
-                <div class="hangman-drawing">
-                    <svg class="hangman-svg" width="200" height="250">
-                        <line x1="20" y1="230" x2="180" y2="230" style="stroke:#333; stroke-width:4; display:block;" />
-                        <line x1="50" y1="230" x2="50" y2="20" style="stroke:#333; stroke-width:4; display:block;" />
-                        <line x1="50" y1="20" x2="130" y2="20" style="stroke:#333; stroke-width:4; display:block;" />
-                        <line x1="130" y1="20" x2="130" y2="50" style="stroke:#333; stroke-width:4; display:block;" />
-                        <g id="hangmanBody">
-                            <circle id="part_0" cx="130" cy="70" r="20" />
-                            <line id="part_1" x1="130" y1="90" x2="130" y2="160" />
-                            <line id="part_2" x1="130" y1="110" x2="100" y2="140" />
-                            <line id="part_3" x1="130" y1="110" x2="160" y2="140" />
-                            <line id="part_4" x1="130" y1="160" x2="100" y2="200" />
-                            <line id="part_5" x1="130" y1="160" x2="160" y2="200" />
-                        </g>
-                    </svg>
+                <div class="hangman-drawing" id="hangman3dContainer" style="padding:0; overflow:hidden;">
+                    <!-- 3D Canvas injected here -->
                 </div>
                 <div id="timerDisplay" style="font-size: 1.4em; font-weight: 800; color: #dc3545; margin-bottom: 20px; display: none;">⏱️ <span id="timerSeconds">60</span>s</div>
                 <div id="wordContainer" class="word-display"></div>
@@ -361,6 +355,169 @@
         let pollInterval = null;
         let isUpdating = false;
 
+        // --- 3D HANGMAN LOGIC ---
+        let scene, camera, renderer, hangmanGroup, rope;
+        let bodyParts = [];
+        let isSwinging = false;
+        let isWonState = false;
+        let swingAngle = 0;
+        let gameTime = 0;
+
+        function init3D() {
+            const container = document.getElementById('hangman3dContainer');
+            if (!container) return;
+            
+            console.log("Initializing 3D Hangman...");
+            
+            // Fixed dimensions as container may be hidden (display:none) during init
+            const width = 250;
+            const height = 250;
+
+            // Setup scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xfdfdfd);
+
+            // Setup camera
+            camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+            camera.position.set(25, 20, 45); // Side angle
+            camera.lookAt(0, 12, 0); // Look at the middle of the gallows
+
+            // Setup renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(width, height);
+            container.appendChild(renderer.domElement);
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+            directionalLight.position.set(20, 40, 30);
+            scene.add(directionalLight);
+
+            // Materials
+            const woodMat = new THREE.MeshLambertMaterial({ color: 0x795548 });
+            const ropeMat = new THREE.MeshLambertMaterial({ color: 0xd7ccc8 });
+            const skinMat = new THREE.MeshLambertMaterial({ color: 0xffe0bd });
+            const clothesMat = new THREE.MeshLambertMaterial({ color: 0x2c3e50 });
+
+            // Gallows
+            const gallows = new THREE.Group();
+            
+            // Base
+            const baseGeo = new THREE.BoxGeometry(20, 1, 10);
+            const base = new THREE.Mesh(baseGeo, woodMat);
+            base.position.y = 0.5;
+            gallows.add(base);
+
+            // Pillar
+            const pillarGeo = new THREE.BoxGeometry(1.5, 25, 1.5);
+            const pillar = new THREE.Mesh(pillarGeo, woodMat);
+            pillar.position.set(-6, 12.5, 0);
+            gallows.add(pillar);
+
+            // Top Beam
+            const beamGeo = new THREE.BoxGeometry(12, 1.5, 1.5);
+            const beam = new THREE.Mesh(beamGeo, woodMat);
+            beam.position.set(-0.5, 25, 0);
+            gallows.add(beam);
+
+            // Rope
+            const ropeGeo = new THREE.CylinderGeometry(0.2, 0.2, 4);
+            rope = new THREE.Mesh(ropeGeo, ropeMat);
+            rope.position.set(4, 23, 0);
+            gallows.add(rope);
+
+            scene.add(gallows);
+
+            // Hangman Group (Pivot at end of rope)
+            hangmanGroup = new THREE.Group();
+            hangmanGroup.position.set(4, 21, 0); // Position at bottom of rope
+            scene.add(hangmanGroup);
+
+            // Parts (Hidden initially)
+            // 0: Head
+            const head = new THREE.Mesh(new THREE.SphereGeometry(2, 32, 32), skinMat);
+            head.position.y = -2;
+            
+            // 1: Body
+            const body = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.5, 5), clothesMat);
+            body.position.y = -5.5;
+
+            // 2: Left Arm
+            const lArm = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 4), skinMat);
+            lArm.position.set(-2.2, -4.5, 0);
+            lArm.rotation.z = Math.PI / 4;
+
+            // 3: Right Arm
+            const rArm = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 4), skinMat);
+            rArm.position.set(2.2, -4.5, 0);
+            rArm.rotation.z = -Math.PI / 4;
+
+            // 4: Left Leg
+            const lLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 5), clothesMat);
+            lLeg.position.set(-1, -10, 0);
+            lLeg.rotation.z = 0.1;
+
+            // 5: Right Leg
+            const rLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 5), clothesMat);
+            rLeg.position.set(1, -10, 0);
+            rLeg.rotation.z = -0.1;
+
+            bodyParts = [head, body, lArm, rArm, lLeg, rLeg];
+            bodyParts.forEach(p => {
+                p.visible = false;
+                hangmanGroup.add(p);
+            });
+
+            console.log("3D Scene ready.");
+            animate3D();
+        }
+
+        function update3DHangman(wrongCount, lost, won = false) {
+            if (!scene) return; // Not initialized yet
+            for (let i = 0; i < 6; i++) {
+                if (bodyParts[i]) bodyParts[i].visible = (i < wrongCount);
+            }
+            isSwinging = lost;
+            isWonState = won;
+            if (!lost && !won) {
+                hangmanGroup.rotation.z = 0;
+            }
+        }
+
+        function animate3D() {
+            requestAnimationFrame(animate3D);
+            gameTime += 0.03;
+
+            if (hangmanGroup) {
+                if (isSwinging) {
+                    swingAngle += 0.05;
+                    hangmanGroup.rotation.z = Math.sin(swingAngle) * 0.15;
+                } else if (bodyParts[1].visible) { // Only breathe if the body is visible
+                    // Subtle breathing effect
+                    const breathe = Math.sin(gameTime) * 0.02;
+                    hangmanGroup.position.y = 21 + breathe;
+                    
+                    // Idle arm movement
+                    if (bodyParts[2].visible) bodyParts[2].rotation.z = (Math.PI / 4) + Math.sin(gameTime * 0.5) * 0.05;
+                    if (bodyParts[3].visible) bodyParts[3].rotation.z = (-Math.PI / 4) - Math.sin(gameTime * 0.5) * 0.05;
+                }
+            }
+
+            if (isWonState && camera) {
+                // Rotate camera slowly around the gallows on win
+                const radius = 45;
+                camera.position.x = Math.cos(gameTime * 0.2) * radius;
+                camera.position.z = Math.sin(gameTime * 0.2) * radius;
+                camera.lookAt(0, 12, 0);
+            }
+
+            if (renderer && scene && camera) {
+                renderer.render(scene, camera);
+            }
+        }
+        // --- END 3D LOGIC ---
+
         async function leaveGame() {
             if (!confirm("Are you sure you want to leave this game?")) return;
             try {
@@ -377,6 +534,9 @@
             console.log("Init called. User:", username, "SessionId:", sessionId);
             if (!sessionId || !username) { window.location.href = 'games.html'; return; }
             
+            // Initialize 3D canvas
+            init3D();
+
             // First attempt to "join" (in case we clicked a link)
             try {
                 const res = await fetch('/api/games/respond', {
@@ -457,7 +617,7 @@
                 const playersList = document.getElementById('lobbyPlayers');
                 playersList.innerHTML = acceptedPlayers.map(p => {
                     const display = p.username.length > 10 ? p.username.substring(0,10)+'...' : p.username;
-                    const isPHost = p.username.toLowerCase() === session.host.toLowerCase();
+                    const isPHost = p.username && session.host && p.username.toLowerCase() === session.host.toLowerCase();
                     return `
                         <div class="player-chip" title="${p.username}">
                             <div style="width:8px; height:8px; background:#28a745; border-radius:50%;"></div>
@@ -535,9 +695,13 @@
                 const res = await fetch('/api/users/all');
                 const data = await res.json();
                 if (data.success) {
-                    const currentPlayers = session.players.map(p => p.username.toLowerCase());
+                    const currentPlayers = session.players.map(p => (p.username || '').toLowerCase());
                     const aiPlayers = ['Bob', 'Tim'];
-                    const users = data.users.filter(u => u.username.toLowerCase() !== username.toLowerCase() && !currentPlayers.includes(u.username.toLowerCase()));
+                    const users = data.users.filter(u => {
+                        const uName = (u.username || '').toLowerCase();
+                        const myName = (username || '').toLowerCase();
+                        return uName !== myName && !currentPlayers.includes(uName);
+                    });
                     
                     if (users.length === 0) {
                         list.innerHTML = '<div style="padding:10px; text-align:center; color:#999; font-size:0.85em; grid-column: 1 / -1;">No more students available.</div>';
@@ -761,32 +925,14 @@
                 keyboard.appendChild(btn);
             });
 
-            const hangmanBody = document.getElementById('hangmanBody');
-            if (state.wrongGuesses >= 6) {
-                hangmanBody.classList.add('swinging');
-            } else {
-                hangmanBody.classList.remove('swinging');
-            }
-
-            for (let i = 0; i < 6; i++) {
-                const part = document.getElementById(`part_${i}`);
-                if (part) {
-                    if (i < state.wrongGuesses) {
-                        if (part.style.display === 'none' || !part.classList.contains('animate-part')) {
-                            part.style.display = 'block';
-                            part.classList.add('animate-part');
-                        }
-                    } else {
-                        part.style.display = 'none';
-                        part.classList.remove('animate-part');
-                    }
-                }
-            }
+            // Hangman drawing update
+            const isWon = state.word.split('').every(char => char === ' ' || state.guessedLetters.some(l => l.toUpperCase() === char.toUpperCase()));
+            update3DHangman(state.wrongGuesses, state.wrongGuesses >= 6, isWon);
 
             const playersPanel = document.getElementById('gamePlayers');
             playersPanel.innerHTML = acceptedPlayers.map(p => {
                 const display = p.username.length > 10 ? p.username.substring(0,10)+'...' : p.username;
-                const isPHost = p.username.toLowerCase() === session.host.toLowerCase();
+                const isPHost = p.username && session.host && p.username.toLowerCase() === session.host.toLowerCase();
                 return `
                     <div class="player-chip ${p.username === state.currentTurn ? 'active-turn' : ''}" title="${p.username}">
                         <div style="width:8px; height:8px; background:#28a745; border-radius:50%;"></div>
@@ -816,7 +962,7 @@
             }
 
             const activePlayers = session.players.filter(p => p.status === 'accepted');
-            const guestPlayers = activePlayers.filter(p => p.username.toLowerCase() !== session.host.toLowerCase());
+            const guestPlayers = activePlayers.filter(p => p.username && session.host && p.username.toLowerCase() !== session.host.toLowerCase());
             const firstTurn = guestPlayers.length > 0 ? guestPlayers[0].username : session.host;
             const initialState = {
                 word: word, guessedLetters: [], wrongGuesses: 0,
@@ -929,12 +1075,12 @@
                     // Only change turn if it was a wrong guess OR a timeout
                     if (!isCorrect) {
                         const players = state.playersOrder;
-                        let currentIdx = players.findIndex(u => u.toLowerCase() === actor.toLowerCase());
+                        let currentIdx = players.findIndex(u => u && actor && u.toLowerCase() === actor.toLowerCase());
                         if (currentIdx === -1) currentIdx = 0; // Fallback
                         let nextIdx = (currentIdx + 1) % players.length;
                         
                         // Skip host if more than 1 player
-                        if (players.length > 1 && players[nextIdx].toLowerCase() === session.host.toLowerCase()) {
+                        if (players.length > 1 && players[nextIdx] && session.host && players[nextIdx].toLowerCase() === session.host.toLowerCase()) {
                             nextIdx = (nextIdx + 1) % players.length;
                         }
                         state.currentTurn = players[nextIdx];

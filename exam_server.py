@@ -10,6 +10,7 @@ from flask_cors import CORS
 import json
 import os
 import sqlite3
+import random
 from datetime import datetime
 import PyPDF2
 from pdf2image import convert_from_path
@@ -299,224 +300,240 @@ def process_ai_action(session_id):
         if not row: return
         
         status = row['status']
+        game_type = row['game_type']
         host = row['host_username']
         players = json.loads(row['players_json'])
         state = json.loads(row['state_json']) if row['state_json'] else {}
-        
         current_turn = state.get('currentTurn')
-        print(f"[AI-DEBUG] Session {session_id} | Status: {status} | Host: {host} | Turn: {current_turn}")
         
-        # 1. AI as Host: Start game or restart game
-        if status == 'pending' and host in AI_PLAYERS:
-            # AI needs to choose a word and start the game
-            # Only start if there are other accepted players
+        print(f"[AI-DEBUG] Session {session_id} | Type: {game_type} | Status: {status} | Host: {host} | Turn: {current_turn}")
+
+        # --- LOBBY LOGIC (PENDING or STARTING) ---
+        is_starting = (status == 'pending' and host in AI_PLAYERS) or (status == 'active' and state.get('starting'))
+        
+        if is_starting:
+            # Only start if there are other accepted players (guests)
             accepted_guests = [p for p in players if p['status'] == 'accepted' and p['username'].lower() != host.lower()]
-            if not accepted_guests:
-                print(f"[AI-DEBUG] No guests yet, AI host {host} waiting...")
+            if not accepted_guests and host in AI_PLAYERS:
                 conn.close(); return
-                
-            print(f"[AI-DEBUG] AI host {host} choosing a word...")
-            prompt = """You are playing Hangman. You are the host. 
+            
+            accepted_all = [p for p in players if p['status'] == 'accepted']
+            if not accepted_all:
+                conn.close(); return
+
+            if game_type == 'Hangman':
+                print(f"[AI-DEBUG] AI host {host} choosing word...")
+                prompt = """You are playing Hangman. You are the host. 
 Choose a RANDOM, UNIQUE secret word or short common phrase (max 30 chars).
 Pick from categories like: Nature, Science, History, Tech, Movies, or everyday objects.
 Ensure the word/phrase is correctly spelled and commonly known.
 If you choose a phrase, INCLUDE THE SPACES between words.
 Respond ONLY with a JSON object in this format: {"word": "YOUR CHOICE"}"""
-            
-            try:
-                response = requests.post(OLLAMA_API, json={
-                    'model': 'llama3', 
-                    'prompt': prompt, 
-                    'stream': False,
-                    'format': 'json',
-                    'options': {'temperature': 0.9}
-                }, timeout=30)
                 
-                ai_data = json.loads(response.json().get('response', '{}'))
-                word = ai_data.get('word', '').strip().upper()
-                word = re.sub(r'[^A-Z ]', '', word).strip()
-                
-                if not word or len(word) < 3:
-                    fallbacks = ["ADVENTURE", "JOURNEY", "MYSTERY", "HORIZON", "VOLCANO", "GALAXY"]
-                    import random
-                    word = random.choice(fallbacks)
-            except:
-                fallbacks = ["CHALLENGE", "VISTAS", "PIONEER", "WILDERNESS", "ORBITAL"]
-                import random
-                word = random.choice(fallbacks)
-            
-            print(f"[AI-DEBUG] AI host {host} chose word: {word}")
-            
-            first_turn = accepted_guests[0]['username']
-            new_state = {
-                'word': word, 'guessedLetters': [], 'wrongGuesses': 0,
-                'currentTurn': first_turn, 'playersOrder': [p['username'] for p in players if p['status'] == 'accepted'],
-                'allowNumbers': False, 'restarting': False, 'cluesRequestedBy': [], 'clueStack': [],
-                'turnStartedAt': int(datetime.now().timestamp() * 1000),
-                'updatedAt': int(datetime.now().timestamp() * 1000)
-            }
-            cursor.execute("UPDATE game_sessions SET state_json = ?, status = 'active', updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(new_state), session_id))
-            conn.commit(); conn.close(); return
-
-        # 2. AI as Guest: Make a guess
-        if status == 'active' and current_turn in AI_PLAYERS:
-            # AI needs to decide: Guess or Request Clue?
-            # 20% chance to request a clue if not already requested by this AI
-            import random
-            if random.random() < 0.20 and current_turn not in state.get('cluesRequestedBy', []):
-                print(f"[AI-DEBUG] AI player {current_turn} requesting a clue...")
-                new_state = state.copy()
-                if not new_state.get('cluesRequestedBy'): new_state['cluesRequestedBy'] = []
-                new_state['cluesRequestedBy'].append(current_turn)
-                if not new_state.get('clueStack'): new_state['clueStack'] = []
-                new_state['clueStack'].append({'type': 'request', 'user': current_turn})
-                new_state['updatedAt'] = int(datetime.now().timestamp() * 1000)
-                
-                cursor.execute("UPDATE game_sessions SET state_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(new_state), session_id))
-                conn.commit()
-                # AI will still proceed to make a guess after requesting
-            
-            # AI needs to guess a letter
-            word_display = ""
-            for char in state['word']:
-                if char == ' ': word_display += '/ '
-                elif char.upper() in [l.upper() for l in state['guessedLetters']]: word_display += char + ' '
-                else: word_display += '_ '
-            
-            guessed = ", ".join(state['guessedLetters'])
-            prompt = f"""You are playing Hangman.
-The word so far is: {word_display}
-Guessed letters: {guessed}
-Choose the next letter to guess. Return ONLY the single letter."""
-            
-            print(f"[AI-DEBUG] AI player {current_turn} guessing...")
-            try:
-                response = requests.post(OLLAMA_API, json={'model': 'llama3', 'prompt': prompt, 'stream': False}, timeout=30)
-                if response.status_code != 200:
-                    print(f"[AI-DEBUG] Ollama error: {response.status_code}")
-                    letter = 'E'
-                else:
-                    letter = response.json().get('response', 'E').strip().upper()
-                    print(f"[AI-DEBUG] Ollama raw response: {letter}")
-                    match = re.search(r'[A-Z]', letter)
-                    letter = match.group(0) if match else 'E'
-            except Exception as e:
-                print(f"[AI-DEBUG] Ollama request failed: {e}")
-                letter = 'E'
-            
-            print(f"[AI-DEBUG] AI player {current_turn} chose letter: {letter}")
-            
-            # Check if already guessed (simple fallback)
-            if letter in [l.upper() for l in state['guessedLetters']]:
-                print(f"[AI-DEBUG] Letter {letter} already guessed, using fallback...")
-                for l in "ETAOINSHRDLU":
-                    if l not in [g.upper() for g in state['guessedLetters']]:
-                        letter = l; break
-
-            # Update state (mimic client logic)
-            new_state = state.copy()
-            new_state['guessedLetters'].append(letter)
-            is_correct = letter.upper() in state['word'].upper()
-            if not is_correct: new_state['wrongGuesses'] += 1
-            
-            is_won = all(c == ' ' or c.upper() in [l.upper() for l in new_state['guessedLetters']] for c in state['word'])
-            is_lost = new_state['wrongGuesses'] >= 6
-            
-            new_state['updatedAt'] = int(datetime.now().timestamp() * 1000)
-            new_state['turnStartedAt'] = int(datetime.now().timestamp() * 1000)
-            
-            new_status = 'active'
-            if is_won or is_lost:
-                new_status = 'finished'
-                if is_won: new_state['winner'] = current_turn
-                print(f"[AI-DEBUG] Session {session_id} ended. is_won: {is_won} | is_lost: {is_lost} | Winner: {new_state.get('winner')}")
-            else:
-                if not is_correct:
-                    players_order = state['playersOrder']
-                    try:
-                        curr_idx = players_order.index(current_turn)
-                        next_idx = (curr_idx + 1) % len(players_order)
-                        # Skip host if > 1 player
-                        if len(players_order) > 1 and players_order[next_idx].lower() == host.lower():
-                            next_idx = (next_idx + 1) % len(players_order)
-                        new_state['currentTurn'] = players_order[next_idx]
-                        print(f"[AI-DEBUG] Next turn: {new_state['currentTurn']}")
-                    except Exception as e:
-                        print(f"[AI-DEBUG] Turn switch error: {e}")
-            
-            print(f"[AI-DEBUG] Updating session {session_id} state...")
-            cursor.execute("UPDATE game_sessions SET state_json = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(new_state), new_status, session_id))
-            conn.commit()
-            print(f"[AI-DEBUG] Update complete.")
-            
-            # If game finished, handle auto-restart if AI is involved
-            if new_status == 'finished':
-                # AI won OR AI was host (it's the host's job to restart)
-                if (current_turn in AI_PLAYERS and is_won) or (host in AI_PLAYERS):
-                    wait_time = 5.0
-                    print(f"[AI-DEBUG] Session {session_id} triggering auto-restart in {wait_time}s (AI involved)...")
-                    threading.Timer(wait_time, process_ai_action, [session_id]).start()
-
-            conn.close(); return
-
-        # 2.5 AI as Winner (Polling fallback): Transition to new game lobby
-        if status == 'finished' and state.get('winner') in AI_PLAYERS:
-            # Only auto-restart if at least 5 seconds have passed since the win
-            last_update = state.get('updatedAt', 0)
-            now_ms = int(datetime.now().timestamp() * 1000)
-            if now_ms - last_update < 5000:
-                # Too soon, check again in 2s
-                threading.Timer(2.0, process_ai_action, [session_id]).start()
-                conn.close(); return
-
-            print(f"[AI-DEBUG] Transitioning to lobby. AI {state.get('winner')} becoming host.")
-            new_state = {'restarting': True, 'updatedAt': int(datetime.now().timestamp() * 1000)}
-            new_host = state.get('winner')
-            cursor.execute("UPDATE game_sessions SET state_json = ?, status = 'pending', host_username = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(new_state), new_host, session_id))
-            conn.commit()
-            threading.Timer(2.0, process_ai_action, [session_id]).start()
-            conn.close(); return
-
-        # 2.6 AI as Host and Game Finished (Polling fallback): Restart game
-        if status == 'finished' and host in AI_PLAYERS and not state.get('winner'):
-            # Players lost, AI remains host, restart game
-            # Only auto-restart if at least 5 seconds have passed
-            last_update = state.get('updatedAt', 0)
-            now_ms = int(datetime.now().timestamp() * 1000)
-            if now_ms - last_update < 5000:
-                threading.Timer(2.0, process_ai_action, [session_id]).start()
-                conn.close(); return
-
-            print(f"[AI-DEBUG] Players lost. AI host {host} restarting game...")
-            new_state = {'restarting': True, 'updatedAt': int(datetime.now().timestamp() * 1000)}
-            cursor.execute("UPDATE game_sessions SET state_json = ?, status = 'pending', updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(new_state), session_id))
-            conn.commit()
-            threading.Timer(2.0, process_ai_action, [session_id]).start()
-            conn.close(); return
-
-        # 3. AI as Host: Provide clue if requested
-        if status == 'active' and host in AI_PLAYERS:
-            # Check if there are new clue requests
-            clue_stack = state.get('clueStack', [])
-            if clue_stack and clue_stack[-1]['type'] == 'request':
-                print(f"[AI-DEBUG] AI host {host} providing clue...")
-                prompt = f"You are the host in Hangman. The secret word is '{state['word']}'. Provide a short, helpful hint without giving away the word. Return ONLY the hint text."
                 try:
-                    response = requests.post(OLLAMA_API, json={'model': 'llama3', 'prompt': prompt, 'stream': False}, timeout=30)
-                    hint = response.json().get('response', 'Keep guessing!').strip().replace('"', '')
+                    response = requests.post(OLLAMA_API, json={'model': 'llama3', 'prompt': prompt, 'stream': False, 'format': 'json', 'options': {'temperature': 0.9}}, timeout=30)
+                    ai_data = json.loads(response.json().get('response', '{}'))
+                    word = ai_data.get('word', '').strip().upper()
+                    word = re.sub(r'[^A-Z ]', '', word).strip()
+                    if not word or len(word) < 3:
+                        word = random.choice(["ADVENTURE", "GALAXY", "MYSTERY", "VOLCANO"])
                 except:
-                    hint = "It's a common word!"
+                    word = "CHALLENGE"
                 
-                new_state = state.copy()
-                new_state['clueStack'].append({'type': 'clue', 'text': hint})
-                new_state['updatedAt'] = int(datetime.now().timestamp() * 1000)
+                new_state = {
+                    'word': word, 'guessedLetters': [], 'wrongGuesses': 0,
+                    'currentTurn': accepted_guests[0]['username'] if accepted_guests else host, 
+                    'playersOrder': [p['username'] for p in accepted_all],
+                    'allowNumbers': False, 'restarting': False, 'cluesRequestedBy': [], 'clueStack': [],
+                    'turnStartedAt': int(datetime.now().timestamp() * 1000), 'updatedAt': int(datetime.now().timestamp() * 1000)
+                }
+                cursor.execute("UPDATE game_sessions SET state_json = ?, status = 'active', updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(new_state), session_id))
+                conn.commit(); conn.close(); return
+
+            elif game_type == 'UNO':
+                # UNO Lobby Start
+                new_deck = []
+                colors = ['red', 'blue', 'green', 'yellow']
+                for color in colors:
+                    new_deck.append({'color': color, 'value': '0'})
+                    for i in range(1, 10):
+                        new_deck.extend([{'color': color, 'value': str(i)}, {'color': color, 'value': str(i)}])
+                    for act in ['Skip', 'Reverse', 'Draw2']:
+                        new_deck.extend([{'color': color, 'value': act}, {'color': color, 'value': act}])
+                for _ in range(4):
+                    new_deck.extend([{'color': 'black', 'value': 'Wild'}, {'color': 'black', 'value': 'WildDraw4'}])
                 
-                cursor.execute("UPDATE game_sessions SET state_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(new_state), session_id))
+                random.shuffle(new_deck)
+                
+                accepted_names = [p['username'] for p in accepted_all]
+                hands = {}
+                for name in accepted_names:
+                    hands[name] = [new_deck.pop() for _ in range(7)]
+                
+                top_card = new_deck.pop()
+                while top_card['color'] == 'black':
+                    new_deck.insert(0, top_card)
+                    top_card = new_deck.pop()
+                
+                new_state = {
+                    'deck': new_deck, 'discard': [top_card], 'hands': hands,
+                    'currentTurn': accepted_names[0], 'direction': 1, 'currentColor': top_card['color'],
+                    'playersOrder': accepted_names, 'updatedAt': int(datetime.now().timestamp() * 1000)
+                }
+                cursor.execute("UPDATE game_sessions SET state_json = ?, status = 'active', updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(new_state), session_id))
+                conn.commit(); conn.close(); return
+
+        # --- ACTIVE GAME LOGIC ---
+        if status == 'active':
+            # 1. AI providing clue (Host) - Hangman Only
+            if host in AI_PLAYERS and game_type == 'Hangman':
+                clue_stack = state.get('clueStack', [])
+                if clue_stack and clue_stack[-1]['type'] == 'request':
+                    print(f"[AI-DEBUG] AI host {host} providing clue...")
+                    p = f"You are the host in Hangman. Word is '{state.get('word')}'. Give a short, helpful hint. Return ONLY text."
+                    
+                    try:
+                        resp = requests.post(OLLAMA_API, json={'model': 'llama3', 'prompt': p, 'stream': False}, timeout=30)
+                        hint = resp.json().get('response', 'Good luck!').strip().replace('"', '')
+                    except: hint = "Keep going!"
+                    
+                    new_state = state.copy()
+                    new_state['clueStack'].append({'type': 'clue', 'text': hint})
+                    new_state['updatedAt'] = int(datetime.now().timestamp() * 1000)
+                    cursor.execute("UPDATE game_sessions SET state_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(new_state), session_id))
+                    conn.commit(); conn.close(); return
+
+            # 2. AI making move (Guest/Turn)
+            if current_turn in AI_PLAYERS:
+                if game_type == 'Hangman':
+                    print(f"[AI-DEBUG] AI {current_turn} guessing Hangman...")
+                    # 20% clue request
+                    if random.random() < 0.2 and current_turn not in state.get('cluesRequestedBy', []):
+                        state['cluesRequestedBy'] = state.get('cluesRequestedBy', []) + [current_turn]
+                        state['clueStack'] = state.get('clueStack', []) + [{'type': 'request', 'user': current_turn}]
+                        state['updatedAt'] = int(datetime.now().timestamp() * 1000)
+                        cursor.execute("UPDATE game_sessions SET state_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(state), session_id))
+                        conn.commit()
+
+                    word = state.get('word', 'UNKNOWN')
+                    guessed = state.get('guessedLetters', [])
+                    word_disp = "".join([c if c.upper() in [g.upper() for g in guessed] or c == ' ' else '_' for c in word])
+                    prompt = f"Hangman: {word_disp}. Guessed: {','.join(guessed)}. Pick next letter. Return ONLY the letter."
+                    
+                    try:
+                        resp = requests.post(OLLAMA_API, json={'model': 'llama3', 'prompt': prompt, 'stream': False}, timeout=30)
+                        letter = re.search(r'[A-Z]', resp.json().get('response', 'E').upper()).group(0)
+                    except: letter = 'E'
+                    
+                    if letter in [g.upper() for g in guessed]:
+                        for l in "ETAOINSHRDLU":
+                            if l not in [g.upper() for g in guessed]: letter = l; break
+                    
+                    new_state = state.copy()
+                    new_state['guessedLetters'].append(letter)
+                    is_correct = letter.upper() in word.upper()
+                    if not is_correct: new_state['wrongGuesses'] += 1
+                    
+                    is_won = all(c == ' ' or c.upper() in [l.upper() for l in new_state['guessedLetters']] for c in word)
+                    is_lost = new_state['wrongGuesses'] >= 6
+                    new_state['updatedAt'] = int(datetime.now().timestamp() * 1000)
+                    new_state['turnStartedAt'] = int(datetime.now().timestamp() * 1000)
+                    
+                    new_status = 'finished' if (is_won or is_lost) else 'active'
+                    if is_won: new_state['winner'] = current_turn
+                    
+                    if new_status == 'active' and not is_correct:
+                        order = state['playersOrder']
+                        idx = (order.index(current_turn) + 1) % len(order)
+                        if len(order) > 1 and order[idx].lower() == host.lower(): idx = (idx + 1) % len(order)
+                        new_state['currentTurn'] = order[idx]
+
+                    cursor.execute("UPDATE game_sessions SET state_json = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(new_state), new_status, session_id))
+                    conn.commit()
+                    if new_status == 'active' and new_state['currentTurn'] in AI_PLAYERS:
+                        threading.Timer(2.0, process_ai_action, [session_id]).start()
+                    elif new_status == 'finished':
+                        threading.Timer(5.0, process_ai_action, [session_id]).start()
+                    conn.close(); return
+
+                elif game_type == 'UNO':
+                    print(f"[AI-DEBUG] AI {current_turn} playing UNO...")
+                    order = state['playersOrder']
+                    curr_idx = order.index(current_turn)
+                    my_hand = state['hands'].get(current_turn, [])
+                    top = state['discard'][-1]
+                    cur_color = state.get('currentColor', top['color'])
+                    
+                    playable = [i for i, c in enumerate(my_hand) if c['color'] == 'black' or c['color'] == cur_color or c['value'] == top['value']]
+                    
+                    new_state = state.copy()
+                    if playable:
+                        idx = random.choice(playable)
+                        card = new_state['hands'][current_turn].pop(idx)
+                        new_state['discard'].append(card)
+                        new_state['currentColor'] = card['color']
+                        
+                        if card['color'] == 'black':
+                            counts = {c: 0 for c in ['red', 'blue', 'green', 'yellow']}
+                            for c in new_state['hands'][current_turn]: 
+                                if c['color'] in counts: counts[c['color']] += 1
+                            new_state['currentColor'] = max(counts, key=counts.get)
+
+                        # Effects
+                        next_idx = (curr_idx + new_state['direction'] + len(order)) % len(order)
+                        skip = False
+                        if card['value'] == 'Reverse':
+                            if len(order) == 2: skip = True
+                            else: new_state['direction'] *= -1
+                        elif card['value'] == 'Skip': skip = True
+                        elif card['value'] == 'Draw2':
+                            t = order[next_idx]
+                            for _ in range(2): 
+                                if new_state['deck']: new_state['hands'][t].append(new_state['deck'].pop())
+                            skip = True
+                        elif card['value'] == 'WildDraw4':
+                            t = order[next_idx]
+                            for _ in range(4):
+                                if new_state['deck']: new_state['hands'][t].append(new_state['deck'].pop())
+                            skip = True
+
+                        if len(new_state['hands'][current_turn]) == 0:
+                            new_state['winner'] = current_turn
+                            cursor.execute("UPDATE game_sessions SET state_json = ?, status = 'finished', updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(new_state), session_id))
+                            conn.commit(); threading.Timer(5.0, process_ai_action, [session_id]).start()
+                            conn.close(); return
+
+                        t_idx = (curr_idx + new_state['direction'] + len(order)) % len(order)
+                        if skip: t_idx = (t_idx + new_state['direction'] + len(order)) % len(order)
+                        new_state['currentTurn'] = order[t_idx]
+                    else:
+                        if not new_state['deck']:
+                            t = new_state['discard'].pop(); random.shuffle(new_state['discard'])
+                            new_state['deck'] = new_state['discard']; new_state['discard'] = [t]
+                        if new_state['deck']: new_state['hands'][current_turn].append(new_state['deck'].pop())
+                        new_state['currentTurn'] = order[(curr_idx + new_state['direction'] + len(order)) % len(order)]
+
+                    new_state['updatedAt'] = int(datetime.now().timestamp() * 1000)
+                    cursor.execute("UPDATE game_sessions SET state_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(new_state), session_id))
+                    conn.commit()
+                    if new_state['currentTurn'] in AI_PLAYERS: threading.Timer(2.0, process_ai_action, [session_id]).start()
+                    conn.close(); return
+
+        # --- FINISHED / RESTART LOGIC ---
+        if status == 'finished' and (state.get('winner') in AI_PLAYERS or host in AI_PLAYERS):
+            last_upd = state.get('updatedAt', 0)
+            if int(datetime.now().timestamp() * 1000) - last_upd > 5000:
+                print(f"[AI-DEBUG] AI host/winner restarting game {session_id}...")
+                new_state = {'restarting': True, 'updatedAt': int(datetime.now().timestamp() * 1000)}
+                new_host = state.get('winner') if state.get('winner') in AI_PLAYERS else host
+                cursor.execute("UPDATE game_sessions SET state_json = ?, status = 'pending', host_username = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(new_state), new_host, session_id))
                 conn.commit()
+                threading.Timer(2.0, process_ai_action, [session_id]).start()
         
         conn.close()
     except Exception as e:
-        print(f"AI Error: {e}")
+        print(f"AI Error in {session_id}: {e}")
+        import traceback; traceback.print_exc()
 
 def trigger_ai_if_needed(session_id):
     # Short delay to ensure the database commit from the triggering request is fully finished

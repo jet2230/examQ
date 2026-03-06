@@ -134,11 +134,11 @@
                     <div class="game-desc">Instantly host a word-guessing challenge and invite classmates!</div>
                     <button class="btn-play" onclick="createInstantGame('Hangman')">Start New Game</button>
                 </div>
-                <div class="game-card" style="opacity: 0.5;">
-                    <div class="game-icon">🧩</div>
-                    <div class="game-title">More Games</div>
-                    <div class="game-desc">Coming soon...</div>
-                    <button class="btn-play" disabled>Locked</button>
+                <div class="game-card">
+                    <div class="game-icon">🃏</div>
+                    <div class="game-title">Multiplayer UNO</div>
+                    <div class="game-desc">The classic card game! Match colors and numbers to empty your hand.</div>
+                    <button class="btn-play" onclick="createInstantGame('UNO')">Start New Game</button>
                 </div>
             </div>
 
@@ -198,6 +198,11 @@
 
         async function handleJoin(sessionId) {
             try {
+                const resSess = await fetch(`/api/games/session/${sessionId}`);
+                const sData = await resSess.json();
+                if (!sData.success) { alert("Game not found."); return; }
+                const gameUrl = sData.session.game_type === 'UNO' ? 'uno.html' : 'hangman.html';
+
                 const res = await fetch('/api/games/respond', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -205,7 +210,7 @@
                 });
                 const data = await res.json();
                 if (data.success) {
-                    window.location.href = `hangman.html?id=${sessionId}`;
+                    window.location.href = `${gameUrl}?id=${sessionId}`;
                 } else if (data.error === 'Session not found') {
                     alert("This game invitation is no longer active. The host may have removed the session.");
                     window.history.replaceState({}, document.title, window.location.pathname);
@@ -224,7 +229,8 @@
                 });
                 const data = await res.json();
                 if (data.success) {
-                    window.location.href = `hangman.html?id=${data.session_id}`;
+                    const gameUrl = gameType === 'UNO' ? 'uno.html' : 'hangman.html';
+                    window.location.href = `${gameUrl}?id=${data.session_id}`;
                 } else {
                     alert(data.error || "Failed to create game.");
                 }
@@ -300,16 +306,18 @@
                 const total = players.length;
                 const displayHost = s.host_username.length > 10 ? s.host_username.substring(0, 10) + '...' : s.host_username;
                 
+                const gameUrl = s.game_type === 'UNO' ? 'uno.html' : 'hangman.html';
+
                 let actionBtn = '';
                 if (s.status === 'pending') {
                     const myStatus = players.find(p => p.username === username)?.status;
                     if (myStatus === 'invited') {
                         actionBtn = `<button class="btn-play" onclick="respondInvite('${s.id}', 'accept')">Accept</button>`;
                     } else {
-                        actionBtn = `<a href="hangman.html?id=${s.id}" class="btn-play" style="background:#28a745;">Lobby</a>`;
+                        actionBtn = `<a href="${gameUrl}?id=${s.id}" class="btn-play" style="background:#28a745;">Lobby</a>`;
                     }
                 } else {
-                    actionBtn = `<a href="hangman.html?id=${s.id}" class="btn-play">Resume</a>`;
+                    actionBtn = `<a href="${gameUrl}?id=${s.id}" class="btn-play">Resume</a>`;
                 }
 
                 const canDelete = isAdmin || s.host_username === username;
@@ -447,13 +455,18 @@
 
         async function respondInvite(sessionId, action) {
             try {
+                const resSess = await fetch(`/api/games/session/${sessionId}`);
+                const sData = await resSess.json();
+                if (!sData.success) { alert("Game not found."); return; }
+                const gameUrl = sData.session.game_type === 'UNO' ? 'uno.html' : 'hangman.html';
+
                 const res = await fetch('/api/games/respond', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ session_id: sessionId, username, action })
                 });
                 const data = await res.json();
-                if (data.success && action === 'accept') { window.location.href = `hangman.html?id=${sessionId}`; }
+                if (data.success && action === 'accept') { window.location.href = `${gameUrl}?id=${sessionId}`; }
                 else { loadSessions(); }
             } catch (e) { console.error(e); }
         }
