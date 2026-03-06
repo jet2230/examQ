@@ -311,6 +311,15 @@ def log_game_action(cursor, session_id, message):
     # Keep last 50 logs
     cursor.execute("UPDATE game_sessions SET logs_json = ? WHERE id = ?", (json.dumps(logs[:50]), session_id))
 
+def get_next_uno_turn(order, current_idx, direction, finishers):
+    """Calculate next player, skipping those who have finished."""
+    idx = current_idx
+    for _ in range(len(order)):
+        idx = (idx + direction + len(order)) % len(order)
+        if order[idx] not in finishers:
+            return order[idx]
+    return order[current_idx]
+
 def apply_uno_move(state, action, username, params):
     """Centralized UNO logic for both AI and Humans"""
     order = state.get('playersOrder', [])
@@ -324,15 +333,16 @@ def apply_uno_move(state, action, username, params):
     order_lower = [o.lower() for o in order]
     if current_turn.lower() not in order_lower:
         return state, "Current player not in turn order"
-    curr_idx = order_lower.index(current_turn.lower())
+    curr_idx = order_lower.index(username.lower())
 
     new_state = json.loads(json.dumps(state)) # Deep copy
+    if 'finishers' not in new_state: new_state['finishers'] = []
     
-    # Pre-action cleanup
+    # Pre-action cleanup: solidified winners
     if action in ['DRAW_CARD', 'PLAY_CARD', 'SELECT_COLOR'] and new_state.get('vulnerableWin'):
-        new_state['winner'] = new_state.get('lastFinisher')
-        new_state.pop('vulnerableWin', None)
-        new_state.pop('lastFinisher', None)
+        lf = new_state.get('lastFinisher')
+        if lf and lf not in new_state['finishers']: new_state['finishers'].append(lf)
+        new_state.pop('vulnerableWin', None); new_state.pop('lastFinisher', None)
     
     if action == 'CALL_UNO':
         if 'unoCalls' not in new_state: new_state['unoCalls'] = []
@@ -353,125 +363,97 @@ def apply_uno_move(state, action, username, params):
     if action == 'DRAW_CARD':
         if not new_state['deck']:
             if len(new_state['discard']) > 1:
-                top = new_state['discard'].pop()
-                random.shuffle(new_state['discard'])
-                new_state['deck'] = new_state['discard']
-                new_state['discard'] = [top]
-            else:
-                return state, "No cards left in deck"
+                top = new_state['discard'].pop(); random.shuffle(new_state['discard'])
+                new_state['deck'] = new_state['discard']; new_state['discard'] = [top]
+            else: return state, "No cards left"
         
         card = new_state['deck'].pop()
         new_state['hands'][username].append(card)
+        if 'unoCalls' in new_state and username in new_state['unoCalls'] and len(new_state['hands'][username]) > 1:
+            new_state['unoCalls'].remove(username)
         
-        # Reset UNO call if they have > 1 card
-        if 'unoCalls' in new_state and username in new_state['unoCalls']:
-            if len(new_state['hands'][username]) > 1: new_state['unoCalls'].remove(username)
-        
-        # Check if playable
         top = new_state['discard'][-1]
         cur_color = new_state.get('currentColor', top['color'])
-        can_play = card['color'] == 'black' or card['color'] == cur_color or card['value'] == top['value']
-        
-        if not can_play:
-            # Advance turn
-            next_idx = (curr_idx + new_state['direction'] + len(order)) % len(order)
-            new_state['currentTurn'] = order[next_idx]
-        else:
-            # If playable, the player keeps their turn to play it
-            new_state['justDrewPlayable'] = True
+        if not (card['color'] == 'black' or card['color'] == cur_color or card['value'] == top['value']):
+            new_state['currentTurn'] = get_next_uno_turn(order, curr_idx, new_state['direction'], new_state['finishers'])
+        else: new_state['justDrewPlayable'] = True
             
     elif action == 'PLAY_CARD':
         card_idx = params.get('card_idx')
         if card_idx is None or card_idx >= len(new_state['hands'][username]):
-            return state, "Invalid card index"
+            return state, "Invalid index"
             
         card = new_state['hands'][username].pop(card_idx)
         new_state['discard'].append(card)
         
-        # If they played their last card, check for UNO call
-        is_finished = len(new_state['hands'][username]) == 0
-        has_called = 'unoCalls' in new_state and username in new_state['unoCalls']
-        
-        if is_finished:
-            if has_called:
-                new_state['winner'] = username
-                return new_state, None
+        if len(new_state['hands'][username]) == 0:
+            if 'unoCalls' in new_state and username in new_state['unoCalls']:
+                new_state['finishers'].append(username)
             else:
-                new_state['vulnerableWin'] = True
-                new_state['lastFinisher'] = username
+                new_state['vulnerableWin'] = True; new_state['lastFinisher'] = username
         
         if card['color'] != 'black':
             new_state['currentColor'] = card['color']
-            
-            # Effects
-            skip = False
+            step = 1
             if card['value'] == 'Reverse':
-                if len(order) == 2: skip = True
+                if (len(order) - len(new_state['finishers'])) == 2: step = 2
                 else: new_state['direction'] *= -1
-            elif card['value'] == 'Skip': skip = True
+            elif card['value'] == 'Skip': step = 2
             elif card['value'] == 'Draw2':
-                next_idx = (curr_idx + new_state['direction'] + len(order)) % len(order)
-                t = order[next_idx]
+                victim = get_next_uno_turn(order, curr_idx, new_state['direction'], new_state['finishers'])
                 for _ in range(2): 
                     if not new_state['deck'] and len(new_state['discard']) > 1:
-                        top = new_state['discard'].pop()
-                        random.shuffle(new_state['discard'])
-                        new_state['deck'] = new_state['discard']
-                        new_state['discard'] = [top]
-                    if new_state['deck']: new_state['hands'][t].append(new_state['deck'].pop())
-                skip = True
+                        top_c = new_state['discard'].pop(); random.shuffle(new_state['discard'])
+                        new_state['deck'] = new_state['discard']; new_state['discard'] = [top_c]
+                    if new_state['deck']: new_state['hands'][victim].append(new_state['deck'].pop())
+                step = 2
                 
-            # Check for win
-            if len(new_state['hands'][username]) == 0:
-                new_state['winner'] = username
+            remaining = [u for u in order if u not in new_state['finishers'] and u != new_state.get('lastFinisher')]
+            if len(remaining) <= 1:
+                new_state['winner'] = new_state['finishers'][0] if new_state['finishers'] else username
+                new_state['loser'] = remaining[0] if remaining else username
                 return new_state, None
 
-            # Advance turn
-            t_idx = (curr_idx + new_state['direction'] + len(order)) % len(order)
-            if skip: t_idx = (t_idx + new_state['direction'] + len(order)) % len(order)
-            new_state['currentTurn'] = order[t_idx]
+            target_idx = curr_idx
+            for _ in range(step):
+                nxt = get_next_uno_turn(order, target_idx, new_state['direction'], new_state['finishers'])
+                target_idx = order_lower.index(nxt.lower())
+            new_state['currentTurn'] = nxt
         else:
-            # Black card needs color selection
             new_state['pendingColorSelection'] = True
             return new_state, None
 
     elif action == 'SELECT_COLOR':
-        color = params.get('color')
-        if color not in ['red', 'blue', 'green', 'yellow']:
-            return state, "Invalid color"
-            
-        new_state['currentColor'] = color
+        new_state['currentColor'] = params.get('color')
         new_state.pop('pendingColorSelection', None)
-        
-        # Apply effects of the top card (Wild or WildDraw4)
         top = new_state['discard'][-1]
-        skip = False
-        
+        step = 1
         if top['value'] == 'WildDraw4':
-            next_idx = (curr_idx + new_state['direction'] + len(order)) % len(order)
-            t = order[next_idx]
+            victim = get_next_uno_turn(order, curr_idx, new_state['direction'], new_state['finishers'])
             for _ in range(4):
                 if not new_state['deck'] and len(new_state['discard']) > 1:
-                    top_card = new_state['discard'].pop()
-                    random.shuffle(new_state['discard'])
-                    new_state['deck'] = new_state['discard']
-                    new_state['discard'] = [top_card]
-                if new_state['deck']: new_state['hands'][t].append(new_state['deck'].pop())
-            skip = True
+                    top_c = new_state['discard'].pop(); random.shuffle(new_state['discard'])
+                    new_state['deck'] = new_state['discard']; new_state['discard'] = [top_c]
+                if new_state['deck']: new_state['hands'][victim].append(new_state['deck'].pop())
+            step = 2
             
-        # Check for win (just in case)
-        if len(new_state['hands'][username]) == 0:
-            if 'unoCalls' in new_state and username in new_state['unoCalls']:
-                new_state['winner'] = username
-                return new_state, None
-            else:
-                new_state['vulnerableWin'] = True
-                new_state['lastFinisher'] = username
+        if len(new_state['hands'][username]) == 0 and not new_state.get('vulnerableWin'):
+            if username not in new_state['finishers']: new_state['finishers'].append(username)
 
-        # Advance turn
-        t_idx = (curr_idx + new_state['direction'] + len(order)) % len(order)
-        if skip: t_idx = (t_idx + new_state['direction'] + len(order)) % len(order)
-        new_state['currentTurn'] = order[t_idx]
+        remaining = [u for u in order if u not in new_state['finishers'] and u != new_state.get('lastFinisher')]
+        if len(remaining) <= 1:
+            new_state['winner'] = new_state['finishers'][0] if new_state['finishers'] else username
+            new_state['loser'] = remaining[0] if remaining else username
+            return new_state, None
+
+        target_idx = curr_idx
+        for _ in range(step):
+            nxt = get_next_uno_turn(order, target_idx, new_state['direction'], new_state['finishers'])
+            target_idx = order_lower.index(nxt.lower())
+        new_state['currentTurn'] = nxt
+
+    new_state['updatedAt'] = int(datetime.now().timestamp() * 1000)
+    return new_state, None
 
     new_state['updatedAt'] = int(datetime.now().timestamp() * 1000)
     return new_state, None
@@ -720,17 +702,16 @@ Respond ONLY with a JSON object in this format: {"word": "YOUR CHOICE"}"""
                             order = state['playersOrder']
                             order_lower = [o.lower() for o in order]
                             curr_idx = order_lower.index(current_turn.lower())
+                            finishers = new_state.get('finishers', [])
                             
-                            next_p = new_state.get('currentTurn', 'Unknown')
+                            next_p = get_next_uno_turn(order, curr_idx, new_state.get('direction', 1), finishers)
                             if val == 'Reverse': msg = f"{current_turn} used reverse card, reversing turn order to {next_p}"
                             elif val == 'Skip': msg = f"{current_turn} skipped the next player, it is now {next_p}'s turn"
                             elif val == 'Draw2':
-                                victim_idx = (curr_idx + state['direction'] + len(order)) % len(order)
-                                victim = order[victim_idx]
+                                victim = get_next_uno_turn(order, curr_idx, new_state.get('direction', 1), finishers)
                                 msg = f"{current_turn} used a Draw 2, {victim} draws 2 and is skipped"
                             elif val == 'WildDraw4':
-                                victim_idx = (curr_idx + state['direction'] + len(order)) % len(order)
-                                victim = order[victim_idx]
+                                victim = get_next_uno_turn(order, curr_idx, new_state.get('direction', 1), finishers)
                                 msg = f"{current_turn} used a Wild Draw 4, {victim} draws 4 and is skipped"
                             else: msg = f"{current_turn} played {card['color']} {val}, next is {next_p}"
 
@@ -742,15 +723,15 @@ Respond ONLY with a JSON object in this format: {"word": "YOUR CHOICE"}"""
                                 best_color = max(counts, key=counts.get)
                                 new_state, err = apply_uno_move(new_state, 'SELECT_COLOR', current_turn, {'color': best_color})
                                 if not err:
-                                    next_p = new_state.get('currentTurn', 'Unknown')
+                                    next_p = get_next_uno_turn(order, curr_idx, new_state.get('direction', 1), new_state.get('finishers', []))
                                     msg += f" and chose {best_color}, next is {next_p}"
                     else:
                         new_state, err = apply_uno_move(state, 'DRAW_CARD', current_turn, {})
                         if not err:
-                            next_p = new_state.get('currentTurn', 'Unknown')
-                            if new_state.get('currentTurn') == current_turn:
+                            if new_state.get('justDrewPlayable'):
                                 msg = f"{current_turn} drew a playable card and can still move"
                             else:
+                                next_p = get_next_uno_turn(order, curr_idx, new_state.get('direction', 1), new_state.get('finishers', []))
                                 msg = f"{current_turn} drew a card, it is now {next_p}'s turn"
 
                     if not err:
@@ -881,6 +862,16 @@ def game_action():
         state = json.loads(row['state_json']) if row['state_json'] else {}
         game_type = row['game_type']
         
+        # PRE-CAPTURE card details for logging before hands change
+        pre_card_details = None
+        if game_type == 'UNO' and action == 'PLAY_CARD':
+            try:
+                hand = state.get('hands', {}).get(username, [])
+                card_idx = params.get('card_idx')
+                if card_idx is not None and card_idx < len(hand):
+                    pre_card_details = hand[card_idx]
+            except: pass
+
         if game_type == 'UNO':
             new_state, err = apply_uno_move(state, action, username, params)
         elif game_type == 'Hangman':
@@ -896,16 +887,21 @@ def game_action():
             conn.close(); return jsonify({'error': err}), status_code
             
         if game_type == 'UNO':
-            next_p = new_state.get('currentTurn', 'Unknown')
+            # Calculate next player while skipping finished ones
+            finishers = new_state.get('finishers', [])
+            order = new_state.get('playersOrder', [])
+            order_lower = [o.lower() for o in order]
+            try:
+                curr_idx = order_lower.index(username.lower())
+                next_p = get_next_uno_turn(order, curr_idx, new_state.get('direction', 1), finishers)
+            except:
+                next_p = new_state.get('currentTurn', 'Unknown')
+
             msg = f"{username} performed {action}"
             try:
                 if action == 'PLAY_CARD':
-                    # Get card details safely from the PREVIOUS state
-                    hand = state.get('hands', {}).get(username, [])
-                    card_idx = params.get('card_idx')
-                    if card_idx is not None and card_idx < len(hand):
-                        card = hand[card_idx]
-                        val = card['value']
+                    if pre_card_details:
+                        val = pre_card_details['value']
                         if val == 'Reverse':
                             msg = f"{username} used reverse card, reversing turn order to {next_p}"
                         elif val == 'Skip':
@@ -919,7 +915,9 @@ def game_action():
                             victim = order[victim_idx]
                             msg = f"{username} used a Wild Draw 4, {victim} draws 4 and is skipped"
                         else:
-                            msg = f"{username} played {card['color']} {val}, next is {next_p}"
+                            msg = f"{username} played {pre_card_details['color']} {val}, next is {next_p}"
+                    else:
+                        msg = f"{username} played a card, next is {next_p}"
                 elif action == 'DRAW_CARD':
                     if new_state.get('justDrewPlayable'):
                         msg = f"{username} drew a playable card and can still move"
