@@ -115,14 +115,17 @@ def init_db():
             state_json TEXT, -- Current game state (word, guessed letters, etc)
             status TEXT DEFAULT 'pending', -- 'pending', 'active', 'finished'
             version INTEGER DEFAULT 0,
+            logs_json TEXT DEFAULT '[]',
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             expires_at DATETIME
         )
     ''')
-    # Check for version column
+    # Check for logs_json column
     cursor.execute("PRAGMA table_info(game_sessions)")
     game_cols = [row['name'] for row in cursor.fetchall()]
+    if game_cols and 'logs_json' not in game_cols:
+        cursor.execute("ALTER TABLE game_sessions ADD COLUMN logs_json TEXT DEFAULT '[]'")
     if game_cols and 'version' not in game_cols:
         cursor.execute("ALTER TABLE game_sessions ADD COLUMN version INTEGER DEFAULT 0")
     if game_cols and 'expires_at' not in game_cols:
@@ -240,7 +243,7 @@ def game_create():
         players = [{'username': host, 'status': 'accepted'}]
             
         cursor.execute(
-            "INSERT INTO game_sessions (id, game_type, host_username, players_json, status, expires_at) VALUES (?, ?, ?, ?, ?, datetime('now', '+10 minutes'))",
+            "INSERT INTO game_sessions (id, game_type, host_username, players_json, status, expires_at, logs_json) VALUES (?, ?, ?, ?, ?, datetime('now', '+10 minutes'), '[]')",
             (session_id, game_type, host, json.dumps(players), 'pending')
         )
         conn.commit(); conn.close()
@@ -266,7 +269,7 @@ def game_invite():
             for u in invitees:
                 players.append({'username': u, 'status': 'invited'})
             cursor.execute(
-                "INSERT INTO game_sessions (id, game_type, host_username, players_json, status, expires_at) VALUES (?, ?, ?, ?, ?, datetime('now', '+10 minutes'))",
+                "INSERT INTO game_sessions (id, game_type, host_username, players_json, status, expires_at, logs_json) VALUES (?, ?, ?, ?, ?, datetime('now', '+10 minutes'), '[]')",
                 (session_id, game_type, host, json.dumps(players), 'pending')
             )
         else:
@@ -293,6 +296,20 @@ def game_invite():
         trigger_ai_if_needed(session_id)
         return jsonify({'success': True, 'session_id': session_id}), 201
     except Exception as e: return jsonify({'error': str(e)}), 500
+
+def log_game_action(cursor, session_id, message):
+    cursor.execute("SELECT logs_json FROM game_sessions WHERE id = ?", (session_id,))
+    row = cursor.fetchone()
+    logs = []
+    if row and row['logs_json']:
+        try:
+            logs = json.loads(row['logs_json'])
+        except:
+            logs = []
+    
+    logs.insert(0, {'msg': message, 'time': int(datetime.now().timestamp())})
+    # Keep last 50 logs
+    cursor.execute("UPDATE game_sessions SET logs_json = ? WHERE id = ?", (json.dumps(logs[:50]), session_id))
 
 def apply_uno_move(state, action, username, params):
     """Centralized UNO logic for both AI and Humans"""
@@ -333,6 +350,9 @@ def apply_uno_move(state, action, username, params):
             # Advance turn
             next_idx = (curr_idx + new_state['direction'] + len(order)) % len(order)
             new_state['currentTurn'] = order[next_idx]
+        else:
+            # If playable, the player keeps their turn to play it
+            new_state['justDrewPlayable'] = True
             
     elif action == 'PLAY_CARD':
         card_idx = params.get('card_idx')
@@ -750,7 +770,8 @@ def get_game_session(session_id):
                 'players': json.loads(row['players_json']),
                 'state': state,
                 'status': status,
-                'version': row['version']
+                'version': row['version'],
+                'logs': json.loads(row['logs_json'] if row['logs_json'] else '[]')
             }
         })
     except Exception as e: return jsonify({'error': str(e)}), 500
@@ -797,6 +818,41 @@ def game_action():
             status_code = 200 if err == "Already guessed" else 400
             conn.close(); return jsonify({'error': err}), status_code
             
+        if game_type == 'UNO':
+            next_p = new_state.get('currentTurn', 'Unknown')
+            if action == 'PLAY_CARD':
+                card = state['hands'][username][params.get('card_idx')]
+                val = card['value']
+                if val == 'Reverse':
+                    msg = f"{username} used reverse card, reversing turn order to {next_p}"
+                elif val == 'Skip':
+                    msg = f"{username} skipped the next player, it is now {next_p}'s turn"
+                elif val == 'Draw2':
+                    msg = f"{username} used a Draw 2, {next_p} draws 2 and is skipped"
+                elif val == 'WildDraw4':
+                    msg = f"{username} used a Wild Draw 4, {next_p} draws 4 and is skipped"
+                else:
+                    msg = f"{username} played {card['color']} {val}, next is {next_p}"
+            elif action == 'DRAW_CARD':
+                if new_state.pop('justDrewPlayable', False):
+                    msg = f"{username} drew a playable card and can still move"
+                else:
+                    msg = f"{username} drew a card, it is now {next_p}'s turn"
+            elif action == 'SELECT_COLOR':
+                # Determine if this was after a Wild or WildDraw4
+                top = state['discard'][-1]
+                if top['value'] == 'WildDraw4':
+                    msg = f"{username} chose {params.get('color')}, next is {next_p}"
+                else:
+                    msg = f"{username} chose {params.get('color')}, next is {next_p}"
+            else: msg = f"{username} performed {action}"
+        elif game_type == 'Hangman':
+            if action == 'GUESS':
+                l = params.get('letter')
+                msg = f"{username} guessed {l}" if l else f"{username} timed out"
+            else: msg = f"{username} performed {action}"
+        else: msg = f"{username} performed {action}"
+
         new_status = 'finished' if (new_state.get('winner') or new_state.get('status') == 'finished') else 'active'
         new_version = current_version + 1
         cursor.execute(
@@ -807,6 +863,7 @@ def game_action():
             conn.close()
             return jsonify({'error': 'Concurrency conflict, please retry'}), 409
             
+        log_game_action(cursor, session_id, msg)
         conn.commit(); conn.close()
         trigger_ai_if_needed(session_id)
         return jsonify({'success': True, 'version': new_version}), 200
