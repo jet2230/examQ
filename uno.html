@@ -51,11 +51,11 @@
         </div>
         <div class="content">
             <div id="lobbyView" style="display:none;">
-                <div id="hostControls" style="display:none; margin-bottom:30px;"><button class="btn-action" onclick="startGame()">Start Game Now</button></div>
+                <div id="hostControls" style="display:none; margin-bottom:30px;"><button id="startBtn" class="btn-action" onclick="startGame()">Start Game Now</button></div>
                 <div id="guestWait" style="display:none; margin-bottom:30px;"><p style="color:#666;">Waiting for host...</p></div>
                 <div class="players-panel" id="lobbyPlayers"></div>
                 <div id="hostInviteArea" style="display:none; margin-top:30px; padding:20px; background:#f8f9fa; border-radius:15px;">
-                    <h4 style="margin-bottom:15px;">Invite Students</h4><div id="inviteUserList" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); gap:10px; max-height:150px; overflow-y:auto; margin-bottom:15px;"></div>
+                    <h4 style="margin-bottom:15px;">Invite Players</h4><div id="inviteUserList" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); gap:10px; max-height:150px; overflow-y:auto; margin-bottom:15px;"></div>
                     <button class="btn-action" style="width:100%;" onclick="sendLobbyInvites()">Send Invitations</button>
                 </div>
             </div>
@@ -132,12 +132,27 @@
                 document.getElementById('hostInviteArea').style.display = 'block';
                 loadInvites();
 
-                if (isH) { document.getElementById('hostControls').style.display = 'block'; document.getElementById('guestWait').style.display = 'none'; }
+                if (isH) { 
+                    document.getElementById('hostControls').style.display = 'block'; document.getElementById('guestWait').style.display = 'none'; loadInvites(); 
+                    const btn = document.getElementById('startBtn');
+                    if (acc.length < 2) {
+                        btn.disabled = true;
+                        btn.textContent = "Waiting for players...";
+                        btn.style.background = "#ccc";
+                    } else {
+                        btn.disabled = false;
+                        btn.textContent = "Start Game Now";
+                        btn.style.background = "var(--main-gradient)";
+                    }
+                }
                 else { document.getElementById('hostControls').style.display = 'none'; document.getElementById('guestWait').style.display = 'block'; }
+
                 
                 document.getElementById('lobbyPlayers').innerHTML = acc.map(p => {
                     const disp = p.username.length > 10 ? p.username.substring(0,10) + '...' : p.username;
-                    return `<div class="player-chip"><strong>${disp}</strong>${p.username.toLowerCase() === session.host.toLowerCase() ? ' (H)' : ''}</div>`;
+                    const isPHost = p.username && session.host && p.username.toLowerCase() === session.host.toLowerCase();
+                    const removeBtn = (isH && !isPHost) ? `<button onclick="removePlayer('${p.username}')" style="background:none; border:none; color:#dc3545; cursor:pointer; font-weight:bold; margin-left:5px; padding:0 5px;" title="Remove Player">&times;</button>` : '';
+                    return `<div class="player-chip"><strong>${disp}</strong>${isPHost ? ' (H)' : ''}${removeBtn}</div>`;
                 }).join('');
             } else {
                 document.getElementById('lobbyView').style.display = 'none'; document.getElementById('gameView').style.display = 'block';
@@ -145,7 +160,8 @@
             }
         }
         function renderActive() {
-            const s = session.state; if (!s) return; const isMyT = s.currentTurn?.toLowerCase() === username.toLowerCase();
+            const s = session.state; if (!s || !s.discard || !s.hands) return; 
+            const isMyT = s.currentTurn?.toLowerCase() === username.toLowerCase();
             document.getElementById('gameStatus').textContent = isMyT ? "YOUR TURN!" : `Waiting for ${s.currentTurn}...`;
             document.getElementById('myHand').className = 'hand-area' + (!isMyT ? ' not-my-turn' : '');
             document.querySelector('.draw-pile').className = 'draw-pile' + (!isMyT ? ' not-my-turn' : '');
@@ -194,26 +210,43 @@
             msg.innerHTML = messageHtml;
             document.getElementById('playAgainBtn').style.display = 'none';
         }
+        let cachedUsers = null;
         async function loadInvites() {
-            const list = document.getElementById('inviteUserList'); if (!list || list.getAttribute('data-loaded')) return;
-            const res = await fetch('/api/users/all'); const data = await res.json();
-            if (data.success) {
-                const cur = session.players.map(p => p.username.toLowerCase());
+            const list = document.getElementById('inviteUserList'); if (!list) return;
+            
+            if (!cachedUsers) {
+                const res = await fetch('/api/users/all');
+                const data = await res.json();
+                if (data.success) cachedUsers = data.users;
+            }
+
+            if (cachedUsers) {
+                const cur = session.players.map(p => (p.username || '').toLowerCase());
                 const ai = ['Bob', 'Tim'];
-                list.innerHTML = data.users.filter(u => u.username.toLowerCase() !== username.toLowerCase() && !cur.includes(u.username.toLowerCase())).map(u => {
+                list.innerHTML = cachedUsers.filter(u => u.username.toLowerCase() !== username.toLowerCase() && !cur.includes(u.username.toLowerCase())).map(u => {
                     const disp = u.username.length > 10 ? u.username.substring(0,10) + '...' : u.username;
                     const isAI = ai.includes(u.username);
                     const statusDot = `<span style="width:8px; height:8px; background:${u.is_online ? '#28a745' : '#ccc'}; border-radius:50%; display:inline-block; margin-right:5px;"></span>`;
-                    return `<div class="user-card" onclick="toggleInviteSelection(this, '${u.username}')">${statusDot}${disp}${isAI ? ' (ai)' : ''}</div>`;
+                    return `<div class="user-card ${inviteSelected.has(u.username) ? 'selected' : ''}" onclick="toggleInviteSelection(this, '${u.username}')">${statusDot}${disp}${isAI ? ' (ai)' : ''}</div>`;
                 }).join('') || 'None';
-                list.setAttribute('data-loaded', 'true');
             }
         }
 
-        let invites = new Set();
-        function toggleInvite(el, u) { if (invites.has(u)) { invites.delete(u); el.classList.remove('selected'); } else { invites.add(u); el.classList.add('selected'); } }
-        async function sendLobbyInvites() { if (!invites.size) return; await fetch('/api/games/invite', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ host: username, game_type: 'UNO', invitees: Array.from(invites), session_id: sessionId }) }); alert("Sent!"); invites.clear(); document.getElementById('inviteUserList').removeAttribute('data-loaded'); loadInvites(); }
+        let inviteSelected = new Set();
+        function toggleInviteSelection(el, u) { if (inviteSelected.has(u)) { inviteSelected.delete(u); el.classList.remove('selected'); } else { inviteSelected.add(u); el.classList.add('selected'); } }
+        async function sendLobbyInvites() { if (!inviteSelected.size) return; await fetch('/api/games/invite', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ host: username, game_type: 'UNO', invitees: Array.from(inviteSelected), session_id: sessionId }) }); alert("Sent!"); inviteSelected.clear(); document.getElementById('inviteUserList').removeAttribute('data-loaded'); loadInvites(); }
         async function leaveGame() { if (confirm("Leave?")) { await fetch('/api/games/leave', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ session_id: sessionId, username }) }); location.href = 'games.html'; } }
+        async function removePlayer(targetUser) {
+            if (!confirm(`Remove ${targetUser} from the game?`)) return;
+            try {
+                await fetch('/api/games/leave', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ session_id: sessionId, username: targetUser })
+                });
+                await fetchSession(true);
+            } catch (e) { console.error(e); }
+        }
         init();
     </script>
 </body>

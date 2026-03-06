@@ -171,7 +171,9 @@
                 }
                 document.getElementById('lobbyPlayers').innerHTML = acc.map(p => {
                     const disp = p.username.length > 10 ? p.username.substring(0,10) + '...' : p.username;
-                    return `<div class="player-chip"><strong>${disp}</strong>${p.username.toLowerCase() === session.host.toLowerCase() ? ' (H)' : ''}</div>`;
+                    const isPHost = p.username && session.host && p.username.toLowerCase() === session.host.toLowerCase();
+                    const removeBtn = (isH && !isPHost) ? `<button onclick="removePlayer('${p.username}')" style="background:none; border:none; color:#dc3545; cursor:pointer; font-weight:bold; margin-left:5px; padding:0 5px;" title="Remove Player">&times;</button>` : '';
+                    return `<div class="player-chip"><strong>${disp}</strong>${isPHost ? ' (H)' : ''}${removeBtn}</div>`;
                 }).join('');
                 
                 if (isH) { 
@@ -249,6 +251,17 @@
             } finally { isUpdating = false; } 
         }
         async function leaveGame() { if (confirm("Leave?")) { await fetch('/api/games/leave', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ session_id: sessionId, username }) }); location.href = 'games.html'; } }
+        async function removePlayer(targetUser) {
+            if (!confirm(`Remove ${targetUser} from the game?`)) return;
+            try {
+                await fetch('/api/games/leave', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ session_id: sessionId, username: targetUser })
+                });
+                await fetchSession(true);
+            } catch (e) { console.error(e); }
+        }
         function showGameOver() {
             const s = session.state, isW = s.word.split('').every(c => c === ' ' || s.guessedLetters.some(l => l.toUpperCase() === c.toUpperCase())), isH = session.host?.toLowerCase() === username.toLowerCase();
             const o = document.getElementById('gameOverlay'); o.style.display = 'flex';
@@ -297,19 +310,25 @@
         }
         let isPeeking = false, turnTimer = null, lastTurnAt = 0;
         function showPeek() { isPeeking = true; renderActive(); } function hidePeek() { isPeeking = false; renderActive(); }
+        let cachedUsers = null;
         async function loadInvites() {
-            const list = document.getElementById('inviteUserList'); if (!list || list.getAttribute('data-loaded')) return;
-            const res = await fetch('/api/users/all'); const data = await res.json();
-            if (data.success) {
+            const list = document.getElementById('inviteUserList'); if (!list) return;
+            
+            if (!cachedUsers) {
+                const res = await fetch('/api/users/all');
+                const data = await res.json();
+                if (data.success) cachedUsers = data.users;
+            }
+
+            if (cachedUsers) {
                 const cur = session.players.map(p => p.username.toLowerCase());
                 const ai = ['Bob', 'Tim'];
-                list.innerHTML = data.users.filter(u => u.username.toLowerCase() !== username.toLowerCase() && !cur.includes(u.username.toLowerCase())).map(u => {
+                list.innerHTML = cachedUsers.filter(u => u.username.toLowerCase() !== username.toLowerCase() && !cur.includes(u.username.toLowerCase())).map(u => {
                     const disp = u.username.length > 10 ? u.username.substring(0,10) + '...' : u.username;
                     const isAI = ai.includes(u.username);
                     const statusDot = `<span style="width:8px; height:8px; background:${u.is_online ? '#28a745' : '#ccc'}; border-radius:50%; display:inline-block; margin-right:5px;"></span>`;
-                    return `<div class="user-card" onclick="toggleInvite(this, '${u.username}')">${statusDot}${disp}${isAI ? ' (ai)' : ''}</div>`;
+                    return `<div class="user-card ${invites.has(u.username) ? 'selected' : ''}" onclick="toggleInvite(this, '${u.username}')">${statusDot}${disp}${isAI ? ' (ai)' : ''}</div>`;
                 }).join('') || 'None';
-                list.setAttribute('data-loaded', 'true');
             }
         }
         let invites = new Set();

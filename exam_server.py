@@ -500,14 +500,15 @@ def process_ai_action(session_id):
         is_starting = (status == 'pending' and host in AI_PLAYERS) or (status == 'active' and state.get('starting'))
         
         if is_starting:
-            # Only start if there are other accepted players (guests)
-            accepted_guests = [p for p in players if p['status'] == 'accepted' and p['username'].lower() != host.lower()]
-            if not accepted_guests and host in AI_PLAYERS:
-                conn.close(); return
-            
             accepted_all = [p for p in players if p['status'] == 'accepted']
-            if not accepted_all:
+            if len(accepted_all) < 2:
+                # If human tried to start alone, just ignore it and stay in lobby
+                if status == 'active' and state.get('starting'):
+                    cursor.execute("UPDATE game_sessions SET status = 'pending', version = version + 1 WHERE id = ?", (session_id,))
+                    conn.commit()
                 conn.close(); return
+
+            accepted_guests = [p for p in players if p['status'] == 'accepted' and p['username'].lower() != host.lower()]
 
             if game_type == 'Hangman':
                 print(f"[AI-DEBUG] AI host {host} choosing word...")
