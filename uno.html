@@ -386,7 +386,13 @@
         }
         function canPlay(c) { const s = session.state, top = s.discard[s.discard.length - 1], cur = s.currentColor || top.color; return c.color === 'black' || c.color === cur || c.value === top.value; }
         async function playCard(i) { if (isUpdating) return; if (session.state.hands[username][i].color === 'black') { window.pendingPlayIndex = i; document.getElementById('colorPicker').style.display = 'block'; return; } await perform('PLAY_CARD', { card_idx: i }); }
-        async function selectColor(c) { document.getElementById('colorPicker').style.display = 'none'; if (window.pendingPlayIndex !== undefined) { const idx = window.pendingPlayIndex; delete window.pendingPlayIndex; isUpdating = true; await perform('PLAY_CARD', { card_idx: idx }); await perform('SELECT_COLOR', { color: c }); } }
+        async function selectColor(c) { 
+            document.getElementById('colorPicker').style.display = 'none'; 
+            if (window.pendingPlayIndex !== undefined) { 
+                const idx = window.pendingPlayIndex; delete window.pendingPlayIndex; 
+                await perform('PLAY_CARD', { card_idx: idx, color: c }); 
+            } 
+        }
         async function drawCard() { if (isUpdating || session.state.currentTurn.toLowerCase() !== username.toLowerCase()) return; await perform('DRAW_CARD', {}); }
         async function perform(a, p) {
             overlayTimeout = setTimeout(() => { document.getElementById('processingOverlay').style.display = 'flex'; }, 200);
