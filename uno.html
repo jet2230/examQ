@@ -70,6 +70,12 @@
             transform: scale(1.1);
             z-index: 2;
         }
+        .player-chip.finished-player {
+            background: #eee;
+            border-color: #ccc;
+            opacity: 0.7;
+            filter: grayscale(1);
+        }
         .player-chip.next-turn {
             border-color: #ffc107;
             background: #fff8e1;
@@ -151,6 +157,18 @@
                 <div id="hostInviteArea" style="display:none; margin-top:30px; padding:20px; background:#f8f9fa; border-radius:15px;">
                     <h4 style="margin-bottom:15px;">Invite Players</h4><div id="inviteUserList" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); gap:10px; max-height:150px; overflow-y:auto; margin-bottom:15px;"></div>
                     <button class="btn-action" style="width:100%;" onclick="sendLobbyInvites()">Send Invitations</button>
+                </div>
+
+                <!-- Game Rules -->
+                <div style="margin-top:40px; text-align:left; background:#f1f4f9; padding:20px; border-radius:15px; border:1px solid #ddd;">
+                    <h4 style="color:var(--primary-color); margin-bottom:10px; display:flex; align-items:center; gap:8px;">📜 How to Play</h4>
+                    <ul style="font-size:0.85em; color:#555; line-height:1.6; padding-left:20px;">
+                        <li><strong>Starting:</strong> At least 2 players are required to begin.</li>
+                        <li><strong>Gameplay:</strong> Match cards by color or value. Play continues until only one person is left with cards!</li>
+                        <li><strong>CALL UNO:</strong> When you have exactly 1 card left, you MUST click the <strong>CALL UNO!</strong> button before playing your final card.</li>
+                        <li><strong>Disputes:</strong> If a player finishes without calling UNO, any other player can click <strong>Dispute Win</strong> to force them back into the game with 2 penalty cards.</li>
+                        <li><strong>Host:</strong> The first person to clear their hand (the winner) becomes the host for the next game.</li>
+                    </ul>
                 </div>
             </div>
             <div id="gameView" style="display:none;">
@@ -328,9 +346,12 @@
                 const count = s.hands[u]?.length || 0;
                 const disp = u.length > 10 ? u.substring(0,10) + '...' : u;
                 const called = s.unoCalls && s.unoCalls.includes(u);
+                const finished = s.finishers && s.finishers.includes(u);
                 
                 turnHtml += `<div class="player-chip ${active ? 'active-turn' : (next ? 'next-turn' : '')}" title="${u}">
-                    <strong>${disp}</strong> <span>(${count})</span> ${called ? '<span style="color:#28a745; font-weight:bold; margin-left:5px;">(Uno)</span>' : ''}
+                    <strong>${disp}</strong> <span>(${count})</span> 
+                    ${called && !finished ? '<span style="color:#28a745; font-weight:bold; margin-left:5px;">(Uno)</span>' : ''}
+                    ${finished ? '<span style="color:#6c757d; font-weight:bold; margin-left:5px;">(FINISHED)</span>' : ''}
                 </div>`;
             }
 
@@ -359,6 +380,7 @@
                 }
                 else if (c.value === 'Draw2') tooltip = `<div class="card-tooltip">Next player ${nextP} will draw 2 cards and skip a go</div>`;
                 else if (c.value === 'WildDraw4') tooltip = `<div class="card-tooltip">Next player ${nextP} will draw 4 cards and skip a go</div>`;
+                else if (c.value === 'Wild') tooltip = `<div class="card-tooltip">Change the current color to one of your choice</div>`;
             }
             return `<button class="card card-${c.color} ${!p && i !== -1 ? 'disabled' : ''}" ${p ? `onclick="playCard(${i})"` : ''}>${tooltip}<div class="card-inner">${l}</div></button>`; 
         }
@@ -376,6 +398,7 @@
         function showGameOver() {
             const o = document.getElementById('gameOverlay'); o.style.display = 'flex';
             const win = session.state.winner?.toLowerCase() === username.toLowerCase();
+            const lose = session.state.loser?.toLowerCase() === username.toLowerCase();
             const isH = session.host?.toLowerCase() === username.toLowerCase();
             const title = document.getElementById('overlayTitle');
             const msg = document.getElementById('overlayMessage');
@@ -386,14 +409,18 @@
                     confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, zIndex: 1000 });
                     confettiShown = true;
                 }
-            } else {
+            } else if (lose) {
                 title.textContent = "YOU LOSE!"; title.style.color = "#dc3545";
+            } else {
+                title.textContent = "GAME OVER"; title.style.color = "#1e3c72";
             }
             
-            let messageHtml = `Winner: <strong>${session.state.winner}</strong>`;
-            if (!win && !isH) {
-                messageHtml += `<br><br><span style="color:#1e3c72; font-weight:bold;">Please wait for the host (${session.host}) to restart the game...</span>`;
-            } else if (isH) {
+            let messageHtml = `Winner: <strong>${session.state.winner}</strong><br>Loser: <strong>${session.state.loser}</strong>`;
+            const isActualWinner = session.state.winner?.toLowerCase() === username.toLowerCase();
+            
+            if (!win && !lose && !isActualWinner) {
+                messageHtml += `<br><br><span style="color:#1e3c72; font-weight:bold;">Please wait for the new host (${session.state.winner}) to restart the game...</span>`;
+            } else if (isActualWinner) {
                 messageHtml += `<br><br><span style="color:#28a745; font-weight:bold;">The other players are waiting for you to start a new game!</span><br>`;
                 messageHtml += `<button class="btn-action" style="background:#28a745; margin-top:15px;" onclick="resetGame()">🎮 Play Again</button>`;
             }

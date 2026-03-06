@@ -717,11 +717,21 @@ Respond ONLY with a JSON object in this format: {"word": "YOUR CHOICE"}"""
                         new_state, err = apply_uno_move(state, 'PLAY_CARD', current_turn, {'card_idx': card_idx})
                         
                         if not err:
+                            order = state['playersOrder']
+                            order_lower = [o.lower() for o in order]
+                            curr_idx = order_lower.index(current_turn.lower())
+                            
                             next_p = new_state.get('currentTurn', 'Unknown')
                             if val == 'Reverse': msg = f"{current_turn} used reverse card, reversing turn order to {next_p}"
                             elif val == 'Skip': msg = f"{current_turn} skipped the next player, it is now {next_p}'s turn"
-                            elif val == 'Draw2': msg = f"{current_turn} used a Draw 2, {next_p} draws 2 and is skipped"
-                            elif val == 'WildDraw4': msg = f"{current_turn} used a Wild Draw 4, {next_p} draws 4 and is skipped"
+                            elif val == 'Draw2':
+                                victim_idx = (curr_idx + state['direction'] + len(order)) % len(order)
+                                victim = order[victim_idx]
+                                msg = f"{current_turn} used a Draw 2, {victim} draws 2 and is skipped"
+                            elif val == 'WildDraw4':
+                                victim_idx = (curr_idx + state['direction'] + len(order)) % len(order)
+                                victim = order[victim_idx]
+                                msg = f"{current_turn} used a Wild Draw 4, {victim} draws 4 and is skipped"
                             else: msg = f"{current_turn} played {card['color']} {val}, next is {next_p}"
 
                             if card['color'] == 'black':
@@ -887,37 +897,43 @@ def game_action():
             
         if game_type == 'UNO':
             next_p = new_state.get('currentTurn', 'Unknown')
-            if action == 'PLAY_CARD':
-                card = state['hands'][username][params.get('card_idx')]
-                val = card['value']
-                if val == 'Reverse':
-                    msg = f"{username} used reverse card, reversing turn order to {next_p}"
-                elif val == 'Skip':
-                    msg = f"{username} skipped the next player, it is now {next_p}'s turn"
-                elif val == 'Draw2':
-                    victim_idx = (curr_idx + state['direction'] + len(order)) % len(order)
-                    victim = order[victim_idx]
-                    msg = f"{username} used a Draw 2, {victim} draws 2 and is skipped"
-                elif val == 'WildDraw4':
-                    victim_idx = (curr_idx + state['direction'] + len(order)) % len(order)
-                    victim = order[victim_idx]
-                    msg = f"{username} used a Wild Draw 4, {victim} draws 4 and is skipped"
-                else:
-                    msg = f"{username} played {card['color']} {val}, next is {next_p}"
-            elif action == 'DRAW_CARD':
-                if new_state.pop('justDrewPlayable', False):
-                    msg = f"{username} drew a playable card and can still move"
-                else:
-                    msg = f"{username} drew a card, it is now {next_p}'s turn"
-            elif action == 'SELECT_COLOR':
-                # For SELECT_COLOR, the turn has already advanced in apply_uno_move
-                msg = f"{username} chose {params.get('color')}, next is {next_p}"
-            elif action == 'CALL_UNO':
-                msg = f"{username} called UNO!"
-            elif action == 'DISPUTE':
-                target = state.get('lastFinisher', 'someone')
-                msg = f"{username} disputed the win! {target} draws 2 and is back in!"
-            else: msg = f"{username} performed {action}"
+            msg = f"{username} performed {action}"
+            try:
+                if action == 'PLAY_CARD':
+                    # Get card details safely from the PREVIOUS state
+                    hand = state.get('hands', {}).get(username, [])
+                    card_idx = params.get('card_idx')
+                    if card_idx is not None and card_idx < len(hand):
+                        card = hand[card_idx]
+                        val = card['value']
+                        if val == 'Reverse':
+                            msg = f"{username} used reverse card, reversing turn order to {next_p}"
+                        elif val == 'Skip':
+                            msg = f"{username} skipped the next player, it is now {next_p}'s turn"
+                        elif val == 'Draw2':
+                            victim_idx = (curr_idx + state['direction'] + len(order)) % len(order)
+                            victim = order[victim_idx]
+                            msg = f"{username} used a Draw 2, {victim} draws 2 and is skipped"
+                        elif val == 'WildDraw4':
+                            victim_idx = (curr_idx + state['direction'] + len(order)) % len(order)
+                            victim = order[victim_idx]
+                            msg = f"{username} used a Wild Draw 4, {victim} draws 4 and is skipped"
+                        else:
+                            msg = f"{username} played {card['color']} {val}, next is {next_p}"
+                elif action == 'DRAW_CARD':
+                    if new_state.get('justDrewPlayable'):
+                        msg = f"{username} drew a playable card and can still move"
+                    else:
+                        msg = f"{username} drew a card, it is now {next_p}'s turn"
+                elif action == 'SELECT_COLOR':
+                    msg = f"{username} chose {params.get('color')}, next is {next_p}"
+                elif action == 'CALL_UNO':
+                    msg = f"{username} called UNO!"
+                elif action == 'DISPUTE':
+                    target = state.get('lastFinisher', 'someone')
+                    msg = f"{username} disputed the win! {target} draws 2 and is back in!"
+            except Exception as le:
+                print(f"[LOG-ERROR] Failed to construct message: {le}")
         elif game_type == 'Hangman':
             if action == 'GUESS':
                 l = params.get('letter')
@@ -964,6 +980,8 @@ def update_game_state():
         if status:
             updates.append("status = ?")
             params.append(status)
+            if status == 'pending':
+                updates.append("logs_json = '[]'")
         if new_host:
             updates.append("host_username = ?")
             params.append(new_host)
