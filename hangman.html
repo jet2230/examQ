@@ -800,11 +800,21 @@
         async function startGame() {
             const word = document.getElementById('secretWordInput').value.trim().toUpperCase();
             if (!word || word.length < 3) { alert("Please enter a valid word (3+ letters)."); return; }
-            const allowNumbers = document.getElementById('allowNumbersToggle').checked;
-            if (!allowNumbers && /[0-9]/.test(word)) {
+            let allowNumbers = document.getElementById('allowNumbersToggle').checked;
+            
+            const hasNumbers = /[0-9]/.test(word);
+            
+            if (!allowNumbers && hasNumbers) {
                 alert("Numbers are not allowed in the secret word when 'Allow Numbers' is turned off.");
                 return;
             }
+
+            // If toggle is ON but word has no numbers, turn it OFF for this game to keep keyboard clean
+            if (allowNumbers && !hasNumbers) {
+                console.log("No numbers in word, auto-disabling allowNumbers toggle for this round.");
+                allowNumbers = false;
+            }
+
             const activePlayers = session.players.filter(p => p.status === 'accepted');
             const guestPlayers = activePlayers.filter(p => p.username.toLowerCase() !== session.host.toLowerCase());
             const firstTurn = guestPlayers.length > 0 ? guestPlayers[0].username : session.host;

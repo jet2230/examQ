@@ -1870,7 +1870,9 @@ if __name__ == '__main__':
                 '/api/admin/all-progress',
                 '/api/games/session',
                 '/api/games/my-active',
-                '/api/games/available'
+                '/api/games/available',
+                '/api/user/preferences/save',
+                '/api/user/preferences/get'
             ])
     logging.getLogger('werkzeug').addFilter(NoPollingFilter())
     
