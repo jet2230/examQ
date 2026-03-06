@@ -4,578 +4,216 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ExamQ - UNO</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="/static/theme_manager.js"></script>
     <script src="/static/online_status.js"></script>
     <style>
-        :root {
-            --primary-color: #1e3c72;
-            --secondary-color: #2a5298;
-            --main-gradient: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-            --uno-red: #ff5555;
-            --uno-blue: #5555ff;
-            --uno-green: #55aa55;
-            --uno-yellow: #ffaa00;
-            --uno-black: #222;
-        }
+        :root { --primary-color: #1e3c72; --secondary-color: #2a5298; --main-gradient: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%); --uno-red: #ff5555; --uno-blue: #5555ff; --uno-green: #55aa55; --uno-yellow: #ffaa00; --uno-black: #222; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: var(--main-gradient);
-            min-height: 100vh;
-            padding: 20px;
-        }
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            min-height: 85vh;
-        }
-        .header { background: #f8f9fa; padding: 15px 30px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--main-gradient); min-height: 100vh; padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.4); overflow: hidden; display: flex; flex-direction: column; min-height: 80vh; position: relative; }
+        .header { background: #f8f9fa; padding: 20px 40px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
         .content { padding: 30px; text-align: center; flex: 1; display: flex; flex-direction: column; }
-
-        /* Card Styles */
-        .card {
-            width: 80px;
-            height: 120px;
-            border-radius: 10px;
-            display: inline-flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            font-weight: 900;
-            font-size: 1.5em;
-            color: white;
-            position: relative;
-            cursor: pointer;
-            user-select: none;
-            transition: transform 0.2s, box-shadow 0.2s;
-            border: 3px solid white;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            margin: 5px;
-        }
-        .card:hover { transform: translateY(-15px) scale(1.1); z-index: 10; box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+        .card { width: 80px; height: 120px; border-radius: 10px; display: flex; justify-content: center; align-items: center; font-weight: 900; font-size: 1.5em; color: white; position: relative; cursor: pointer; user-select: none; transition: all 0.2s; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.2); margin: 5px; outline: none; font-family: inherit; }
+        .card:hover { transform: translateY(-15px) scale(1.1); z-index: 10; box-shadow: 0 10px 20px rgba(0,0,0,0.3); filter: brightness(1.1); }
         .card.disabled { cursor: not-allowed; filter: grayscale(0.5); opacity: 0.8; }
         .card.disabled:hover { transform: none; }
-        
         .card-red { background-color: var(--uno-red); }
         .card-blue { background-color: var(--uno-blue); }
         .card-green { background-color: var(--uno-green); }
         .card-yellow { background-color: var(--uno-yellow); }
         .card-black { background-color: var(--uno-black); }
-
-        .card-inner {
-            border: 2px solid rgba(255,255,255,0.3);
-            width: 85%;
-            height: 85%;
-            border-radius: 50% / 40%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transform: rotate(-15deg);
-        }
-
-        /* Game Board Layout */
-        .game-area { flex: 1; display: flex; flex-direction: column; gap: 30px; }
-        .deck-area { display: flex; justify-content: center; align-items: center; gap: 40px; margin: 20px 0; }
-        .hand-area { 
-            background: #f1f4f9; 
-            padding: 20px; 
-            border-radius: 15px; 
-            min-height: 160px;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            align-items: center;
-            border: 2px dashed #ddd;
-        }
-
-        .draw-pile {
-            width: 80px;
-            height: 120px;
-            background: var(--uno-black);
-            border: 3px solid white;
-            border-radius: 10px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: var(--uno-red);
-            font-weight: 900;
-            font-size: 1.2em;
-            cursor: pointer;
-            box-shadow: 4px 4px 0 #444;
-        }
-
-        .btn-action {
-            background: var(--main-gradient);
-            color: white;
-            border: none;
-            padding: 10px 25px;
-            border-radius: 8px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: opacity 0.2s;
-        }
-        .btn-action:disabled { opacity: 0.5; cursor: not-allowed; }
-
-        .players-panel {
-            margin-top: 30px;
-            padding: 20px;
-            background: #f1f4f9;
-            border-radius: 15px;
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-        .player-chip {
-            padding: 5px 15px;
-            background: white;
-            border-radius: 20px;
-            font-size: 0.85em;
-            border: 1px solid #ddd;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .player-chip.active-turn {
-            border-color: #28a745;
-            background: #e8f5e9;
-            box-shadow: 0 0 10px rgba(40,167,69,0.2);
-        }
-        .user-card {
-            padding: 8px 12px;
-            border: 1px solid #eee;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 0.8em;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.2s;
-            background: #fdfdfd;
-        }
-        .user-card:hover { background: #f1f4f9; border-color: #abc; }
-        .user-card.selected { background: #e3f2fd; border-color: #1e3c72; border-width: 2px; }
-
-        #gameOverlay {
-            display: none;
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255,255,255,0.9);
-            z-index: 100;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
+        .card-inner { border: 2px solid rgba(255,255,255,0.3); width: 85%; height: 85%; border-radius: 50% / 40%; display: flex; justify-content: center; align-items: center; transform: rotate(-15deg); pointer-events: none; }
+        .hand-area { background: #f1f4f9; padding: 20px; border-radius: 15px; min-height: 160px; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; border: 2px dashed #ddd; transition: all 0.3s; }
+        .hand-area.not-my-turn { filter: grayscale(0.8); opacity: 0.6; pointer-events: none; }
+        .draw-pile { width: 80px; height: 120px; background: var(--uno-black); border: 3px solid white; border-radius: 10px; display: flex; justify-content: center; align-items: center; color: var(--uno-red); font-weight: 900; font-size: 1.2em; cursor: pointer; box-shadow: 4px 4px 0 #444; transition: transform 0.1s; outline: none; font-family: inherit; }
+        .draw-pile.not-my-turn { filter: grayscale(0.8); opacity: 0.6; pointer-events: none; }
+        .draw-pile:hover:not(.not-my-turn) { transform: scale(1.05); }
+        .btn-action { background: var(--main-gradient); color: white; border: none; padding: 12px 30px; border-radius: 8px; font-weight: 700; cursor: pointer; }
+        .players-panel { display: flex; justify-content: center; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
+        .player-chip { padding: 8px 15px; background: #f8f9fa; border-radius: 20px; border: 2px solid #eee; display: flex; align-items: center; gap: 10px; font-size: 0.9em; }
+        .player-chip.active-turn { border-color: #28a745; background: #e8f5e9; box-shadow: 0 0 10px rgba(40,167,69,0.2); }
+        .color-picker { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 50px rgba(0,0,0,0.5); z-index: 1000; }
+        .color-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
+        .color-btn { width: 80px; height: 80px; border-radius: 10px; border: 4px solid white; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        #gameOverlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 100; flex-direction: column; justify-content: center; align-items: center; }
         .overlay-title { font-size: 3em; font-weight: 800; margin-bottom: 20px; }
-
-        .color-picker {
-            display: none;
-            position: fixed;
-            top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: white;
-            padding: 25px;
-            border-radius: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-            z-index: 1000;
-        }
-        .color-btn {
-            width: 60px; height: 60px; border-radius: 50%; cursor: pointer; border: 4px solid white;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            transition: transform 0.2s;
-        }
-        .color-btn:hover { transform: scale(1.1); }
-
+        .user-card { padding: 8px 12px; border: 1px solid #eee; border-radius: 8px; cursor: pointer; font-size: 0.8em; background: #fdfdfd; }
+        .user-card.selected { background: #e3f2fd; border-color: #1e3c72; border-width: 2px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
-    <div class="container" style="position: relative;">
+    <div class="container">
         <div class="header">
-            <div>
-                <h2 style="color: var(--primary-color);">Multiplayer UNO</h2>
-                <div id="gameStatus" style="font-size: 0.8em; color: #666;">Initializing...</div>
-            </div>
-            <div style="display:flex; gap:15px; align-items:center;">
-                <button class="btn-action" style="background:#dc3545; margin:0;" onclick="leaveGame()">🚪 Leave Game</button>
-            </div>
+            <div><h2 style="color: var(--primary-color);">UNO Multiplayer</h2><div id="gameStatus" style="font-size: 0.8em; color: #666;">Initializing...</div></div>
+            <button class="btn-action" style="background:#dc3545; padding:8px 15px; font-size:0.8em;" onclick="leaveGame()">🚪 Leave</button>
         </div>
-
         <div class="content">
-            <!-- Lobby View -->
             <div id="lobbyView" style="display:none;">
-                <div id="hostControls" style="display:none; background:#f8f9fa; padding:30px; border-radius:20px; border:1px solid #eee; margin-bottom:30px;">
-                    <h3 style="margin-bottom:20px;">Lobby: You are the Host</h3>
-                    <p style="margin-bottom:20px;">Invite your friends and start the match!</p>
-                    <button id="startBtn" class="btn-action" style="padding:15px 40px; font-size:1.2em;" onclick="startGame()">🚀 Start UNO Game</button>
-                </div>
-
-                <div id="guestWait" style="display:none; background:#f8f9fa; padding:40px; border-radius:20px; border:1px solid #eee; margin-bottom:30px;">
-                    <div style="width:40px; height:40px; border:4px solid #f3f3f3; border-top:4px solid #1e3c72; border-radius:50%; animation:spin 2s linear infinite; margin:0 auto 20px;"></div>
-                    <h3 id="guestWaitTitle" style="color:var(--primary-color); margin-bottom:10px;">Waiting for Host...</h3>
-                    <p style="color:#666;">The game will begin once the host starts the match.</p>
-                </div>
-
-                <div class="players-panel" id="lobbyPlayers" style="margin-top:40px;"></div>
-
-                <div id="hostInviteArea" style="margin-top:30px; padding:20px; background:#fff; border:1px solid #eee; border-radius:15px; box-shadow:0 4px 15px rgba(0,0,0,0.05);">
-                    <h4 style="color:var(--primary-color); margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">👤 Invite More Players</h4>
-                    <div id="inviteUserList" style="max-height:200px; overflow-y:auto; margin-bottom:15px; display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:10px;">
-                        <div style="padding:10px; text-align:center; color:#999; font-size:0.85em;">Loading students...</div>
-                    </div>
-                    <button id="sendInviteBtn" class="btn-action" style="width:100%; margin:0; padding:10px; font-size:0.9em; background:#1e3c72;" onclick="sendLobbyInvitations()">Send Invitations</button>
-                </div>
-
-                <div style="margin-top:40px; text-align:left; background:#f1f4f9; padding:20px; border-radius:15px; border:1px solid #ddd;">
-                    <h4 style="color:var(--primary-color); margin-bottom:10px; display:flex; align-items:center; gap:8px;">🃏 How to Play UNO</h4>
-                    <ul style="font-size:0.85em; color:#555; line-height:1.6; padding-left:20px;">
-                        <li><strong>Match Cards:</strong> Match by color, number, or symbol.</li>
-                        <li><strong>Action Cards:</strong> Use Skips, Reverses, and +2s to challenge opponents.</li>
-                        <li><strong>Wilds:</strong> Play Wild or +4 cards to change the current color.</li>
-                        <li><strong>Winning:</strong> Be the first to clear your entire hand.</li>
-                    </ul>
+                <div id="hostControls" style="display:none; margin-bottom:30px;"><button class="btn-action" onclick="startGame()">Start Game Now</button></div>
+                <div id="guestWait" style="display:none; margin-bottom:30px;"><p style="color:#666;">Waiting for host...</p></div>
+                <div class="players-panel" id="lobbyPlayers"></div>
+                <div id="hostInviteArea" style="display:none; margin-top:30px; padding:20px; background:#f8f9fa; border-radius:15px;">
+                    <h4 style="margin-bottom:15px;">Invite Students</h4><div id="inviteUserList" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); gap:10px; max-height:150px; overflow-y:auto; margin-bottom:15px;"></div>
+                    <button class="btn-action" style="width:100%;" onclick="sendLobbyInvites()">Send Invitations</button>
                 </div>
             </div>
-
-            <!-- Game View -->
-            <div id="gameView" style="display:none; flex-direction:column;" class="game-area">
+            <div id="gameView" style="display:none;">
                 <div id="playerIndicators" class="players-panel" style="margin-top:0;"></div>
-
                 <div class="deck-area">
-                    <div>
-                        <div style="font-size:0.7em; color:#999; margin-bottom:5px;">DRAW</div>
-                        <div class="draw-pile" onclick="drawCard()">DRAW</div>
-                    </div>
-                    <div>
-                        <div style="font-size:0.7em; color:#999; margin-bottom:5px;">DISCARD</div>
-                        <div id="topCard"></div>
-                    </div>
-                    <div id="activeColorIndicator" style="display:none; flex-direction:column; align-items:center;">
-                        <div style="font-size:0.7em; color:#999; margin-bottom:5px;">COLOR</div>
-                        <div id="colorCircle" style="width:30px; height:30px; border-radius:50%; border:2px solid white; box-shadow:0 2px 5px rgba(0,0,0,0.2);"></div>
-                    </div>
+                    <div><div style="font-size:0.7em; color:#999; margin-bottom:5px;">DRAW</div><button class="draw-pile" onclick="drawCard()">DRAW</button></div>
+                    <div><div style="font-size:0.7em; color:#999; margin-bottom:5px;">DISCARD</div><div id="topCard"></div></div>
                 </div>
-
-                <div style="margin-top:auto;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                        <span id="turnNotice" style="font-weight:800; color:var(--primary-color);">Your Hand</span>
-                    </div>
-                    <div id="myHand" class="hand-area"></div>
-                </div>
+                <div style="margin: 15px 0;"><div id="colorIndicator" style="display:inline-block; padding:5px 15px; border-radius:15px; color:white; font-weight:bold; font-size:0.8em; text-transform:uppercase;"></div></div>
+                <div style="margin-top:20px;"><div style="font-size:0.8em; color:#666; margin-bottom:10px; font-weight:bold;">YOUR HAND</div><div id="myHand" class="hand-area"></div></div>
             </div>
-
             <div id="gameOverlay">
                 <div class="overlay-title" id="overlayTitle">GAME OVER</div>
                 <p id="overlayMessage" style="font-size: 1.2em; color: #666; margin-bottom:30px;"></p>
-                <button class="btn-action" onclick="window.location.href='/games.html'">🏠 Back to Games</button>
+                <div id="overlayPlayerList" style="margin-bottom:20px; padding:15px; background:#f1f4f9; border-radius:12px; font-size:0.9em; width:100%; max-width:400px; color:#333;"></div>
+                <div style="display:flex; gap:15px;"><button id="playAgainBtn" class="btn-action" style="background:#28a745; display:none;" onclick="resetGame()">🎮 Play Again</button><button class="btn-action" style="background:#6c757d;" onclick="leaveGame()">🚪 Quit Game</button></div>
+            </div>
+            <div id="processingOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.7); z-index:2000; justify-content:center; align-items:center; flex-direction:column;">
+                <div style="width:50px; height:50px; border:5px solid #f3f3f3; border-top:5px solid var(--primary-color); border-radius:50%; animation: spin 1s linear infinite;"></div>
+                <div style="margin-top:15px; font-weight:700; color:var(--primary-color);">Processing...</div>
             </div>
         </div>
     </div>
-
-    <!-- Wild Color Picker -->
     <div id="colorPicker" class="color-picker">
-        <h3 style="margin-bottom:15px; text-align:center;">Choose a Color</h3>
-        <div style="display:flex; gap:15px;">
-            <div class="color-btn" style="background:var(--uno-red);" onclick="selectColor('red')"></div>
-            <div class="color-btn" style="background:var(--uno-blue);" onclick="selectColor('blue')"></div>
-            <div class="color-btn" style="background:var(--uno-green);" onclick="selectColor('green')"></div>
-            <div class="color-btn" style="background:var(--uno-yellow);" onclick="selectColor('yellow')"></div>
+        <h3>Choose a Color</h3>
+        <div class="color-grid">
+            <button class="color-btn" style="background:var(--uno-red);" onclick="selectColor('red')"></button>
+            <button class="color-btn" style="background:var(--uno-blue);" onclick="selectColor('blue')"></button>
+            <button class="color-btn" style="background:var(--uno-green);" onclick="selectColor('green')"></button>
+            <button class="color-btn" style="background:var(--uno-yellow);" onclick="selectColor('yellow')"></button>
         </div>
     </div>
-
     <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        const sessionId = urlParams.get('id');
-        const username = (localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username') || '').trim();
-        
-        let session = null;
-        let pollInterval = null;
-        let isUpdating = false;
-
-        async function leaveGame() {
-            if (!confirm("Are you sure you want to leave?")) return;
-            window.location.href = 'games.html';
-        }
+        const urlParams = new URLSearchParams(window.location.search), sessionId = urlParams.get('id'), username = (localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username') || '').trim();
+        let session = null, pollInterval = null, isUpdating = false, overlayTimeout = null;
+        let confettiShown = false;
 
         async function init() {
-            if (!sessionId || !username) { window.location.href = 'games.html'; return; }
-            await fetchSession();
-            pollInterval = setInterval(fetchSession, 2000);
+            if (!sessionId || !username) { location.href = 'games.html'; return; }
+            await fetch('/api/games/respond', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ session_id: sessionId, username, action: 'accept' }) });
+            await fetchSession(true); pollInterval = setInterval(() => fetchSession(false), 2000);
         }
-
-        async function fetchSession() {
-            if (isUpdating) return;
+        async function fetchSession(force = false) {
             try {
-                const res = await fetch(`/api/games/session/${sessionId}`);
+                const res = await fetch(`/api/games/session/${sessionId}?t=${Date.now()}`);
+                if (res.status === 404) { clearInterval(pollInterval); location.href = 'games.html'; return; }
                 const data = await res.json();
                 if (data.success) {
-                    const statusChanged = !session || data.session.status !== session.status;
-                    const hostChanged = !session || data.session.host !== session.host;
-                    const serverTs = data.session.state?.updatedAt || 0;
-                    const localTs = session?.state?.updatedAt || 0;
-                    
-                    if (statusChanged || hostChanged || serverTs >= localTs) {
-                        session = data.session;
-                        updateUI();
-                    }
-                } else if (res.status === 404) {
-                    clearInterval(pollInterval);
-                    document.getElementById('lobbyView').style.display = 'none';
-                    document.getElementById('gameView').style.display = 'none';
-                    document.getElementById('gameOverlay').style.display = 'flex';
-                    document.getElementById('overlayTitle').textContent = "HOST LEFT";
-                    document.getElementById('overlayMessage').textContent = "The game session was terminated.";
+                    const sc = !session || data.session.status !== session.status, vc = !session || data.session.version > session.version, pc = !session || JSON.stringify(data.session.players) !== JSON.stringify(session.players);
+                    if (force || sc || vc || pc) { session = data.session; updateUI(); }
                 }
             } catch (e) { console.error(e); }
         }
-
         function updateUI() {
-            if (!session) return;
-            const acceptedPlayers = session.players.filter(p => p.status === 'accepted');
-            const isHost = session.host && username && session.host.toLowerCase() === username.toLowerCase();
+            if (!session) return; const acc = session.players.filter(p => p.status === 'accepted'), isH = session.host?.toLowerCase() === username.toLowerCase();
+            
+            // Hide overlay by default unless finished
+            if (session.status !== 'finished') {
+                document.getElementById('gameOverlay').style.display = 'none';
+            } else {
+                const listEl = document.getElementById('overlayPlayerList');
+                if (listEl) {
+                    listEl.innerHTML = `<div style="font-weight:bold; margin-bottom:10px; color:var(--primary-color);">Players waiting (${acc.length}):</div>` + 
+                        acc.map(p => `<span>${p.username}${p.username.toLowerCase() === session.host.toLowerCase() ? ' (Host)' : ''}</span>`).join(', ');
+                }
+            }
 
             if (session.status === 'pending') {
-                document.getElementById('lobbyView').style.display = 'block';
-                document.getElementById('gameView').style.display = 'none';
+                confettiShown = false; // Reset ONLY when back in lobby
+                document.getElementById('lobbyView').style.display = 'block'; document.getElementById('gameView').style.display = 'none';
                 
-                const list = document.getElementById('lobbyPlayers');
-                list.innerHTML = acceptedPlayers.map(p => {
-                    const isPHost = p.username && session.host && p.username.toLowerCase() === session.host.toLowerCase();
-                    return `<div class="player-chip">
-                        <div style="width:8px; height:8px; background:#28a745; border-radius:50%;"></div>
-                        <strong>${p.username}</strong>
-                        ${isPHost ? '<span style="font-size:0.65em; background:#1e3c72; color:white; padding:1px 5px; border-radius:4px; margin-left:5px;">HOST</span>' : ''}
-                    </div>`;
-                }).join('');
-                
-                if (isHost) {
-                    document.getElementById('hostControls').style.display = 'block';
-                    document.getElementById('guestWait').style.display = 'none';
-                    document.getElementById('startBtn').disabled = acceptedPlayers.length < 2;
-                    if (acceptedPlayers.length < 2) document.getElementById('startBtn').textContent = "Waiting for players...";
-                    else document.getElementById('startBtn').textContent = "🚀 Start UNO Game";
-                } else {
-                    document.getElementById('hostControls').style.display = 'none';
-                    document.getElementById('guestWait').style.display = 'block';
-                    document.getElementById('guestWaitTitle').textContent = `Waiting for ${session.host}...`;
-                }
-
+                // Accessible to ALL users
                 document.getElementById('hostInviteArea').style.display = 'block';
-                loadInviteList();
-            } else if (session.status === 'active') {
-                document.getElementById('lobbyView').style.display = 'none';
-                document.getElementById('gameView').style.display = 'flex';
-                renderActiveGame();
-            } else if (session.status === 'finished') {
-                showGameOver();
-            }
-        }
+                loadInvites();
 
-        async function startGame() {
-            const accepted = session.players.filter(p => p.status === 'accepted').map(p => p.username);
-            const state = { updatedAt: Date.now(), starting: true };
-            await updateServerState(state, 'active');
-        }
-
-        function renderActiveGame() {
-            const state = session.state;
-            if (!state || !state.playersOrder || !state.currentTurn) return;
-            const isMyTurn = state.currentTurn.toLowerCase() === username.toLowerCase();
-            
-            const indicators = document.getElementById('playerIndicators');
-            indicators.innerHTML = state.playersOrder.map(u => {
-                const count = state.hands[u]?.length || 0;
-                const active = u && state.currentTurn && u.toLowerCase() === state.currentTurn.toLowerCase();
-                return `<div class="player-chip ${active ? 'active-turn' : ''}">
-                    <div style="width:8px; height:8px; background:#28a745; border-radius:50%;"></div>
-                    <strong>${u}</strong>
-                    <span style="font-size:0.8em; margin-left:5px; color:#666;">(${count} cards)</span>
-                </div>`;
-            }).join('');
-
-            const top = state.discard[state.discard.length - 1];
-            document.getElementById('topCard').innerHTML = createCardHtml(top);
-
-            const colorIndicator = document.getElementById('activeColorIndicator');
-            if (top.color === 'black') {
-                colorIndicator.style.display = 'flex';
-                document.getElementById('colorCircle').style.backgroundColor = `var(--uno-${state.currentColor})`;
+                if (isH) { document.getElementById('hostControls').style.display = 'block'; document.getElementById('guestWait').style.display = 'none'; }
+                else { document.getElementById('hostControls').style.display = 'none'; document.getElementById('guestWait').style.display = 'block'; }
+                
+                document.getElementById('lobbyPlayers').innerHTML = acc.map(p => {
+                    const disp = p.username.length > 10 ? p.username.substring(0,10) + '...' : p.username;
+                    return `<div class="player-chip"><strong>${disp}</strong>${p.username.toLowerCase() === session.host.toLowerCase() ? ' (H)' : ''}</div>`;
+                }).join('');
             } else {
-                colorIndicator.style.display = 'none';
+                document.getElementById('lobbyView').style.display = 'none'; document.getElementById('gameView').style.display = 'block';
+                renderActive(); if (session.status === 'finished') showGameOver(); else document.getElementById('gameOverlay').style.display = 'none';
             }
-
-            const myHand = document.getElementById('myHand');
-            const hand = state.hands[username] || [];
-            myHand.innerHTML = hand.map((c, i) => createCardHtml(c, i, isMyTurn && canPlay(c))).join('');
-            
-            document.getElementById('gameStatus').textContent = isMyTurn ? "IT'S YOUR TURN!" : `Waiting for ${state.currentTurn}...`;
-            document.getElementById('turnNotice').textContent = isMyTurn ? "Select a card to play:" : "Your Hand";
         }
-
-        function createCardHtml(card, index = -1, playable = false) {
-            const label = card.value === 'Draw2' ? '+2' : (card.value === 'WildDraw4' ? '+4' : card.value);
-            const clickAttr = playable ? `onclick="playCard(${index})"` : '';
-            return `
-                <div class="card card-${card.color} ${!playable && index !== -1 ? 'disabled' : ''}" ${clickAttr}>
-                    <div class="card-inner">${label}</div>
-                </div>
-            `;
+        function renderActive() {
+            const s = session.state; if (!s) return; const isMyT = s.currentTurn?.toLowerCase() === username.toLowerCase();
+            document.getElementById('gameStatus').textContent = isMyT ? "YOUR TURN!" : `Waiting for ${s.currentTurn}...`;
+            document.getElementById('myHand').className = 'hand-area' + (!isMyT ? ' not-my-turn' : '');
+            document.querySelector('.draw-pile').className = 'draw-pile' + (!isMyT ? ' not-my-turn' : '');
+            const top = s.discard[s.discard.length - 1]; document.getElementById('topCard').innerHTML = createCardHtml(top);
+            const ind = document.getElementById('colorIndicator'); ind.textContent = `Current Color: ${s.currentColor}`; ind.style.backgroundColor = `var(--uno-${s.currentColor})`;
+            document.getElementById('myHand').innerHTML = (s.hands[username] || []).map((c, i) => createCardHtml(c, i, isMyT && canPlay(c))).join('');
+            document.getElementById('playerIndicators').innerHTML = s.playersOrder.map(u => `<div class="player-chip ${u.toLowerCase() === s.currentTurn.toLowerCase() ? 'active-turn' : ''}"><strong>${u}</strong> <span>(${s.hands[u]?.length || 0})</span></div>`).join('');
         }
-
-        function canPlay(card) {
-            const state = session.state;
-            const top = state.discard[state.discard.length - 1];
-            if (card.color === 'black') return true;
-            if (card.color === state.currentColor) return true;
-            if (card.value === top.value) return true;
-            return false;
+        function createCardHtml(c, i = -1, p = false) { const l = c.value === 'Draw2' ? '+2' : (c.value === 'WildDraw4' ? '+4' : c.value); return `<button class="card card-${c.color} ${!p && i !== -1 ? 'disabled' : ''}" ${p ? `onclick="playCard(${i})"` : ''}><div class="card-inner">${l}</div></button>`; }
+        function canPlay(c) { const s = session.state, top = s.discard[s.discard.length - 1], cur = s.currentColor || top.color; return c.color === 'black' || c.color === cur || c.value === top.value; }
+        async function playCard(i) { if (isUpdating) return; if (session.state.hands[username][i].color === 'black') { window.pendingPlayIndex = i; document.getElementById('colorPicker').style.display = 'block'; return; } await perform('PLAY_CARD', { card_idx: i }); }
+        async function selectColor(c) { document.getElementById('colorPicker').style.display = 'none'; if (window.pendingPlayIndex !== undefined) { const idx = window.pendingPlayIndex; delete window.pendingPlayIndex; isUpdating = true; await perform('PLAY_CARD', { card_idx: idx }); await perform('SELECT_COLOR', { color: c }); } }
+        async function drawCard() { if (isUpdating || session.state.currentTurn.toLowerCase() !== username.toLowerCase()) return; await perform('DRAW_CARD', {}); }
+        async function perform(a, p) {
+            overlayTimeout = setTimeout(() => { document.getElementById('processingOverlay').style.display = 'flex'; }, 200);
+            try { await fetch('/api/games/action', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ session_id: sessionId, username, action: a, params: p, version: session.version }) }); await fetchSession(true); }
+            finally { clearTimeout(overlayTimeout); document.getElementById('processingOverlay').style.display = 'none'; setTimeout(() => isUpdating = false, 500); }
         }
-
-        async function drawCard() {
-            if (!session || !session.state || !session.state.currentTurn) return;
-            if (session.state.currentTurn.toLowerCase() !== username.toLowerCase() || isUpdating) return;
-            const state = JSON.parse(JSON.stringify(session.state));
-            
-            if (state.deck.length === 0) {
-                const top = state.discard.pop();
-                state.deck = state.discard.sort(() => Math.random() - 0.5);
-                state.discard = [top];
-            }
-
-            const card = state.deck.pop();
-            state.hands[username].push(card);
-            
-            if (!canPlay(card)) {
-                const order = state.playersOrder;
-                let idx = order.findIndex(u => u && state.currentTurn && u.toLowerCase() === state.currentTurn.toLowerCase());
-                idx = (idx + state.direction + order.length) % order.length;
-                state.currentTurn = order[idx];
-            }
-            
-            state.updatedAt = Date.now();
-            await updateServerState(state);
-        }
-
-        async function playCard(index) {
-            if (isUpdating) return;
-            const state = JSON.parse(JSON.stringify(session.state));
-            const card = state.hands[username].splice(index, 1)[0];
-            state.discard.push(card);
-            state.currentColor = card.color;
-
-            if (card.color === 'black') {
-                document.getElementById('colorPicker').style.display = 'block';
-                session.state = state;
-                renderActiveGame();
-                return;
-            }
-            processCardEffects(state, card);
-        }
-
-        function selectColor(color) {
-            document.getElementById('colorPicker').style.display = 'none';
-            const state = JSON.parse(JSON.stringify(session.state));
-            state.currentColor = color;
-            processCardEffects(state, state.discard[state.discard.length - 1]);
-        }
-
-        async function processCardEffects(state, card) {
-            const order = state.playersOrder;
-            if (!username || !order) return;
-            let idx = order.findIndex(u => u && u.toLowerCase() === username.toLowerCase());
-            let nextIdx = (idx + state.direction + order.length) % order.length;
-            let skip = false;
-
-            if (card.value === 'Reverse') {
-                if (order.length === 2) skip = true;
-                else state.direction *= -1;
-            } else if (card.value === 'Skip') {
-                skip = true;
-            } else if (card.value === 'Draw2') {
-                const target = order[nextIdx];
-                for(let i=0; i<2; i++) if(state.deck.length) state.hands[target].push(state.deck.pop());
-                skip = true;
-            } else if (card.value === 'WildDraw4') {
-                const target = order[nextIdx];
-                for(let i=0; i<4; i++) if(state.deck.length) state.hands[target].push(state.deck.pop());
-                skip = true;
-            }
-
-            if (state.hands[username].length === 0) {
-                state.winner = username;
-                await updateServerState(state, 'finished');
-                return;
-            }
-
-            let turnIdx = (idx + state.direction + order.length) % order.length;
-            if (skip) turnIdx = (turnIdx + state.direction + order.length) % order.length;
-            state.currentTurn = order[turnIdx];
-            
-            state.updatedAt = Date.now();
-            await updateServerState(state);
-        }
-
-        async function updateServerState(state, status = null) {
-            isUpdating = true;
-            try {
-                await fetch('/api/games/update', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ session_id: sessionId, state, status: status || session.status })
-                });
-            } catch (e) { console.error(e); }
-            finally { setTimeout(() => isUpdating = false, 1000); }
-        }
-
+        async function startGame() { isUpdating = true; try { await fetch('/api/games/update', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ session_id: sessionId, state: { starting: true, updatedAt: Date.now() }, status: 'active' }) }); await fetchSession(true); } finally { isUpdating = false; } }
+        async function resetGame() { isUpdating = true; try { await fetch('/api/games/update', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ session_id: sessionId, state: { restarting: true, updatedAt: Date.now() }, status: 'pending', new_host: username }) }); await fetchSession(true); } finally { isUpdating = false; } }
         function showGameOver() {
-            document.getElementById('gameView').style.display = 'none';
-            document.getElementById('gameOverlay').style.display = 'flex';
-            document.getElementById('overlayMessage').textContent = `${session.state.winner} cleared their hand first!`;
-        }
+            const o = document.getElementById('gameOverlay'); o.style.display = 'flex';
+            const win = session.state.winner?.toLowerCase() === username.toLowerCase();
+            const isH = session.host?.toLowerCase() === username.toLowerCase();
+            const title = document.getElementById('overlayTitle');
+            const msg = document.getElementById('overlayMessage');
 
-        let lobbySelectedUsers = new Set();
-        async function loadInviteList() {
-            const list = document.getElementById('inviteUserList');
-            if (list.getAttribute('data-loaded')) return;
-            const res = await fetch('/api/users/all');
-            const data = await res.json();
+            if (win) {
+                title.textContent = "YOU WIN!"; title.style.color = "#28a745";
+                if (!confettiShown) {
+                    confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, zIndex: 1000 });
+                    confettiShown = true;
+                }
+            } else {
+                title.textContent = "YOU LOSE!"; title.style.color = "#dc3545";
+            }
+            
+            let messageHtml = `Winner: <strong>${session.state.winner}</strong>`;
+            if (!win && !isH) {
+                messageHtml += `<br><br><span style="color:#1e3c72; font-weight:bold;">Please wait for the host (${session.host}) to restart the game...</span>`;
+            } else if (isH) {
+                messageHtml += `<br><br><span style="color:#28a745; font-weight:bold;">The other players are waiting for you to start a new game!</span><br>`;
+                messageHtml += `<button class="btn-action" style="background:#28a745; margin-top:15px;" onclick="resetGame()">🎮 Play Again</button>`;
+            }
+            
+            msg.innerHTML = messageHtml;
+            document.getElementById('playAgainBtn').style.display = 'none';
+        }
+        async function loadInvites() {
+            const list = document.getElementById('inviteUserList'); if (!list || list.getAttribute('data-loaded')) return;
+            const res = await fetch('/api/users/all'); const data = await res.json();
             if (data.success) {
-                const current = session.players.map(p => (p.username || '').toLowerCase());
-                const aiPlayers = ['Bob', 'Tim'];
-                list.innerHTML = data.users.filter(u => {
-                    const uName = (u.username || '').toLowerCase();
-                    return !current.includes(uName);
-                })
-                    .map(u => {
-                        const isAI = aiPlayers.includes(u.username);
-                        const display = u.username.length > 10 ? u.username.substring(0, 10) + '...' : u.username;
-                        const aiBadge = isAI ? '<span style="font-size:0.7em; background:#6c757d; color:white; padding:1px 4px; border-radius:3px; margin-left:4px;">AI</span>' : '';
-                        return `<div class="user-card" onclick="toggleUser(this, '${u.username}')">
-                            <div style="width:8px; height:8px; background:${u.is_online || isAI ? '#28a745' : '#ccc'}; border-radius:50%;"></div>
-                            <strong title="${u.username}">${display}${aiBadge}</strong>
-                        </div>`;
-                    }).join('');
+                const cur = session.players.map(p => p.username.toLowerCase());
+                const ai = ['Bob', 'Tim'];
+                list.innerHTML = data.users.filter(u => u.username.toLowerCase() !== username.toLowerCase() && !cur.includes(u.username.toLowerCase())).map(u => {
+                    const disp = u.username.length > 10 ? u.username.substring(0,10) + '...' : u.username;
+                    const isAI = ai.includes(u.username);
+                    const statusDot = `<span style="width:8px; height:8px; background:${u.is_online ? '#28a745' : '#ccc'}; border-radius:50%; display:inline-block; margin-right:5px;"></span>`;
+                    return `<div class="user-card" onclick="toggleInviteSelection(this, '${u.username}')">${statusDot}${disp}${isAI ? ' (ai)' : ''}</div>`;
+                }).join('') || 'None';
                 list.setAttribute('data-loaded', 'true');
             }
         }
-        function toggleUser(el, u) {
-            if(lobbySelectedUsers.has(u)) { lobbySelectedUsers.delete(u); el.classList.remove('selected'); }
-            else { lobbySelectedUsers.add(u); el.classList.add('selected'); }
-        }
-        async function sendLobbyInvitations() {
-            await fetch('/api/games/invite', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ host: username, game_type: 'UNO', invitees: Array.from(lobbySelectedUsers), session_id: sessionId })
-            });
-            alert("Sent!");
-        }
 
+        let invites = new Set();
+        function toggleInvite(el, u) { if (invites.has(u)) { invites.delete(u); el.classList.remove('selected'); } else { invites.add(u); el.classList.add('selected'); } }
+        async function sendLobbyInvites() { if (!invites.size) return; await fetch('/api/games/invite', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ host: username, game_type: 'UNO', invitees: Array.from(invites), session_id: sessionId }) }); alert("Sent!"); invites.clear(); document.getElementById('inviteUserList').removeAttribute('data-loaded'); loadInvites(); }
+        async function leaveGame() { if (confirm("Leave?")) { await fetch('/api/games/leave', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ session_id: sessionId, username }) }); location.href = 'games.html'; } }
         init();
     </script>
 </body>

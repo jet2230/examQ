@@ -5,1189 +5,319 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ExamQ - Hangman</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="/static/theme_manager.js"></script>
     <script src="/static/online_status.js"></script>
     <style>
-        :root {
-            --primary-color: #1e3c72;
-            --secondary-color: #2a5298;
-            --main-gradient: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-        }
+        :root { --primary-color: #1e3c72; --secondary-color: #2a5298; --main-gradient: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%); }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: var(--main-gradient);
-            min-height: 100vh;
-            padding: 20px;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--main-gradient); min-height: 100vh; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.4); overflow: hidden; display: flex; flex-direction: column; position: relative; }
         .header { background: #f8f9fa; padding: 20px 40px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
         .content { padding: 40px; text-align: center; }
-        
-        .hangman-drawing {
-            width: 250px;
-            height: 250px;
-            margin: 0 auto 30px auto;
-            display: block;
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.05);
-            background: #fdfdfd;
-        }
-        .word-display {
-            font-size: 2.2em;
-            font-family: monospace;
-            margin-bottom: 30px;
-            color: var(--primary-color);
-            font-weight: 800;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 10px 8px;
-            line-height: 1.4;
-            max-width: 100%;
-        }
-        .peek-highlight {
-            background-color: #ffeb3b;
-            border-radius: 4px;
-            padding: 0 4px;
-            color: #000;
-        }
-        .word-char {
-            min-width: 0.8em;
-            text-align: center;
-            display: inline-block;
-        }
-        .word-space {
-            color: #ccc;
-            margin: 0 10px;
-        }
-        @keyframes timer-pulse {
-            0% { transform: scale(1); color: #dc3545; }
-            50% { transform: scale(1.1); color: #ff0000; text-shadow: 0 0 10px rgba(220,53,69,0.3); }
-            100% { transform: scale(1); color: #dc3545; }
-        }
-        .timer-warning {
-            animation: timer-pulse 0.5s infinite;
-        }
-        .keyboard {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
-            gap: 10px;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-        .key {
-            padding: 10px;
-            background: #eee;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: 700;
-            transition: all 0.2s;
-        }
-        .key:hover { background: #e0e0e0; }
+        .hangman-drawing { width: 250px; height: 250px; margin: 0 auto 30px; display: block; border-radius: 15px; overflow: hidden; background: #fdfdfd; box-shadow: inset 0 0 20px rgba(0,0,0,0.05); }
+        .word-display { font-size: 2.2em; font-family: monospace; margin-bottom: 30px; color: var(--primary-color); font-weight: 800; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 8px; }
+        .word-char { min-width: 0.8em; text-align: center; display: inline-block; }
+        .peek-highlight { background-color: #ffeb3b; border-radius: 4px; padding: 0 4px; color: #000; }
+        .word-space { color: #ccc; margin: 0 10px; }
+        .keyboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(40px, 1fr)); gap: 10px; max-width: 600px; margin: 0 auto; }
+        .keyboard.not-my-turn { filter: grayscale(0.8); opacity: 0.6; pointer-events: none; }
+        .key { padding: 10px; background: #eee; border: 1px solid #ddd; border-radius: 5px; cursor: pointer; font-weight: 700; transition: all 0.2s; }
         .key.used { opacity: 0.3; cursor: not-allowed; }
         .key.correct { background: #d4edda; color: #155724; border-color: #c3e6cb; }
         .key.wrong { background: #f8d7da; color: #721c24; border-color: #f5c6cb; }
-
-        .players-panel {
-            margin-top: 30px;
-            padding: 20px;
-            background: #f1f4f9;
-            border-radius: 15px;
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-        .player-chip {
-            padding: 5px 15px;
-            background: white;
-            border-radius: 20px;
-            font-size: 0.85em;
-            border: 1px solid #ddd;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .player-chip.active-turn {
-            border-color: #28a745;
-            background: #e8f5e9;
-            box-shadow: 0 0 10px rgba(40,167,69,0.2);
-        }
-
-        #gameOverlay {
-            display: none;
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255,255,255,0.9);
-            z-index: 100;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
+        .players-panel { margin-top: 30px; padding: 20px; background: #f1f4f9; border-radius: 15px; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
+        .player-chip { padding: 5px 15px; background: white; border-radius: 20px; font-size: 0.85em; border: 1px solid #ddd; display: flex; align-items: center; gap: 8px; }
+        .player-chip.active-turn { border-color: #28a745; background: #e8f5e9; box-shadow: 0 0 10px rgba(40,167,69,0.2); }
+        #gameOverlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 100; flex-direction: column; justify-content: center; align-items: center; }
         .overlay-title { font-size: 3em; font-weight: 800; margin-bottom: 20px; }
-        
-        .btn-action {
-            background: var(--main-gradient);
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 8px;
-            font-weight: 700;
-            cursor: pointer;
-            text-decoration: none;
-            margin-top: 20px;
-        }
-
-        .share-link-box {
-            background: #f0f4f9;
-            border: 1px dashed #1e3c72;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            display: inline-block;
-        }
-
-        .user-card {
-            padding: 8px 12px;
-            border: 1px solid #eee;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 0.8em;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.2s;
-            background: #fdfdfd;
-        }
-        .user-card:hover { background: #f1f4f9; border-color: #abc; }
+        .btn-action { background: var(--main-gradient); color: white; border: none; padding: 12px 30px; border-radius: 8px; font-weight: 700; cursor: pointer; text-decoration: none; margin-top: 20px; }
+        .user-card { padding: 8px 12px; border: 1px solid #eee; border-radius: 8px; cursor: pointer; font-size: 0.8em; display: flex; align-items: center; gap: 8px; background: #fdfdfd; }
         .user-card.selected { background: #e3f2fd; border-color: #1e3c72; border-width: 2px; }
-
-        /* Toggle Switch CSS */
         .switch input:checked + .slider { background-color: #28a745; }
-        .switch input:focus + .slider { box-shadow: 0 0 1px #28a745; }
+        .slider { background-color: #ccc; position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; transition: .4s; border-radius: 20px; }
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 2px; bottom: 2px; background-color: white; transition: .4s; border-radius: 50%; }
         .switch input:checked + .slider:before { transform: translateX(20px); }
-        .slider { background-color: #ccc; border: 1px solid #ddd; }
-        .slider:before {
-            position: absolute; content: ""; height: 14px; width: 14px;
-            left: 2px; bottom: 2px; background-color: white;
-            transition: .4s; border-radius: 50%;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-            100% { transform: scale(1); }
-        }
-
-        /* Advanced Hangman Graphics */
-        .gallows-base { stroke: #5d4037; stroke-width: 8; stroke-linecap: round; }
-        .gallows-wood { stroke: #795548; stroke-width: 6; stroke-linecap: round; }
-        .rope { stroke: #d7ccc8; stroke-width: 3; stroke-dasharray: 2,2; }
-
-        .hangman-part {
-            stroke: #2c3e50;
-            stroke-width: 4;
-            fill: none;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-            transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            opacity: 0;
-            transform: scale(0.5);
-            transform-origin: center;
-            display: block !important;
-        }
-        .hangman-part.visible {
-            opacity: 1;
-            transform: scale(1);
-        }
-        .hangman-head {
-            fill: #fff;
-            stroke-width: 3;
-        }
-        .hangman-face {
-            stroke: #2c3e50;
-            stroke-width: 2;
-            opacity: 0;
-            transition: opacity 0.5s;
-        }
-        .visible .hangman-face { opacity: 1; }
-
-        @keyframes swing {
-            0% { transform: rotate(-3deg); }
-            50% { transform: rotate(3deg); }
-            100% { transform: rotate(-3deg); }
-        }
-        .swinging #hangmanBody {
-            animation: swing 2s ease-in-out infinite;
-            transform-origin: 130px 50px;
-        }    </style>
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
 </head>
 <body>
-    <div class="container" style="position: relative;">
+    <div class="container">
         <div class="header">
-            <div>
-                <h2 style="color: var(--primary-color);">Multiplayer Hangman</h2>
-                <div id="gameStatus" style="font-size: 0.8em; color: #666;">Initializing...</div>
-            </div>
-            <div style="display:flex; gap:15px; align-items:center;">
-                <button id="restartBtn" class="btn-action" style="background:#ffc107; color:#000; margin:0; padding:8px 15px; font-size:0.8em; display:none;" onclick="resetGame()">🔄 Change Word</button>
-            </div>
+            <div><h2 style="color: var(--primary-color);">Multiplayer Hangman</h2><div id="gameStatus" style="font-size: 0.8em; color: #666;">Initializing...</div></div>
+            <button id="restartBtn" class="btn-action" style="background:#ffc107; color:#000; margin:0; padding:8px 15px; font-size:0.8em; display:none;" onclick="resetGame()">🔄 Change Word</button>
         </div>
-
         <div class="content">
-            <!-- Lobby View -->
             <div id="lobbyView" style="display:none;">
                 <div id="hostControls" style="display:none;">
                     <h3 style="margin-bottom:20px;">Lobby: You are the Host</h3>
-                    <p style="margin-bottom:20px;">Choose a word for your friends to guess:</p>
-                    <input type="text" id="secretWordInput" maxlength="255" style="padding:12px; border-radius:8px; border:1px solid #ddd; margin-bottom:15px; width:100%; max-width:500px; text-transform:uppercase;" placeholder="ENTER SECRET WORD OR PHRASE">
-                    
+                    <input type="text" id="secretWordInput" maxlength="255" style="padding:12px; border-radius:8px; border:1px solid #ddd; margin-bottom:15px; width:100%; max-width:500px; text-transform:uppercase;" placeholder="ENTER SECRET WORD">
                     <div style="margin-bottom:20px; display:flex; align-items:center; justify-content:center; gap:10px;">
-                        <label class="switch" style="position:relative; display:inline-block; width:40px; height:20px;">
-                            <input type="checkbox" id="allowNumbersToggle" style="opacity:0; width:0; height:0;">
-                            <span class="slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; transition:.4s; border-radius:20px;"></span>
-                        </label>
-                        <span style="font-size:0.9em; font-weight:600; color:#666;">Allow Numbers (0-9)</span>
+                        <label class="switch" style="position:relative; display:inline-block; width:40px; height:20px;"><input type="checkbox" id="allowNumbersToggle" style="opacity:0; width:0; height:0;"><span class="slider"></span></label>
+                        <span style="font-size:0.9em; color:#666;">Allow Numbers</span>
                     </div>
-
-                    <button id="startBtn" class="btn-action" onclick="startGame()" disabled>Waiting for players to join...</button>
+                    <button id="startBtn" class="btn-action" onclick="startGame()">Start Game</button>
                 </div>
-                <div id="guestWait" style="display:none;">
-                    <h3 id="guestWaitTitle">Waiting for Host...</h3>
-                    <div id="restartNotice" style="display:none; margin-top:15px; padding:15px; background:#fff3cd; color:#856404; border-radius:10px; border:1px solid #ffeeba; font-weight:700; animation: pulse 2s infinite;">
-                        🔄 The host is restarting the game with a different guess word!
-                    </div>
-                    <p style="color:#666; margin-top:10px;">The game will start as soon as the host picks a word.</p>
-                </div>
-                
-                <div class="players-panel" id="lobbyPlayers" style="margin-top:40px;"></div>
-
-                <!-- Invitation Section (Host Only) -->
-                <div id="hostInviteArea" style="display:none; margin-top:30px; padding:20px; background:#fff; border:1px solid #eee; border-radius:15px; box-shadow:0 4px 15px rgba(0,0,0,0.05);">
-                    <h4 style="color:var(--primary-color); margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">👤 Invite More Players</h4>
-                    <div id="inviteUserList" style="max-height:200px; overflow-y:auto; margin-bottom:15px; display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:10px;">
-                        <div style="padding:10px; text-align:center; color:#999; font-size:0.85em;">Loading students...</div>
-                    </div>
-                    <button id="sendInviteBtn" class="btn-action" style="width:100%; margin:0; padding:10px; font-size:0.9em; background:#1e3c72;" onclick="sendLobbyInvitations()">Send Invitations</button>
-                </div>
-
-                <!-- Game Rules -->
-                <div style="margin-top:40px; text-align:left; background:#f1f4f9; padding:20px; border-radius:15px; border:1px solid #ddd;">
-                    <h4 style="color:var(--primary-color); margin-bottom:10px; display:flex; align-items:center; gap:8px;">📜 How to Play</h4>
-                    <ul style="font-size:0.85em; color:#555; line-height:1.6; padding-left:20px;">
-                        <li><strong>Host:</strong> Chooses a secret word/phrase. Spaces become slashes (/).</li>
-                        <li><strong>Players:</strong> Take turns guessing letters or numbers (if enabled).</li>
-                        <li><strong>Winning:</strong> Reveal the full word before the hangman is complete!</li>
-                        <li><strong>Winner becomes Host:</strong> The person who makes the final guess sets the next word.</li>
-                        <li><strong>Clues:</strong> Guests can request 1 clue per game. The host can send multiple hints.</li>
-                    </ul>
+                <div id="guestWait" style="display:none;"><h3>Waiting for Host...</h3><div id="restartNotice" style="display:none; margin-top:15px; padding:15px; background:#fff3cd; border-radius:10px;">🔄 Host is restarting...</div></div>
+                <div class="players-panel" id="lobbyPlayers"></div>
+                <div id="hostInviteArea" style="display:none; margin-top:30px; padding:20px; background:#fff; border:1px solid #eee; border-radius:15px;">
+                    <h4 style="margin-bottom:15px;">Invite Players</h4><div id="inviteUserList" style="max-height:150px; overflow-y:auto; display:grid; grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); gap:10px; margin-bottom:15px;"></div>
+                    <button class="btn-action" style="width:100%; margin:0;" onclick="sendInvites()">Send Invitations</button>
                 </div>
             </div>
-
-            <!-- Game View -->
             <div id="gameView" style="display:none;">
-                <div class="hangman-drawing" id="hangman3dContainer" style="padding:0; overflow:hidden;">
-                    <!-- 3D Canvas injected here -->
-                </div>
+                <div class="hangman-drawing" id="hangman3dContainer"></div>
                 <div id="timerDisplay" style="font-size: 1.4em; font-weight: 800; color: #dc3545; margin-bottom: 20px; display: none;">⏱️ <span id="timerSeconds">60</span>s</div>
                 <div id="wordContainer" class="word-display"></div>
-                
-                <div id="clueDisplay" style="display:none; margin-bottom:20px; padding:15px; background:#f8f9fa; border-radius:12px; border:1px solid #ddd; text-align:left; max-height:160px; overflow-y:auto; scroll-behavior: smooth;">
-                </div>
-
+                <div id="clueDisplay" style="display:none; margin-bottom:20px; padding:15px; background:#f8f9fa; border-radius:12px; border:1px solid #ddd; text-align:left; max-height:120px; overflow-y:auto;"></div>
                 <div id="clueControls" style="margin-bottom:20px; display:flex; flex-direction:column; align-items:center; gap:10px;">
-                    <!-- Guest View -->
                     <button id="requestClueBtn" class="btn-action" style="background:#6c757d; margin:0; padding:8px 15px; font-size:0.8em;" onclick="requestClue()">💡 Request Clue</button>
-                    
-                    <!-- Host View -->
-                    <div id="hostClueBox" style="display:none; flex-direction:column; gap:10px; align-items:center; width:100%;">
-                        <div style="display:flex; gap:10px; align-items:center;">
-                            <button id="peekBtn" class="btn-action" style="background:#6c757d; margin:0; padding:8px 15px; font-size:0.8em; cursor:pointer; user-select:none; touch-action:none;" 
-                                onpointerdown="this.setPointerCapture(event.pointerId); showPeek()" 
-                                onpointerup="hidePeek()" 
-                                onpointerleave="hidePeek()" 
-                                onpointercancel="hidePeek()"
-                                oncontextmenu="return false;">👁️ Peek at Word</button>
-                            <input type="text" id="clueInput" placeholder="Enter a clue..." style="padding:8px; border-radius:5px; border:1px solid #ddd; width:200px;" onkeydown="if(event.key==='Enter') sendClue()">
-                            <button class="btn-action" style="background:#1e3c72; margin:0; padding:8px 15px; font-size:0.8em;" onclick="sendClue()">Send Clue</button>
-                        </div>
+                    <div id="hostClueBox" style="display:none; gap:10px; align-items:center;">
+                        <button class="btn-action" style="background:#6c757d; margin:0; padding:8px 15px; font-size:0.8em;" onpointerdown="showPeek()" onpointerup="hidePeek()" onpointerleave="hidePeek()">👁️ Peek</button>
+                        <input type="text" id="clueInput" placeholder="Enter clue..." style="padding:8px; border-radius:5px; border:1px solid #ddd; width:150px;">
+                        <button class="btn-action" style="background:#1e3c72; margin:0; padding:8px 15px; font-size:0.8em;" onclick="sendClue()">Send</button>
                     </div>
                 </div>
-
                 <div id="keyboard" class="keyboard"></div>
                 <div id="gamePlayers" class="players-panel"></div>
             </div>
-
             <div id="gameOverlay">
                 <div class="overlay-title" id="overlayTitle">GAME OVER</div>
-                <p id="overlayMessage" style="font-size: 1.2em; color: #666;"></p>
-                <div style="display:flex; gap:15px; justify-content:center;">
-                    <button id="playAgainBtn" class="btn-action" style="background:#28a745; display:none;" onclick="resetGame()">🎮 Play Again</button>
-                    <button class="btn-action" onclick="window.location.href='/games.html'">🏠 Back to Games</button>
-                </div>
+                <p id="overlayMessage" style="font-size: 1.2em; color: #666; margin-bottom:20px;"></p>
+                <div id="overlayPlayerList" style="margin-bottom:20px; padding:15px; background:#f1f4f9; border-radius:12px; font-size:0.9em; width:100%; max-width:400px;"></div>
+                <div style="display:flex; gap:15px;"><button id="playAgainBtn" class="btn-action" style="background:#28a745; display:none;" onclick="resetGame()">🎮 Play Again</button><button class="btn-action" style="background:#6c757d;" onclick="leaveGame()">🚪 Quit Game</button></div>
             </div>
-
-            <div style="margin-top:40px; padding-top:20px; border-top:1px solid #eee;">
-                <button class="btn-action" style="background:#dc3545; margin:0; padding:10px 20px; font-size:0.9em; width:100%; max-width:200px;" onclick="leaveGame()">🚪 Leave Game</button>
+            <div style="margin-top:40px; padding-top:20px; border-top:1px solid #eee;"><button class="btn-action" style="background:#dc3545; margin:0; padding:10px 20px; font-size:0.9em;" onclick="leaveGame()">🚪 Leave Game</button></div>
+            <div id="processingOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.7); z-index:2000; justify-content:center; align-items:center; flex-direction:column;">
+                <div style="width:50px; height:50px; border:5px solid #f3f3f3; border-top:5px solid var(--primary-color); border-radius:50%; animation: spin 1s linear infinite;"></div>
+                <div style="margin-top:15px; font-weight:700; color:var(--primary-color);">Processing...</div>
             </div>
         </div>
     </div>
-
+    <!-- END_OF_CHUNK_1 -->
     <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        const sessionId = urlParams.get('id');
-        const username = (localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username') || '').trim();
-        
-        let session = null;
-        let pollInterval = null;
-        let isUpdating = false;
-
-        // --- 3D HANGMAN LOGIC ---
-        let scene, camera, renderer, hangmanGroup, rope;
-        let bodyParts = [];
-        let isSwinging = false;
-        let isWonState = false;
-        let swingAngle = 0;
-        let gameTime = 0;
+        const urlParams = new URLSearchParams(window.location.search), sessionId = urlParams.get('id'), username = (localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username') || '').trim();
+        let session = null, pollInterval = null, isUpdating = false, overlayTimeout = null;
+        let confettiShown = false; // Add this flag
+        let scene, camera, renderer, hangmanGroup, bodyParts = [], isSwinging = false, isWonState = false, swingAngle = 0, gameTime = 0;
 
         function init3D() {
-            const container = document.getElementById('hangman3dContainer');
-            if (!container) return;
-            
-            console.log("Initializing 3D Hangman...");
-            
-            // Fixed dimensions as container may be hidden (display:none) during init
-            const width = 250;
-            const height = 250;
-
-            // Setup scene
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0xfdfdfd);
-
-            // Setup camera
-            camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
-            camera.position.set(25, 20, 45); // Side angle
-            camera.lookAt(0, 12, 0); // Look at the middle of the gallows
-
-            // Setup renderer
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(width, height);
-            container.appendChild(renderer.domElement);
-
-            // Lighting
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
-            scene.add(ambientLight);
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
-            directionalLight.position.set(20, 40, 30);
-            scene.add(directionalLight);
-
-            // Materials
-            const woodMat = new THREE.MeshLambertMaterial({ color: 0x795548 });
-            const ropeMat = new THREE.MeshLambertMaterial({ color: 0xd7ccc8 });
-            const skinMat = new THREE.MeshLambertMaterial({ color: 0xffe0bd });
-            const clothesMat = new THREE.MeshLambertMaterial({ color: 0x2c3e50 });
-
-            // Gallows
-            const gallows = new THREE.Group();
-            
-            // Base
-            const baseGeo = new THREE.BoxGeometry(20, 1, 10);
-            const base = new THREE.Mesh(baseGeo, woodMat);
-            base.position.y = 0.5;
-            gallows.add(base);
-
-            // Pillar
-            const pillarGeo = new THREE.BoxGeometry(1.5, 25, 1.5);
-            const pillar = new THREE.Mesh(pillarGeo, woodMat);
-            pillar.position.set(-6, 12.5, 0);
-            gallows.add(pillar);
-
-            // Top Beam
-            const beamGeo = new THREE.BoxGeometry(12, 1.5, 1.5);
-            const beam = new THREE.Mesh(beamGeo, woodMat);
-            beam.position.set(-0.5, 25, 0);
-            gallows.add(beam);
-
-            // Rope
-            const ropeGeo = new THREE.CylinderGeometry(0.2, 0.2, 4);
-            rope = new THREE.Mesh(ropeGeo, ropeMat);
-            rope.position.set(4, 23, 0);
-            gallows.add(rope);
-
-            scene.add(gallows);
-
-            // Hangman Group (Pivot at end of rope)
-            hangmanGroup = new THREE.Group();
-            hangmanGroup.position.set(4, 21, 0); // Position at bottom of rope
-            scene.add(hangmanGroup);
-
-            // Parts (Hidden initially)
-            // 0: Head
-            const head = new THREE.Mesh(new THREE.SphereGeometry(2, 32, 32), skinMat);
-            head.position.y = -2;
-            
-            // 1: Body
-            const body = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.5, 5), clothesMat);
-            body.position.y = -5.5;
-
-            // 2: Left Arm
-            const lArm = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 4), skinMat);
-            lArm.position.set(-2.2, -4.5, 0);
-            lArm.rotation.z = Math.PI / 4;
-
-            // 3: Right Arm
-            const rArm = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 4), skinMat);
-            rArm.position.set(2.2, -4.5, 0);
-            rArm.rotation.z = -Math.PI / 4;
-
-            // 4: Left Leg
-            const lLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 5), clothesMat);
-            lLeg.position.set(-1, -10, 0);
-            lLeg.rotation.z = 0.1;
-
-            // 5: Right Leg
-            const rLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 5), clothesMat);
-            rLeg.position.set(1, -10, 0);
-            rLeg.rotation.z = -0.1;
-
-            bodyParts = [head, body, lArm, rArm, lLeg, rLeg];
-            bodyParts.forEach(p => {
-                p.visible = false;
-                hangmanGroup.add(p);
-            });
-
-            console.log("3D Scene ready.");
-            animate3D();
+            const container = document.getElementById('hangman3dContainer'); if (!container) return;
+            scene = new THREE.Scene(); scene.background = new THREE.Color(0xfdfdfd);
+            camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000); camera.position.set(25, 20, 45); camera.lookAt(0, 12, 0);
+            renderer = new THREE.WebGLRenderer({ antialias: true }); renderer.setSize(250, 250); container.appendChild(renderer.domElement);
+            scene.add(new THREE.AmbientLight(0xffffff, 0.7)); const sun = new THREE.DirectionalLight(0xffffff, 0.5); sun.position.set(20, 40, 30); scene.add(sun);
+            const wood = new THREE.MeshLambertMaterial({ color: 0x795548 }), skin = new THREE.MeshLambertMaterial({ color: 0xffe0bd }), cloth = new THREE.MeshLambertMaterial({ color: 0x2c3e50 });
+            const gallows = new THREE.Group(); gallows.add(new THREE.Mesh(new THREE.BoxGeometry(20, 1, 10), wood));
+            const p = new THREE.Mesh(new THREE.BoxGeometry(1.5, 25, 1.5), wood); p.position.set(-6, 12.5, 0); gallows.add(p);
+            const b = new THREE.Mesh(new THREE.BoxGeometry(12, 1.5, 1.5), wood); b.position.set(-0.5, 25, 0); gallows.add(b);
+            const r = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 4), new THREE.MeshLambertMaterial({ color: 0xd7ccc8 })); r.position.set(4, 23, 0); gallows.add(r);
+            scene.add(gallows); hangmanGroup = new THREE.Group(); hangmanGroup.position.set(4, 21, 0); scene.add(hangmanGroup);
+            const head = new THREE.Mesh(new THREE.SphereGeometry(2, 32, 32), skin); head.position.y = -2;
+            const body = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.5, 5), cloth); body.position.y = -5.5;
+            const la = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 4), skin); la.position.set(-2.2, -4.5, 0); la.rotation.z = Math.PI/4;
+            const ra = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 4), skin); ra.position.set(2.2, -4.5, 0); ra.rotation.z = -Math.PI/4;
+            const ll = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 5), cloth); ll.position.set(-1, -10, 0);
+            const rl = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 5), cloth); rl.position.set(1, -10, 0);
+            bodyParts = [head, body, la, ra, ll, rl]; bodyParts.forEach(bp => { bp.visible = false; hangmanGroup.add(bp); });
+            function animate() { requestAnimationFrame(animate); gameTime += 0.03; if (isSwinging) { swingAngle += 0.05; hangmanGroup.rotation.z = Math.sin(swingAngle)*0.15; } else if (bodyParts[1].visible) hangmanGroup.position.y = 21 + Math.sin(gameTime)*0.02; if (isWonState) { camera.position.x = Math.cos(gameTime*0.2)*45; camera.position.z = Math.sin(gameTime*0.2)*45; camera.lookAt(0, 12, 0); } renderer.render(scene, camera); }
+            animate();
         }
-
-        function update3DHangman(wrongCount, lost, won = false) {
-            if (!scene) return; // Not initialized yet
-            for (let i = 0; i < 6; i++) {
-                if (bodyParts[i]) bodyParts[i].visible = (i < wrongCount);
-            }
-            isSwinging = lost;
-            isWonState = won;
-            if (!lost && !won) {
-                hangmanGroup.rotation.z = 0;
-            }
-        }
-
-        function animate3D() {
-            requestAnimationFrame(animate3D);
-            gameTime += 0.03;
-
-            if (hangmanGroup) {
-                if (isSwinging) {
-                    swingAngle += 0.05;
-                    hangmanGroup.rotation.z = Math.sin(swingAngle) * 0.15;
-                } else if (bodyParts[1].visible) { // Only breathe if the body is visible
-                    // Subtle breathing effect
-                    const breathe = Math.sin(gameTime) * 0.02;
-                    hangmanGroup.position.y = 21 + breathe;
-                    
-                    // Idle arm movement
-                    if (bodyParts[2].visible) bodyParts[2].rotation.z = (Math.PI / 4) + Math.sin(gameTime * 0.5) * 0.05;
-                    if (bodyParts[3].visible) bodyParts[3].rotation.z = (-Math.PI / 4) - Math.sin(gameTime * 0.5) * 0.05;
-                }
-            }
-
-            if (isWonState && camera) {
-                // Rotate camera slowly around the gallows on win
-                const radius = 45;
-                camera.position.x = Math.cos(gameTime * 0.2) * radius;
-                camera.position.z = Math.sin(gameTime * 0.2) * radius;
-                camera.lookAt(0, 12, 0);
-            }
-
-            if (renderer && scene && camera) {
-                renderer.render(scene, camera);
-            }
-        }
-        // --- END 3D LOGIC ---
-
-        async function leaveGame() {
-            if (!confirm("Are you sure you want to leave this game?")) return;
-            try {
-                const res = await fetch('/api/games/leave', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ session_id: sessionId, username })
-                });
-                window.location.href = 'games.html';
-            } catch (e) { console.error(e); }
-        }
+        function update3D(w, lost, won) { bodyParts.forEach((bp, i) => bp.visible = i < w); isSwinging = lost; isWonState = won; }
 
         async function init() {
-            console.log("Init called. User:", username, "SessionId:", sessionId);
-            if (!sessionId || !username) { window.location.href = 'games.html'; return; }
-            
-            // Initialize 3D canvas
-            init3D();
-
-            // First attempt to "join" (in case we clicked a link)
-            try {
-                const res = await fetch('/api/games/respond', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ session_id: sessionId, username, action: 'accept' })
-                });
-                console.log("Join response:", await res.json());
-            } catch (e) { console.error("Join error:", e); }
-
-            await fetchSession();
-            pollInterval = setInterval(fetchSession, 2000);
+            if (!sessionId || !username) { location.href = 'games.html'; return; }
+            init3D(); await fetch('/api/games/respond', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ session_id: sessionId, username, action: 'accept' }) });
+            await fetchSession(true); pollInterval = setInterval(() => fetchSession(false), 2000);
         }
-
-        async function fetchSession() {
+        async function fetchSession(force = false) {
             try {
-                const res = await fetch(`/api/games/session/${sessionId}`);
-                if (res.status === 404) {
-                    clearInterval(pollInterval);
-                    document.getElementById('gameView').style.display = 'none';
-                    document.getElementById('lobbyView').style.display = 'none';
-                    document.getElementById('gameOverlay').style.display = 'flex';
-                    document.getElementById('overlayTitle').textContent = "HOST LEFT";
-                    document.getElementById('overlayTitle').style.color = "#dc3545";
-                    document.getElementById('overlayMessage').innerHTML = "The host has left the game session.<br>The game has been terminated.";
-                    document.getElementById('playAgainBtn').style.display = 'none';
-                    return;
-                }
+                const res = await fetch(`/api/games/session/${sessionId}?t=${Date.now()}`);
+                if (res.status === 404) { clearInterval(pollInterval); location.href = 'games.html'; return; }
                 const data = await res.json();
                 if (data.success) {
-                    // Stale Data Protection:
-                    const statusChanged = !session || data.session.status !== session.status;
-                    const hostChanged = !session || data.session.host !== session.host;
-                    
-                    let serverIsNewer = false;
-                    if (session && session.state && data.session.state) {
-                        const serverTs = data.session.state.updatedAt || 0;
-                        const localTs = session.state.updatedAt || 0;
-                        serverIsNewer = serverTs > localTs;
-                    }
-
-                    if (statusChanged || hostChanged || serverIsNewer || !isUpdating) {
-                        session = data.session;
-                        updateUI();
-                    }
+                    const sc = !session || data.session.status !== session.status, vc = !session || data.session.version > session.version, pc = !session || JSON.stringify(data.session.players) !== JSON.stringify(session.players);
+                    if (force || sc || vc || pc) { session = data.session; updateUI(); }
                 }
-            } catch (e) { console.error("Fetch error:", e); }
-        }
-
-        function updateUI() {
-            if (!session) return;
-            const acceptedPlayers = session.players.filter(p => p.status === 'accepted');
-            const restartBtn = document.getElementById('restartBtn');
-            const isHost = session.host && username && session.host.toLowerCase() === username.toLowerCase();
-            
-            // Hide game over overlay if we are no longer in finished status
-            if (session.status !== 'finished') {
-                document.getElementById('gameOverlay').style.display = 'none';
-            }
-
-            // Show restart button only to host and only if session is active or finished
-            if (isHost && (session.status === 'active' || session.status === 'finished')) {
-                restartBtn.style.display = 'block';
-            } else {
-                restartBtn.style.display = 'none';
-            }
-            
-            if (session.status === 'pending') {
-                document.getElementById('lobbyView').style.display = 'block';
-                document.getElementById('gameView').style.display = 'none';
-                document.getElementById('clueDisplay').style.display = 'none';
-                document.getElementById('clueControls').style.display = 'none';
-                
-                // Show invitation area for everyone in the lobby
-                document.getElementById('hostInviteArea').style.display = 'block';
-                loadUsersToInvite();
-
-                const playersList = document.getElementById('lobbyPlayers');
-                playersList.innerHTML = acceptedPlayers.map(p => {
-                    const display = p.username.length > 10 ? p.username.substring(0,10)+'...' : p.username;
-                    const isPHost = p.username && session.host && p.username.toLowerCase() === session.host.toLowerCase();
-                    return `
-                        <div class="player-chip" title="${p.username}">
-                            <div style="width:8px; height:8px; background:#28a745; border-radius:50%;"></div>
-                            <strong>${display}</strong>
-                            ${isPHost ? '<span style="font-size:0.65em; background:#1e3c72; color:white; padding:1px 5px; border-radius:4px; margin-left:5px;">HOST</span>' : ''}
-                        </div>`;
-                }).join('');
-
-                if (isHost) {
-                    document.getElementById('hostControls').style.display = 'block';
-                    document.getElementById('guestWait').style.display = 'none';
-                    document.getElementById('gameStatus').textContent = "You are the host. Choose a word to begin!";
-                    
-                    const wordInput = document.getElementById('secretWordInput');
-                    const startBtn = document.getElementById('startBtn');
-                    
-                    if (!wordInput.oninput) {
-                        wordInput.oninput = () => updateUI();
-                    }
-
-                    const word = wordInput.value.trim();
-                    const hasGuests = acceptedPlayers.length > 1;
-                    const isWordValid = word.length >= 3;
-
-                    if (!hasGuests) {
-                        startBtn.disabled = true;
-                        startBtn.textContent = "Waiting for players to join...";
-                        startBtn.style.background = "#ccc";
-                    } else if (!isWordValid) {
-                        startBtn.disabled = true;
-                        startBtn.textContent = "Enter a word (3+ letters)";
-                        startBtn.style.background = "#ffc107";
-                    } else {
-                        startBtn.disabled = false;
-                        startBtn.textContent = "Start Game Now";
-                        startBtn.style.background = "var(--main-gradient)";
-                    }
-                } else {
-                    document.getElementById('hostControls').style.display = 'none';
-                    document.getElementById('guestWait').style.display = 'block';
-                    
-                    const displayHost = session.host.length > 10 ? session.host.substring(0,10)+'...' : session.host;
-                    document.getElementById('guestWaitTitle').innerHTML = `Waiting for <strong style="color:#1e3c72;">${displayHost}</strong>...`;
-                    
-                    const isRestarting = session.state && session.state.restarting;
-                    document.getElementById('restartNotice').style.display = isRestarting ? 'block' : 'none';
-                    
-                    document.getElementById('gameStatus').textContent = isRestarting ? `Host (${displayHost}) is choosing a new word...` : `Waiting for ${displayHost} to start...`;
-                }
-            } else if (session.status === 'active') {
-                document.getElementById('lobbyView').style.display = 'none';
-                document.getElementById('hostInviteArea').style.display = 'none';
-                document.getElementById('gameView').style.display = 'block';
-                document.getElementById('clueControls').style.display = 'flex';
-                renderActiveGame(acceptedPlayers);
-            } else if (session.status === 'finished') {
-                document.getElementById('hostInviteArea').style.display = 'none';
-                document.getElementById('timerDisplay').style.display = 'none';
-                if (turnTimer) { clearInterval(turnTimer); turnTimer = null; }
-                renderActiveGame(acceptedPlayers); // Render the final state
-                showGameOver();
-            } else {
-                document.getElementById('hostInviteArea').style.display = 'none';
-                document.getElementById('timerDisplay').style.display = 'none';
-                if (turnTimer) { clearInterval(turnTimer); turnTimer = null; }
-            }
-        }
-
-        let lobbySelectedUsers = new Set();
-        async function loadUsersToInvite() {
-            const list = document.getElementById('inviteUserList');
-            if (!list || list.getAttribute('data-loaded') === 'true') return;
-            
-            try {
-                const res = await fetch('/api/users/all');
-                const data = await res.json();
-                if (data.success) {
-                    const currentPlayers = session.players.map(p => (p.username || '').toLowerCase());
-                    const aiPlayers = ['Bob', 'Tim'];
-                    const users = data.users.filter(u => {
-                        const uName = (u.username || '').toLowerCase();
-                        const myName = (username || '').toLowerCase();
-                        return uName !== myName && !currentPlayers.includes(uName);
-                    });
-                    
-                    if (users.length === 0) {
-                        list.innerHTML = '<div style="padding:10px; text-align:center; color:#999; font-size:0.85em; grid-column: 1 / -1;">No more students available.</div>';
-                    } else {
-                        list.innerHTML = users.map(u => {
-                            const display = u.username.length > 10 ? u.username.substring(0, 10) + '...' : u.username;
-                            const isAI = aiPlayers.includes(u.username);
-                            const aiBadge = isAI ? '<span style="font-size:0.7em; background:#6c757d; color:white; padding:1px 4px; border-radius:3px; margin-left:4px;">AI</span>' : '';
-                            return `
-                                <div class="user-card" onclick="toggleLobbyUserSelection(this, '${u.username}')">
-                                    <div style="width:8px; height:8px; background:${u.is_online ? '#28a745' : '#ccc'}; border-radius:50%;"></div>
-                                    <strong title="${u.username}">${display}${aiBadge}</strong>
-                                </div>
-                            `;
-                        }).join('');
-                    }
-                    list.setAttribute('data-loaded', 'true');
-                }
-            } catch (e) { console.error("Invite list error:", e); }
-        }
-
-        function toggleLobbyUserSelection(el, user) {
-            if (lobbySelectedUsers.has(user)) {
-                lobbySelectedUsers.delete(user);
-                el.classList.remove('selected');
-            } else {
-                lobbySelectedUsers.add(user);
-                el.classList.add('selected');
-            }
-        }
-
-        async function sendLobbyInvitations() {
-            if (lobbySelectedUsers.size === 0) {
-                alert("Please select at least 1 student to invite.");
-                return;
-            }
-            const btn = document.getElementById('sendInviteBtn');
-            btn.disabled = true; btn.textContent = "Sending...";
-            try {
-                const res = await fetch('/api/games/invite', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        host: username,
-                        game_type: session.game_type,
-                        invitees: Array.from(lobbySelectedUsers),
-                        session_id: sessionId
-                    })
-                });
-                const data = await res.json();
-                if (data.success) {
-                    alert("Invitations sent!");
-                    lobbySelectedUsers.clear();
-                    const list = document.getElementById('inviteUserList');
-                    list.removeAttribute('data-loaded');
-                    loadUsersToInvite();
-                }
-            } catch (e) { console.error("Send invite error:", e); }
-            finally { btn.disabled = false; btn.textContent = "Send Invitations"; }
-        }
-
-        let isPeeking = false;
-        let turnTimer = null;
-        let lastTurnAt = 0;
-
-        function showPeek() {
-            if (session && session.state && session.state.word) {
-                isPeeking = true;
-                renderWordDisplay();
-            }
-        }
-
-        function hidePeek() {
-            isPeeking = false;
-            renderWordDisplay();
-        }
-
-        function renderWordDisplay() {
-            if (!session || !session.state || !session.state.word) return;
-            const state = session.state;
-            const html = state.word.split('').map(char => {
-                if (char === ' ') return '<span class="word-space">/</span>';
-                const isGuessed = state.guessedLetters.some(l => l.toUpperCase() === char.toUpperCase());
-                let content = '_';
-                let classes = 'word-char';
-                
-                if (isPeeking && !isGuessed) {
-                    content = char;
-                    classes += ' peek-highlight';
-                } else if (isGuessed) {
-                    content = char;
-                } else if (/[0-9]/.test(char) && !state.allowNumbers) {
-                    content = char; 
-                } else if (/[0-9]/.test(char) && state.allowNumbers) {
-                    content = '#'; 
-                }
-
-                return `<span class="${classes}">${content}</span>`;
-            }).join('');
-            document.getElementById('wordContainer').innerHTML = html;
-            
-            // Adjust font size for very long words
-            const container = document.getElementById('wordContainer');
-            if (state.word.length > 50) {
-                container.style.fontSize = '1.2em';
-            } else if (state.word.length > 25) {
-                container.style.fontSize = '1.6em';
-            } else {
-                container.style.fontSize = '2.2em';
-            }
-        }
-
-        function renderActiveGame(acceptedPlayers) {
-            const state = session.state;
-            if (!state || !state.word) return;
-
-            renderWordDisplay();
-
-            // Timer management
-            const isMyTurn = state.currentTurn && username && state.currentTurn.toLowerCase() === username.toLowerCase();
-            const isHost = session.host && username && session.host.toLowerCase() === username.toLowerCase();
-            const timerDisplay = document.getElementById('timerDisplay');
-            const timerSeconds = document.getElementById('timerSeconds');
-            
-            if (state.turnStartedAt) {
-                timerDisplay.style.display = 'block';
-                const start = state.turnStartedAt;
-                
-                // If turn just changed, reset local interval if needed
-                if (lastTurnAt !== start) {
-                    lastTurnAt = start;
-                    if (turnTimer) clearInterval(turnTimer);
-                    
-                    turnTimer = setInterval(() => {
-                        const elapsed = Math.floor((Date.now() - start) / 1000);
-                        const remaining = Math.max(0, 60 - elapsed);
-                        timerSeconds.textContent = remaining;
-                        
-                        if (remaining <= 10) {
-                            timerDisplay.classList.add('timer-warning');
-                        } else {
-                            timerDisplay.classList.remove('timer-warning');
-                        }
-                        
-                        // Current player handles their own timeout. 
-                        // FALLBACK: If current player doesn't act (e.g., disconnected), the host handles it after a 5s grace period.
-                        if (remaining <= 0 && !isUpdating) {
-                            if (isMyTurn) {
-                                clearInterval(turnTimer);
-                                handleTimeout();
-                            } else if (isHost && elapsed >= 65) { // Host fallback with 5s grace
-                                clearInterval(turnTimer);
-                                handleGuestTimeout(state.currentTurn);
-                            }
-                        }
-                    }, 1000);
-                    
-                    // Initial update
-                    const elapsed = Math.floor((Date.now() - start) / 1000);
-                    timerSeconds.textContent = Math.max(0, 60 - elapsed);
-                }
-            } else {
-                timerDisplay.style.display = 'none';
-                if (turnTimer) { clearInterval(turnTimer); turnTimer = null; }
-            }
-
-            const clueDisplay = document.getElementById('clueDisplay');
-            if (state.clueStack && state.clueStack.length > 0) {
-                clueDisplay.style.display = 'block';
-                clueDisplay.innerHTML = state.clueStack.map((item, idx) => {
-                    const borderTop = idx > 0 ? 'border-top:1px dashed #ddd; margin-top:8px; padding-top:8px;' : '';
-                    if (item.type === 'request') {
-                        const disp = item.user.length > 10 ? item.user.substring(0,10)+'...' : item.user;
-                        return `<div style="${borderTop} color: #856404; font-weight: bold; font-size: 0.9em;">🙋 ${disp} requested a clue</div>`;
-                    } else {
-                        return `<div style="${borderTop} color: #1e3c72; font-size: 1.1em;">💡 Clue: <strong>${item.text}</strong></div>`;
-                    }
-                }).join('');
-                setTimeout(() => { clueDisplay.scrollTop = clueDisplay.scrollHeight; }, 50);
-            } else {
-                clueDisplay.style.display = 'none';
-            }
-
-            const requestBtn = document.getElementById('requestClueBtn');
-            const hostBox = document.getElementById('hostClueBox');
-            
-            if (isHost) {
-                requestBtn.style.display = 'none';
-                hostBox.style.display = 'flex';
-            } else {
-                hostBox.style.display = 'none';
-                requestBtn.style.display = 'block';
-                if (state.cluesRequestedBy && state.cluesRequestedBy.includes(username)) {
-                    requestBtn.disabled = true; requestBtn.textContent = "💡 Clue Requested"; requestBtn.style.opacity = '0.5';
-                } else {
-                    requestBtn.disabled = false; requestBtn.textContent = "💡 Request Clue"; requestBtn.style.opacity = '1';
-                }
-            }
-
-            const keyboard = document.getElementById('keyboard');
-            keyboard.innerHTML = '';
-            let alphabetStr = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-            if (state.allowNumbers) alphabetStr += '0123456789';
-            const alphabet = alphabetStr.split('');
-            document.getElementById('gameStatus').textContent = isMyTurn ? "IT'S YOUR TURN!" : `Waiting for ${state.currentTurn.substring(0,10)}...`;
-
-            alphabet.forEach(letter => {
-                const btn = document.createElement('button');
-                btn.className = 'key';
-                btn.textContent = letter;
-                const isGuessed = state.guessedLetters.some(l => l.toUpperCase() === letter.toUpperCase());
-                if (isGuessed) {
-                    btn.classList.add('used');
-                    const isInWord = state.word.toUpperCase().includes(letter.toUpperCase());
-                    btn.classList.add(isInWord ? 'correct' : 'wrong');
-                    btn.disabled = true;
-                } else if (!isMyTurn) {
-                    btn.disabled = true;
-                }
-                btn.onclick = () => makeGuess(letter);
-                keyboard.appendChild(btn);
-            });
-
-            // Hangman drawing update
-            const isWon = state.word.split('').every(char => char === ' ' || state.guessedLetters.some(l => l.toUpperCase() === char.toUpperCase()));
-            update3DHangman(state.wrongGuesses, state.wrongGuesses >= 6, isWon);
-
-            const playersPanel = document.getElementById('gamePlayers');
-            playersPanel.innerHTML = acceptedPlayers.map(p => {
-                const display = p.username.length > 10 ? p.username.substring(0,10)+'...' : p.username;
-                const isPHost = p.username && session.host && p.username.toLowerCase() === session.host.toLowerCase();
-                return `
-                    <div class="player-chip ${p.username === state.currentTurn ? 'active-turn' : ''}" title="${p.username}">
-                        <div style="width:8px; height:8px; background:#28a745; border-radius:50%;"></div>
-                        <strong>${display}</strong>
-                        ${isPHost ? '<span style="font-size:0.65em; background:#1e3c72; color:white; padding:1px 5px; border-radius:4px; margin-left:5px;">HOST</span>' : ''}
-                    </div>
-                `;
-            }).join('');
-        }
-
-        async function startGame() {
-            const word = document.getElementById('secretWordInput').value.trim().toUpperCase();
-            if (!word || word.length < 3) { alert("Please enter a valid word (3+ letters)."); return; }
-            let allowNumbers = document.getElementById('allowNumbersToggle').checked;
-            
-            const hasNumbers = /[0-9]/.test(word);
-            
-            if (!allowNumbers && hasNumbers) {
-                alert("Numbers are not allowed in the secret word when 'Allow Numbers' is turned off.");
-                return;
-            }
-
-            // If toggle is ON but word has no numbers, turn it OFF for this game to keep keyboard clean
-            if (allowNumbers && !hasNumbers) {
-                console.log("No numbers in word, auto-disabling allowNumbers toggle for this round.");
-                allowNumbers = false;
-            }
-
-            const activePlayers = session.players.filter(p => p.status === 'accepted');
-            const guestPlayers = activePlayers.filter(p => p.username && session.host && p.username.toLowerCase() !== session.host.toLowerCase());
-            const firstTurn = guestPlayers.length > 0 ? guestPlayers[0].username : session.host;
-            const initialState = {
-                word: word, guessedLetters: [], wrongGuesses: 0,
-                currentTurn: firstTurn, playersOrder: activePlayers.map(p => p.username),
-                allowNumbers: allowNumbers, restarting: false, cluesRequestedBy: [], clueStack: [],
-                turnStartedAt: Date.now(),
-                updatedAt: Date.now()
-            };
-            
-            isUpdating = true;
-            try {
-                await updateServerState(initialState, 'active');
-            } finally {
-                setTimeout(() => { isUpdating = false; }, 1000);
-            }
-        }
-
-        async function requestClue() {
-            if (!session || !session.state || isUpdating) return;
-            const state = JSON.parse(JSON.stringify(session.state));
-            if (!state.cluesRequestedBy) state.cluesRequestedBy = [];
-            if (state.cluesRequestedBy.includes(username)) return;
-            
-            isUpdating = true;
-            state.cluesRequestedBy.push(username);
-            if (!state.clueStack) state.clueStack = [];
-            state.clueStack.push({ type: 'request', user: username });
-            state.updatedAt = Date.now();
-            
-            // Update local state and UI immediately
-            session.state = state;
-            updateUI();
-            
-            try {
-                await updateServerState(state);
-            } finally {
-                setTimeout(() => { isUpdating = false; }, 1000);
-            }
-        }
-
-        async function sendClue() {
-            const input = document.getElementById('clueInput');
-            const clue = input.value.trim();
-            if (!clue || isUpdating) return;
-            const state = JSON.parse(JSON.stringify(session.state));
-            
-            isUpdating = true;
-            if (!state.clueStack) state.clueStack = [];
-            state.clueStack.push({ type: 'clue', text: clue });
-            state.updatedAt = Date.now();
-            input.value = '';
-            
-            // Update local state and UI immediately
-            session.state = state;
-            updateUI();
-            
-            try {
-                await updateServerState(state);
-            } finally {
-                setTimeout(() => { isUpdating = false; }, 1000);
-            }
-        }
-
-        async function handleTimeout() {
-            // Treat as a wrong guess
-            console.log("Turn timed out for me:", username);
-            await makeGuess(null);
-        }
-
-        async function handleGuestTimeout(guestName) {
-            // Host fallback for disconnected players
-            console.log("Turn timed out for guest:", guestName, "(Host fallback)");
-            await makeGuess(null, guestName);
-        }
-
-        async function makeGuess(letter, targetUser = null) {
-            const actor = targetUser || username;
-            if (!session || !session.state || (session.state.currentTurn && session.state.currentTurn.toLowerCase() !== actor.toLowerCase()) || isUpdating) return;
-            const state = JSON.parse(JSON.stringify(session.state));
-            
-            // If letter is provided, check if already guessed. If null, it's a timeout.
-            if (letter && state.guessedLetters.some(l => l.toUpperCase() === letter.toUpperCase())) return;
-            
-            isUpdating = true;
-            let isCorrect = false;
-            if (letter) {
-                state.guessedLetters.push(letter);
-                isCorrect = state.word.toUpperCase().includes(letter.toUpperCase());
-            } else {
-                // Timeout case: just mark as wrong guess
-                isCorrect = false;
-            }
-
-            if (!isCorrect) state.wrongGuesses++;
-
-            const isWon = state.word.split('').every(char => char === ' ' || state.guessedLetters.some(l => l.toUpperCase() === char.toUpperCase()));
-            const isLost = state.wrongGuesses >= 6;
-
-            state.turnStartedAt = Date.now(); // Reset timer for next turn
-            state.updatedAt = Date.now();
-
-            session.state = state;
-            updateUI();
-
-            try {
-                if (isWon || isLost) {
-                    if (isWon) state.winner = actor;
-                    await updateServerState(state, 'finished');
-                } else {
-                    // Only change turn if it was a wrong guess OR a timeout
-                    if (!isCorrect) {
-                        const players = state.playersOrder;
-                        let currentIdx = players.findIndex(u => u && actor && u.toLowerCase() === actor.toLowerCase());
-                        if (currentIdx === -1) currentIdx = 0; // Fallback
-                        let nextIdx = (currentIdx + 1) % players.length;
-                        
-                        // Skip host if more than 1 player
-                        if (players.length > 1 && players[nextIdx] && session.host && players[nextIdx].toLowerCase() === session.host.toLowerCase()) {
-                            nextIdx = (nextIdx + 1) % players.length;
-                        }
-                        state.currentTurn = players[nextIdx];
-                    }
-                    await updateServerState(state);
-                }
-            } catch (e) { console.error("Guess failed:", e); }
-            finally { setTimeout(() => { isUpdating = false; }, 1000); }
-        }
-
-        async function updateServerState(state, status = null) {
-            try {
-                await fetch('/api/games/update', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ session_id: sessionId, state: state, status: status || session.status })
-                });
             } catch (e) { console.error(e); }
         }
+        // --- END_OF_CHUNK_2 ---
+        function updateUI() {
+            if (!session) return; const acc = session.players.filter(p => p.status === 'accepted'), isH = session.host?.toLowerCase() === username.toLowerCase();
+            
+            // Hide overlay by default unless finished
+            if (session.status !== 'finished') {
+                document.getElementById('gameOverlay').style.display = 'none';
+            } else {
+                // Update overlay player list dynamically while showing
+                const listEl = document.getElementById('overlayPlayerList');
+                if (listEl) {
+                    listEl.innerHTML = `<div style="font-weight:bold; margin-bottom:10px; color:var(--primary-color);">Players waiting (${acc.length}):</div>` + 
+                        acc.map(p => `<span>${p.username}${p.username.toLowerCase() === session.host.toLowerCase() ? ' (Host)' : ''}</span>`).join(', ');
+                }
+            }
+            if (session.status === 'pending') {
+                confettiShown = false; // Reset ONLY when back in lobby
+                document.getElementById('lobbyView').style.display = 'block'; document.getElementById('gameView').style.display = 'none';
+                
+                // Accessible to ALL users
+                document.getElementById('hostInviteArea').style.display = 'block';
+                loadInvites();
 
-        async function resetGame() {
-            isUpdating = true;
-            try {
-                await fetch('/api/games/update', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                if (isH) { document.getElementById('hostControls').style.display = 'block'; document.getElementById('guestWait').style.display = 'none'; }
+                else {
+                    document.getElementById('hostControls').style.display = 'none'; document.getElementById('guestWait').style.display = 'block';
+                    document.getElementById('restartNotice').style.display = (session.state?.restarting) ? 'block' : 'none';
+                }
+                document.getElementById('lobbyPlayers').innerHTML = acc.map(p => {
+                    const disp = p.username.length > 10 ? p.username.substring(0,10) + '...' : p.username;
+                    return `<div class="player-chip"><strong>${disp}</strong>${p.username.toLowerCase() === session.host.toLowerCase() ? ' (H)' : ''}</div>`;
+                }).join('');
+                
+                if (isH) { 
+                    const wordInput = document.getElementById('secretWordInput');
+                    if (!wordInput.oninput) wordInput.oninput = () => updateUI();
+                    const word = wordInput.value.trim(), btn = document.getElementById('startBtn');
+                    if (acc.length < 2) { btn.disabled = true; btn.textContent = "Wait for players..."; }
+                    else if (word.length < 3) { btn.disabled = true; btn.textContent = "Enter word"; }
+                    else { btn.disabled = false; btn.textContent = "Start Game"; }
+                }
+            } else { document.getElementById('lobbyView').style.display = 'none'; document.getElementById('gameView').style.display = 'block'; renderActive(); if (session.status === 'finished') showGameOver(); else document.getElementById('gameOverlay').style.display = 'none'; }
+        }
+        function renderActive() {
+            const s = session.state; if (!s) return; const isMyT = s.currentTurn?.toLowerCase() === username.toLowerCase(), isH = session.host?.toLowerCase() === username.toLowerCase();
+            document.getElementById('gameStatus').textContent = isMyT ? "YOUR TURN!" : `Waiting for ${s.currentTurn}...`;
+            const isW = s.word.split('').every(c => c === ' ' || s.guessedLetters.some(l => l.toUpperCase() === c.toUpperCase()));
+            document.getElementById('wordContainer').innerHTML = s.word.split('').map(c => {
+                if (c === ' ') return '<span class="word-space">/</span>';
+                const g = s.guessedLetters.some(l => l.toUpperCase() === c.toUpperCase());
+                return `<span class="word-char${isPeeking && !g ? ' peek-highlight' : ''}">${(g || (isPeeking && !g)) ? c : (/[0-9]/.test(c) && s.allowNumbers ? '#' : '_')}</span>`;
+            }).join('');
+            if (s.turnStartedAt) {
+                document.getElementById('timerDisplay').style.display = 'block';
+                const start = s.turnStartedAt; if (lastTurnAt !== start) {
+                    lastTurnAt = start; if (turnTimer) clearInterval(turnTimer);
+                    turnTimer = setInterval(() => {
+                        const rem = Math.max(0, 60 - Math.floor((Date.now()-start)/1000));
+                        document.getElementById('timerSeconds').textContent = rem;
+                        if (rem <= 0 && isMyT && !isUpdating) { clearInterval(turnTimer); makeGuess(null); }
+                    }, 1000);
+                }
+            } else document.getElementById('timerDisplay').style.display = 'none';
+            document.getElementById('clueDisplay').style.display = s.clueStack?.length ? 'block' : 'none';
+            document.getElementById('clueDisplay').innerHTML = (s.clueStack || []).map(i => i.type === 'request' ? `<div>🙋 ${i.user} requested a clue</div>` : `<div>💡 Clue: <strong>${i.text}</strong></div>`).join('');
+            document.getElementById('requestClueBtn').style.display = isH ? 'none' : 'block';
+            if (!isH) { const req = s.cluesRequestedBy?.includes(username); document.getElementById('requestClueBtn').disabled = req; document.getElementById('requestClueBtn').style.opacity = req ? '0.5' : '1'; }
+            document.getElementById('hostClueBox').style.display = isH ? 'flex' : 'none';
+            const kb = document.getElementById('keyboard'); kb.innerHTML = ''; kb.className = 'keyboard' + (!isMyT ? ' not-my-turn' : '');
+            let abc = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'; if (s.allowNumbers) abc += '0123456789';
+            abc.split('').forEach(l => {
+                const btn = document.createElement('button'); btn.className = 'key'; btn.textContent = l; btn.setAttribute('data-key', l);
+                const g = s.guessedLetters.some(x => x.toUpperCase() === l);
+                if (g) { btn.classList.add('used', s.word.toUpperCase().includes(l) ? 'correct' : 'wrong'); btn.disabled = true; }
+                else if (!isMyT) btn.disabled = true;
+                kb.appendChild(btn);
+            });
+            update3D(s.wrongGuesses, s.wrongGuesses >= 6, isW);
+            document.getElementById('gamePlayers').innerHTML = session.players.filter(p => p.status === 'accepted').map(p => `<div class="player-chip ${p.username === s.currentTurn ? 'active-turn' : ''}"><strong>${p.username}</strong>${p.username.toLowerCase() === session.host.toLowerCase() ? ' (H)' : ''}</div>`).join('');
+        }
+        async function startGame() { const w = document.getElementById('secretWordInput').value.trim().toUpperCase(); if (w.length < 3) return; const n = document.getElementById('allowNumbersToggle').checked, acc = session.players.filter(p => p.status === 'accepted'), g = acc.filter(p => p.username.toLowerCase() !== session.host.toLowerCase()); await updateState({ word: w, guessedLetters: [], wrongGuesses: 0, currentTurn: g.length ? g[0].username : session.host, playersOrder: acc.map(p => p.username), allowNumbers: n, turnStartedAt: Date.now(), updatedAt: Date.now() }, 'active'); }
+        async function makeGuess(l) { if (isUpdating || (l !== null && session.state.currentTurn.toLowerCase() !== username.toLowerCase())) return; isUpdating = true; await perform('GUESS', { letter: l }); }
+        async function requestClue() { if (isUpdating || session.state.cluesRequestedBy?.includes(username)) return; const s = JSON.parse(JSON.stringify(session.state)); if (!s.cluesRequestedBy) s.cluesRequestedBy = []; s.cluesRequestedBy.push(username); if (!s.clueStack) s.clueStack = []; s.clueStack.push({ type: 'request', user: username }); await updateState(s); }
+        async function sendClue() { const i = document.getElementById('clueInput'), c = i.value.trim(); if (!c || isUpdating) return; const s = JSON.parse(JSON.stringify(session.state)); if (!s.clueStack) s.clueStack = []; s.clueStack.push({ type: 'clue', text: c }); i.value = ''; await updateState(s); }
+        async function perform(a, p) { 
+            overlayTimeout = setTimeout(() => { document.getElementById('processingOverlay').style.display = 'flex'; }, 200);
+            try { await fetch('/api/games/action', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ session_id: sessionId, username, action: a, params: p, version: session.version }) }); await fetchSession(true); }
+            finally { clearTimeout(overlayTimeout); document.getElementById('processingOverlay').style.display = 'none'; setTimeout(() => isUpdating = false, 500); }
+        }
+        async function updateState(s, st = null) { isUpdating = true; try { await fetch('/api/games/update', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ session_id: sessionId, state: s, status: st || session.status }) }); await fetchSession(true); } finally { isUpdating = false; } }
+        async function resetGame() { 
+            isUpdating = true; 
+            try { 
+                await fetch('/api/games/update', { 
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/json'}, 
                     body: JSON.stringify({ 
                         session_id: sessionId, 
                         state: { restarting: true, updatedAt: Date.now() }, 
                         status: 'pending', 
                         new_host: username 
-                    })
-                });
-                document.getElementById('secretWordInput').value = '';
-                await fetchSession();
-            } catch (e) { console.error(e); }
-            finally {
-                setTimeout(() => { isUpdating = false; }, 1000);
-            }
+                    }) 
+                }); 
+                document.getElementById('secretWordInput').value = ''; 
+                await fetchSession(true); 
+            } finally { isUpdating = false; } 
         }
-
-        function triggerCelebration() {
-            const colors = ['#f2d74e', '#95c3de', '#ff9a91', '#f2d74e', '#a2ffb2'];
-            for (let i = 0; i < 100; i++) {
-                const confetti = document.createElement('div');
-                confetti.className = 'confetti';
-                confetti.style.left = Math.random() * 100 + 'vw';
-                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-                confetti.style.animationDelay = Math.random() * 2 + 's';
-                confetti.style.opacity = Math.random();
-                document.body.appendChild(confetti);
-                setTimeout(() => confetti.remove(), 5000);
-            }
-        }
-
+        async function leaveGame() { if (confirm("Leave?")) { await fetch('/api/games/leave', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ session_id: sessionId, username }) }); location.href = 'games.html'; } }
         function showGameOver() {
-            const state = session.state;
-            const isWon = state.word.split('').every(char => char === ' ' || state.guessedLetters.some(l => l.toUpperCase() === char.toUpperCase()));
-            const isLost = state.wrongGuesses >= 6;
-            // Delay showing the overlay so users can see the final state
-            const delay = isLost ? 1000 : 1500;
+            const s = session.state, isW = s.word.split('').every(c => c === ' ' || s.guessedLetters.some(l => l.toUpperCase() === c.toUpperCase())), isH = session.host?.toLowerCase() === username.toLowerCase();
+            const o = document.getElementById('gameOverlay'); o.style.display = 'flex';
+            const title = document.getElementById('overlayTitle');
+            const msg = document.getElementById('overlayMessage');
+            const isMeWinner = s.winner && username && s.winner.toLowerCase() === username.toLowerCase();
+            const canRestart = isW ? isMeWinner : isH;
 
-            setTimeout(() => {
-                const overlay = document.getElementById('gameOverlay');
-                overlay.style.display = 'flex';
-                const isHost = session.host && username && session.host.toLowerCase() === username.toLowerCase();
-                const isMeWinner = state.winner && username && state.winner.toLowerCase() === username.toLowerCase();
-
-                if (isWon) {
-                    document.getElementById('overlayTitle').textContent = "WORD GUESSED!";
-                    document.getElementById('overlayTitle').style.color = "#28a745";
-                    if (isMeWinner) triggerCelebration();
+            if (isW) { 
+                // Word was guessed
+                if (isMeWinner) {
+                    title.textContent = "WORD GUESSED - YOU WIN!"; title.style.color = "#28a745"; 
+                } else if (isH) {
+                    title.textContent = "YOU LOSE!"; title.style.color = "#dc3545";
                 } else {
-                    if (isHost) {
-                        document.getElementById('overlayTitle').textContent = "YOU WIN!";
-                        document.getElementById('overlayTitle').style.color = "#28a745";
-                    } else {
-                        document.getElementById('overlayTitle').textContent = "YOU LOSE!";
-                        document.getElementById('overlayTitle').style.color = "#dc3545";
-                    }
+                    title.textContent = "WORD GUESSED!"; title.style.color = "#28a745"; 
                 }
-                
-                const displayWinner = state.winner ? (state.winner.length > 10 ? state.winner.substring(0,10)+'...' : state.winner) : '';
-                const winnerText = isWon ? `Winner: <strong>${displayWinner}</strong>` : 'Host remains the same.';
-                const nextStepText = isWon ? (isMeWinner ? `Others are waiting for you to start a new game as the new host` : `Waiting for <strong>${displayWinner}</strong> to start a new game...`) : `Waiting for <strong>${session.host.length > 10 ? session.host.substring(0,10)+'...' : session.host}</strong> to try again...`;
 
-                document.getElementById('overlayMessage').innerHTML = `The word was <strong>${state.word}</strong>.<br><br>${winnerText}<br><span style=\"font-size:0.85em; color:#666;\">${nextStepText}</span>`;
-                
-                const playAgainBtn = document.getElementById('playAgainBtn');
-                if (isWon) {
-                    playAgainBtn.style.display = isMeWinner ? 'block' : 'none';
-                    playAgainBtn.textContent = "🎮 Start New Game 🎮";
-                } else {
-                    playAgainBtn.style.display = isHost ? 'block' : 'none';
-                    playAgainBtn.textContent = "🎮 Play Again (Same Host)";
+                if ((isMeWinner || isH) && !confettiShown) {
+                    // Confetti if I won OR if I'm the host celebrating their success (optional, but keep for winner)
+                    if (isMeWinner) confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, zIndex: 1000 });
+                    confettiShown = true;
                 }
-            }, delay);
-        }
-
-        window.addEventListener('keydown', (e) => {
-            if (session && session.status === 'active' && session.state && session.state.currentTurn && session.state.currentTurn.toLowerCase() === username.toLowerCase()) {
-                const key = e.key.toUpperCase();
-                const allowedRegex = session.state.allowNumbers ? /^[A-Z0-9]$/ : /^[A-Z]$/;
-                if (allowedRegex.test(key) && !session.state.guessedLetters.includes(key)) { makeGuess(key); }
+            } else { 
+                // Players failed to guess
+                title.textContent = isH ? "YOU WIN!" : "YOU LOSE!"; title.style.color = isH ? "#28a745" : "#dc3545"; 
+                if (isH && !confettiShown) {
+                    confetti({ particleCount: 100, spread: 50, origin: { y: 0.6 }, zIndex: 1000 });
+                    confettiShown = true;
+                }
             }
-        });
-
+            
+            let messageHtml = `The word was <strong>${s.word}</strong>.`;
+            if (isW) messageHtml += `<br>Winner: <strong>${s.winner}</strong>`;
+            
+            if (!canRestart) {
+                const nextHost = isW ? s.winner : session.host;
+                messageHtml += `<br><br><span style="color:#1e3c72; font-weight:bold;">Please wait for the new host (${nextHost}) to restart the game...</span>`;
+            } else {
+                messageHtml += `<br><br><span style="color:#28a745; font-weight:bold;">The other players are waiting for you to start a new game!</span><br>`;
+                messageHtml += `<button class="btn-action" style="background:#28a745; margin-top:15px;" onclick="resetGame()">🎮 Play Again</button>`;
+            }
+            
+            msg.innerHTML = messageHtml;
+            document.getElementById('playAgainBtn').style.display = 'none'; // Use the inline one
+        }
+        let isPeeking = false, turnTimer = null, lastTurnAt = 0;
+        function showPeek() { isPeeking = true; renderActive(); } function hidePeek() { isPeeking = false; renderActive(); }
+        async function loadInvites() {
+            const list = document.getElementById('inviteUserList'); if (!list || list.getAttribute('data-loaded')) return;
+            const res = await fetch('/api/users/all'); const data = await res.json();
+            if (data.success) {
+                const cur = session.players.map(p => p.username.toLowerCase());
+                const ai = ['Bob', 'Tim'];
+                list.innerHTML = data.users.filter(u => u.username.toLowerCase() !== username.toLowerCase() && !cur.includes(u.username.toLowerCase())).map(u => {
+                    const disp = u.username.length > 10 ? u.username.substring(0,10) + '...' : u.username;
+                    const isAI = ai.includes(u.username);
+                    const statusDot = `<span style="width:8px; height:8px; background:${u.is_online ? '#28a745' : '#ccc'}; border-radius:50%; display:inline-block; margin-right:5px;"></span>`;
+                    return `<div class="user-card" onclick="toggleInvite(this, '${u.username}')">${statusDot}${disp}${isAI ? ' (ai)' : ''}</div>`;
+                }).join('') || 'None';
+                list.setAttribute('data-loaded', 'true');
+            }
+        }
+        let invites = new Set();
+        function toggleInvite(el, u) { if (invites.has(u)) { invites.delete(u); el.classList.remove('selected'); } else { invites.add(u); el.classList.add('selected'); } }
+        async function sendInvites() { if (!invites.size) return; await fetch('/api/games/invite', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ host: username, game_type: 'Hangman', invitees: Array.from(invites), session_id: sessionId }) }); alert("Sent!"); invites.clear(); document.getElementById('inviteUserList').removeAttribute('data-loaded'); loadInvites(); }
+        function handleInput(k) { if (isUpdating || session?.status !== 'active') return; const u = k.toUpperCase(), r = session.state?.allowNumbers ? /^[A-Z0-9]$/ : /^[A-Z]$/; if (r.test(u) && !session.state.guessedLetters.some(l => l.toUpperCase() === u)) makeGuess(u); }
+        window.addEventListener('keydown', (e) => { if (e.target.tagName !== 'INPUT') handleInput(e.key); });
+        document.getElementById('keyboard').addEventListener('click', (e) => { const k = e.target.getAttribute('data-key'); if (k) { e.preventDefault(); e.stopPropagation(); handleInput(k); } });
         init();
     </script>
 </body>

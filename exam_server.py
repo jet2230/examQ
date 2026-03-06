@@ -114,14 +114,17 @@ def init_db():
             players_json TEXT NOT NULL, -- List of {username, status: 'invited'|'accepted'}
             state_json TEXT, -- Current game state (word, guessed letters, etc)
             status TEXT DEFAULT 'pending', -- 'pending', 'active', 'finished'
+            version INTEGER DEFAULT 0,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             expires_at DATETIME
         )
     ''')
-    # Check for expires_at column
+    # Check for version column
     cursor.execute("PRAGMA table_info(game_sessions)")
     game_cols = [row['name'] for row in cursor.fetchall()]
+    if game_cols and 'version' not in game_cols:
+        cursor.execute("ALTER TABLE game_sessions ADD COLUMN version INTEGER DEFAULT 0")
     if game_cols and 'expires_at' not in game_cols:
         cursor.execute("ALTER TABLE game_sessions ADD COLUMN expires_at DATETIME")
     
@@ -210,7 +213,7 @@ def leave_game_session():
             cursor.execute("DELETE FROM game_sessions WHERE id = ?", (session_id,))
         else:
             # If guest leaves, just update players list
-            cursor.execute("UPDATE game_sessions SET players_json = ? WHERE id = ?", (json.dumps(new_players), session_id))
+            cursor.execute("UPDATE game_sessions SET players_json = ?, version = version + 1 WHERE id = ?", (json.dumps(new_players), session_id))
             
         conn.commit(); conn.close()
         return jsonify({'success': True}), 200
@@ -277,7 +280,7 @@ def game_invite():
                 if u not in existing_users:
                     status = 'accepted' if u in AI_PLAYERS else 'invited'
                     players.append({'username': u, 'status': status})
-            cursor.execute("UPDATE game_sessions SET players_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(players), session_id))
+            cursor.execute("UPDATE game_sessions SET players_json = ?, version = version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(players), session_id))
         
         # Send messages to invitees
         invite_msg = f"🎮 {host} invited you to play {game_type}! Click here to join: {request.host_url}games.html?join={session_id}"
@@ -290,6 +293,191 @@ def game_invite():
         trigger_ai_if_needed(session_id)
         return jsonify({'success': True, 'session_id': session_id}), 201
     except Exception as e: return jsonify({'error': str(e)}), 500
+
+def apply_uno_move(state, action, username, params):
+    """Centralized UNO logic for both AI and Humans"""
+    order = state.get('playersOrder', [])
+    if not order: return state, "Invalid game state"
+    
+    current_turn = state.get('currentTurn')
+    if not current_turn or current_turn.lower() != username.lower():
+        return state, f"Not your turn (Current: {current_turn})"
+
+    # Case-insensitive index lookup
+    order_lower = [o.lower() for o in order]
+    if current_turn.lower() not in order_lower:
+        return state, "Current player not in turn order"
+    curr_idx = order_lower.index(current_turn.lower())
+
+    new_state = json.loads(json.dumps(state)) # Deep copy
+    
+    if action == 'DRAW_CARD':
+        if not new_state['deck']:
+            if len(new_state['discard']) > 1:
+                top = new_state['discard'].pop()
+                random.shuffle(new_state['discard'])
+                new_state['deck'] = new_state['discard']
+                new_state['discard'] = [top]
+            else:
+                return state, "No cards left in deck"
+        
+        card = new_state['deck'].pop()
+        new_state['hands'][username].append(card)
+        
+        # Check if playable
+        top = new_state['discard'][-1]
+        cur_color = new_state.get('currentColor', top['color'])
+        can_play = card['color'] == 'black' or card['color'] == cur_color or card['value'] == top['value']
+        
+        if not can_play:
+            # Advance turn
+            next_idx = (curr_idx + new_state['direction'] + len(order)) % len(order)
+            new_state['currentTurn'] = order[next_idx]
+            
+    elif action == 'PLAY_CARD':
+        card_idx = params.get('card_idx')
+        if card_idx is None or card_idx >= len(new_state['hands'][username]):
+            return state, "Invalid card index"
+            
+        card = new_state['hands'][username].pop(card_idx)
+        new_state['discard'].append(card)
+        
+        if card['color'] != 'black':
+            new_state['currentColor'] = card['color']
+            
+            # Effects
+            skip = False
+            if card['value'] == 'Reverse':
+                if len(order) == 2: skip = True
+                else: new_state['direction'] *= -1
+            elif card['value'] == 'Skip': skip = True
+            elif card['value'] == 'Draw2':
+                next_idx = (curr_idx + new_state['direction'] + len(order)) % len(order)
+                t = order[next_idx]
+                for _ in range(2): 
+                    if not new_state['deck'] and len(new_state['discard']) > 1:
+                        top = new_state['discard'].pop()
+                        random.shuffle(new_state['discard'])
+                        new_state['deck'] = new_state['discard']
+                        new_state['discard'] = [top]
+                    if new_state['deck']: new_state['hands'][t].append(new_state['deck'].pop())
+                skip = True
+                
+            # Check for win
+            if len(new_state['hands'][username]) == 0:
+                new_state['winner'] = username
+                return new_state, None
+
+            # Advance turn
+            t_idx = (curr_idx + new_state['direction'] + len(order)) % len(order)
+            if skip: t_idx = (t_idx + new_state['direction'] + len(order)) % len(order)
+            new_state['currentTurn'] = order[t_idx]
+        else:
+            # Black card needs color selection
+            new_state['pendingColorSelection'] = True
+            return new_state, None
+
+    elif action == 'SELECT_COLOR':
+        color = params.get('color')
+        if color not in ['red', 'blue', 'green', 'yellow']:
+            return state, "Invalid color"
+            
+        new_state['currentColor'] = color
+        new_state.pop('pendingColorSelection', None)
+        
+        # Apply effects of the top card (Wild or WildDraw4)
+        top = new_state['discard'][-1]
+        skip = False
+        
+        if top['value'] == 'WildDraw4':
+            next_idx = (curr_idx + new_state['direction'] + len(order)) % len(order)
+            t = order[next_idx]
+            for _ in range(4):
+                if not new_state['deck'] and len(new_state['discard']) > 1:
+                    top_card = new_state['discard'].pop()
+                    random.shuffle(new_state['discard'])
+                    new_state['deck'] = new_state['discard']
+                    new_state['discard'] = [top_card]
+                if new_state['deck']: new_state['hands'][t].append(new_state['deck'].pop())
+            skip = True
+            
+        # Check for win (just in case)
+        if len(new_state['hands'][username]) == 0:
+            new_state['winner'] = username
+            return new_state, None
+
+        # Advance turn
+        t_idx = (curr_idx + new_state['direction'] + len(order)) % len(order)
+        if skip: t_idx = (t_idx + new_state['direction'] + len(order)) % len(order)
+        new_state['currentTurn'] = order[t_idx]
+
+    new_state['updatedAt'] = int(datetime.now().timestamp() * 1000)
+    return new_state, None
+
+def apply_hangman_move(state, action, username, params):
+    """Centralized Hangman logic"""
+    if action == 'GUESS':
+        letter = params.get('letter') # Can be None for timeout
+        actor = username
+        
+        current_turn = state.get('currentTurn', '')
+        if not current_turn or current_turn.lower() != actor.lower():
+            return state, "Not your turn"
+            
+        new_state = json.loads(json.dumps(state))
+        word = new_state.get('word', '').upper()
+        
+        if 'guessedLetters' not in new_state:
+            new_state['guessedLetters'] = []
+        if 'wrongGuesses' not in new_state:
+            new_state['wrongGuesses'] = 0
+            
+        if letter:
+            letter = letter.upper()
+            if letter in [l.upper() for l in new_state['guessedLetters']]:
+                return state, "Already guessed"
+            new_state['guessedLetters'].append(letter)
+            is_correct = letter in word
+        else:
+            is_correct = False # Timeout
+            
+        if not is_correct:
+            new_state['wrongGuesses'] = new_state.get('wrongGuesses', 0) + 1
+            
+        is_won = all(c == ' ' or c.upper() in [l.upper() for l in new_state['guessedLetters']] for c in word)
+        is_lost = new_state['wrongGuesses'] >= 6
+        
+        if is_won:
+            new_state['winner'] = actor
+            new_state['status'] = 'finished'
+            return new_state, None
+        if is_lost:
+            new_state['status'] = 'finished'
+            return new_state, None
+            
+        # Change turn if incorrect or timeout
+        if not is_correct:
+            players = new_state.get('playersOrder', [])
+            if players:
+                players_lower = [p.lower() for p in players]
+                try:
+                    current_idx = players_lower.index(actor.lower())
+                except ValueError:
+                    current_idx = 0
+                    
+                next_idx = (current_idx + 1) % len(players)
+                
+                host = params.get('host_username')
+                if len(players) > 1 and host and players[next_idx].lower() == host.lower():
+                    next_idx = (next_idx + 1) % len(players)
+                
+                new_state['currentTurn'] = players[next_idx]
+                
+        new_state['turnStartedAt'] = int(datetime.now().timestamp() * 1000)
+        new_state['updatedAt'] = int(datetime.now().timestamp() * 1000)
+        return new_state, None
+    
+    return state, "Unknown action"
 
 def process_ai_action(session_id):
     """Handle AI player logic for Bob and Tim using Ollama"""
@@ -347,7 +535,7 @@ Respond ONLY with a JSON object in this format: {"word": "YOUR CHOICE"}"""
                     'allowNumbers': False, 'restarting': False, 'cluesRequestedBy': [], 'clueStack': [],
                     'turnStartedAt': int(datetime.now().timestamp() * 1000), 'updatedAt': int(datetime.now().timestamp() * 1000)
                 }
-                cursor.execute("UPDATE game_sessions SET state_json = ?, status = 'active', updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(new_state), session_id))
+                cursor.execute("UPDATE game_sessions SET state_json = ?, status = 'active', version = version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(new_state), session_id))
                 conn.commit(); conn.close(); return
 
             elif game_type == 'UNO':
@@ -380,7 +568,7 @@ Respond ONLY with a JSON object in this format: {"word": "YOUR CHOICE"}"""
                     'currentTurn': accepted_names[0], 'direction': 1, 'currentColor': top_card['color'],
                     'playersOrder': accepted_names, 'updatedAt': int(datetime.now().timestamp() * 1000)
                 }
-                cursor.execute("UPDATE game_sessions SET state_json = ?, status = 'active', updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(new_state), session_id))
+                cursor.execute("UPDATE game_sessions SET state_json = ?, status = 'active', version = version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(new_state), session_id))
                 conn.commit(); conn.close(); return
 
         # --- ACTIVE GAME LOGIC ---
@@ -400,7 +588,7 @@ Respond ONLY with a JSON object in this format: {"word": "YOUR CHOICE"}"""
                     new_state = state.copy()
                     new_state['clueStack'].append({'type': 'clue', 'text': hint})
                     new_state['updatedAt'] = int(datetime.now().timestamp() * 1000)
-                    cursor.execute("UPDATE game_sessions SET state_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(new_state), session_id))
+                    cursor.execute("UPDATE game_sessions SET state_json = ?, version = version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(new_state), session_id))
                     conn.commit(); conn.close(); return
 
             # 2. AI making move (Guest/Turn)
@@ -412,7 +600,7 @@ Respond ONLY with a JSON object in this format: {"word": "YOUR CHOICE"}"""
                         state['cluesRequestedBy'] = state.get('cluesRequestedBy', []) + [current_turn]
                         state['clueStack'] = state.get('clueStack', []) + [{'type': 'request', 'user': current_turn}]
                         state['updatedAt'] = int(datetime.now().timestamp() * 1000)
-                        cursor.execute("UPDATE game_sessions SET state_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(state), session_id))
+                        cursor.execute("UPDATE game_sessions SET state_json = ?, version = version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(state), session_id))
                         conn.commit()
 
                     word = state.get('word', 'UNKNOWN')
@@ -429,94 +617,56 @@ Respond ONLY with a JSON object in this format: {"word": "YOUR CHOICE"}"""
                         for l in "ETAOINSHRDLU":
                             if l not in [g.upper() for g in guessed]: letter = l; break
                     
-                    new_state = state.copy()
-                    new_state['guessedLetters'].append(letter)
-                    is_correct = letter.upper() in word.upper()
-                    if not is_correct: new_state['wrongGuesses'] += 1
+                    new_state, err = apply_hangman_move(state, 'GUESS', current_turn, {'letter': letter, 'host_username': host})
                     
-                    is_won = all(c == ' ' or c.upper() in [l.upper() for l in new_state['guessedLetters']] for c in word)
-                    is_lost = new_state['wrongGuesses'] >= 6
-                    new_state['updatedAt'] = int(datetime.now().timestamp() * 1000)
-                    new_state['turnStartedAt'] = int(datetime.now().timestamp() * 1000)
-                    
-                    new_status = 'finished' if (is_won or is_lost) else 'active'
-                    if is_won: new_state['winner'] = current_turn
-                    
-                    if new_status == 'active' and not is_correct:
-                        order = state['playersOrder']
-                        idx = (order.index(current_turn) + 1) % len(order)
-                        if len(order) > 1 and order[idx].lower() == host.lower(): idx = (idx + 1) % len(order)
-                        new_state['currentTurn'] = order[idx]
+                    if not err:
+                        new_status = 'finished' if new_state.get('winner') or new_state.get('wrongGuesses', 0) >= 6 else 'active'
+                        cursor.execute("UPDATE game_sessions SET state_json = ?, status = ?, version = version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(new_state), new_status, session_id))
+                        conn.commit()
+                        if new_status == 'active' and new_state.get('currentTurn') in AI_PLAYERS:
+                            threading.Timer(2.0, process_ai_action, [session_id]).start()
+                        elif new_status == 'finished':
+                            threading.Timer(5.0, process_ai_action, [session_id]).start()
+                    else:
+                        print(f"[AI-ERROR] {current_turn} Hangman move failed: {err}")
 
-                    cursor.execute("UPDATE game_sessions SET state_json = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(new_state), new_status, session_id))
-                    conn.commit()
-                    if new_status == 'active' and new_state['currentTurn'] in AI_PLAYERS:
-                        threading.Timer(2.0, process_ai_action, [session_id]).start()
-                    elif new_status == 'finished':
-                        threading.Timer(5.0, process_ai_action, [session_id]).start()
                     conn.close(); return
 
                 elif game_type == 'UNO':
                     print(f"[AI-DEBUG] AI {current_turn} playing UNO...")
-                    order = state['playersOrder']
-                    curr_idx = order.index(current_turn)
                     my_hand = state['hands'].get(current_turn, [])
                     top = state['discard'][-1]
                     cur_color = state.get('currentColor', top['color'])
                     
                     playable = [i for i, c in enumerate(my_hand) if c['color'] == 'black' or c['color'] == cur_color or c['value'] == top['value']]
                     
-                    new_state = state.copy()
                     if playable:
-                        idx = random.choice(playable)
-                        card = new_state['hands'][current_turn].pop(idx)
-                        new_state['discard'].append(card)
-                        new_state['currentColor'] = card['color']
+                        # Pick a card
+                        card_idx = random.choice(playable)
+                        card = my_hand[card_idx]
+                        new_state, err = apply_uno_move(state, 'PLAY_CARD', current_turn, {'card_idx': card_idx})
                         
-                        if card['color'] == 'black':
+                        if not err and card['color'] == 'black':
+                            # AI chooses color
                             counts = {c: 0 for c in ['red', 'blue', 'green', 'yellow']}
-                            for c in new_state['hands'][current_turn]: 
+                            for c in my_hand: 
                                 if c['color'] in counts: counts[c['color']] += 1
-                            new_state['currentColor'] = max(counts, key=counts.get)
-
-                        # Effects
-                        next_idx = (curr_idx + new_state['direction'] + len(order)) % len(order)
-                        skip = False
-                        if card['value'] == 'Reverse':
-                            if len(order) == 2: skip = True
-                            else: new_state['direction'] *= -1
-                        elif card['value'] == 'Skip': skip = True
-                        elif card['value'] == 'Draw2':
-                            t = order[next_idx]
-                            for _ in range(2): 
-                                if new_state['deck']: new_state['hands'][t].append(new_state['deck'].pop())
-                            skip = True
-                        elif card['value'] == 'WildDraw4':
-                            t = order[next_idx]
-                            for _ in range(4):
-                                if new_state['deck']: new_state['hands'][t].append(new_state['deck'].pop())
-                            skip = True
-
-                        if len(new_state['hands'][current_turn]) == 0:
-                            new_state['winner'] = current_turn
-                            cursor.execute("UPDATE game_sessions SET state_json = ?, status = 'finished', updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(new_state), session_id))
-                            conn.commit(); threading.Timer(5.0, process_ai_action, [session_id]).start()
-                            conn.close(); return
-
-                        t_idx = (curr_idx + new_state['direction'] + len(order)) % len(order)
-                        if skip: t_idx = (t_idx + new_state['direction'] + len(order)) % len(order)
-                        new_state['currentTurn'] = order[t_idx]
+                            best_color = max(counts, key=counts.get)
+                            new_state, err = apply_uno_move(new_state, 'SELECT_COLOR', current_turn, {'color': best_color})
                     else:
-                        if not new_state['deck']:
-                            t = new_state['discard'].pop(); random.shuffle(new_state['discard'])
-                            new_state['deck'] = new_state['discard']; new_state['discard'] = [t]
-                        if new_state['deck']: new_state['hands'][current_turn].append(new_state['deck'].pop())
-                        new_state['currentTurn'] = order[(curr_idx + new_state['direction'] + len(order)) % len(order)]
+                        new_state, err = apply_uno_move(state, 'DRAW_CARD', current_turn, {})
 
-                    new_state['updatedAt'] = int(datetime.now().timestamp() * 1000)
-                    cursor.execute("UPDATE game_sessions SET state_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(new_state), session_id))
-                    conn.commit()
-                    if new_state['currentTurn'] in AI_PLAYERS: threading.Timer(2.0, process_ai_action, [session_id]).start()
+                    if not err:
+                        new_status = 'finished' if new_state.get('winner') else 'active'
+                        cursor.execute("UPDATE game_sessions SET state_json = ?, status = ?, version = version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(new_state), new_status, session_id))
+                        conn.commit()
+                        if new_status == 'active' and new_state.get('currentTurn') in AI_PLAYERS:
+                            threading.Timer(2.0, process_ai_action, [session_id]).start()
+                        elif new_status == 'finished':
+                            threading.Timer(5.0, process_ai_action, [session_id]).start()
+                    else:
+                        print(f"[AI-ERROR] {current_turn} move failed: {err}")
+
                     conn.close(); return
 
         # --- FINISHED / RESTART LOGIC ---
@@ -526,7 +676,7 @@ Respond ONLY with a JSON object in this format: {"word": "YOUR CHOICE"}"""
                 print(f"[AI-DEBUG] AI host/winner restarting game {session_id}...")
                 new_state = {'restarting': True, 'updatedAt': int(datetime.now().timestamp() * 1000)}
                 new_host = state.get('winner') if state.get('winner') in AI_PLAYERS else host
-                cursor.execute("UPDATE game_sessions SET state_json = ?, status = 'pending', host_username = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(new_state), new_host, session_id))
+                cursor.execute("UPDATE game_sessions SET state_json = ?, status = 'pending', host_username = ?, version = version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(new_state), new_host, session_id))
                 conn.commit()
                 threading.Timer(2.0, process_ai_action, [session_id]).start()
         
@@ -567,7 +717,7 @@ def game_respond():
         
         if not found: return jsonify({'error': 'User not in invite list'}), 403
         
-        cursor.execute("UPDATE game_sessions SET players_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(players), session_id))
+        cursor.execute("UPDATE game_sessions SET players_json = ?, version = version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(players), session_id))
         conn.commit(); conn.close()
         return jsonify({'success': True}), 200
     except Exception as e: return jsonify({'error': str(e)}), 500
@@ -598,10 +748,71 @@ def get_game_session(session_id):
                 'host': row['host_username'],
                 'players': json.loads(row['players_json']),
                 'state': state,
-                'status': status
+                'status': status,
+                'version': row['version']
             }
         })
     except Exception as e: return jsonify({'error': str(e)}), 500
+
+@app.route('/api/games/action', methods=['POST'])
+def game_action():
+    try:
+        data = request.json
+        print(f"[ACTION-DEBUG] Incoming action: {data}")
+        session_id = data.get('session_id')
+        username = data.get('username')
+        action = data.get('action')
+        params = data.get('params', {})
+        client_version = data.get('version')
+        
+        conn = get_db(); cursor = conn.cursor()
+        cursor.execute("SELECT * FROM game_sessions WHERE id = ?", (session_id,))
+        row = cursor.fetchone()
+        
+        if not row:
+            conn.close(); return jsonify({'error': 'Session not found'}), 404
+            
+        current_version = row['version']
+        if client_version is not None and client_version < current_version:
+            # Client is out of date, but we should return current state to let them catch up
+            state = json.loads(row['state_json']) if row['state_json'] else {}
+            conn.close()
+            return jsonify({'error': 'State out of date', 'current_state': state, 'version': current_version}), 409
+            
+        state = json.loads(row['state_json']) if row['state_json'] else {}
+        game_type = row['game_type']
+        
+        if game_type == 'UNO':
+            new_state, err = apply_uno_move(state, action, username, params)
+        elif game_type == 'Hangman':
+            params['host_username'] = row['host_username']
+            new_state, err = apply_hangman_move(state, action, username, params)
+        else:
+            conn.close(); return jsonify({'error': 'Game type does not support actions yet'}), 400
+            
+        if err:
+            print(f"[ACTION-REJECTED] Session {session_id} | User {username} | Action {action} | Error: {err}")
+            # If it's a duplicate guess, return 200 so browser doesn't log a red error
+            status_code = 200 if err == "Already guessed" else 400
+            conn.close(); return jsonify({'error': err}), status_code
+            
+        new_status = 'finished' if (new_state.get('winner') or new_state.get('status') == 'finished') else 'active'
+        new_version = current_version + 1
+        cursor.execute(
+            "UPDATE game_sessions SET state_json = ?, status = ?, version = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND version = ?",
+            (json.dumps(new_state), new_status, new_version, session_id, current_version)
+        )
+        if cursor.rowcount == 0:
+            conn.close()
+            return jsonify({'error': 'Concurrency conflict, please retry'}), 409
+            
+        conn.commit(); conn.close()
+        trigger_ai_if_needed(session_id)
+        return jsonify({'success': True, 'version': new_version}), 200
+        
+    except Exception as e:
+        import traceback; traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/games/update', methods=['POST'])
 def update_game_state():
@@ -628,6 +839,9 @@ def update_game_state():
             params.append(new_host)
             
         if not updates: return jsonify({'error': 'No updates provided'}), 400
+        
+        # Always increment version on manual state update
+        updates.append("version = version + 1")
         
         params.append(session_id)
         query = f"UPDATE game_sessions SET {', '.join(updates)}, updated_at = CURRENT_TIMESTAMP WHERE id = ?"
