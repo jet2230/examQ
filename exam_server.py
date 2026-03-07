@@ -614,7 +614,7 @@ def process_ai_action(session_id):
         state = json.loads(row['state_json']) if row['state_json'] else {}
         current_turn = state.get('currentTurn')
         
-        print(f\"[AI-DEBUG] Session {session_id} | Type: {game_type} | Status: {status} | Host: {host} | Turn: {current_turn}\")
+        print(f"[AI-DEBUG] Session {session_id} | Type: {game_type} | Status: {status} | Host: {host} | Turn: {current_turn}")
 
         # --- FINISHED GAME RESTART LOGIC ---
         if status == 'finished':
@@ -630,11 +630,11 @@ def process_ai_action(session_id):
                 new_host = host
             
             if should_restart:
-                print(f\"[AI-DEBUG] AI {new_host} automatically restarting finished {game_type} game...\")
+                print(f"[AI-DEBUG] AI {new_host} automatically restarting finished {game_type} game...")
                 new_state = {'restarting': True, 'updatedAt': int(datetime.now().timestamp() * 1000)}
-                cursor.execute(\"UPDATE game_sessions SET status = 'pending', host_username = ?, state_json = ?, version = version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?\", 
+                cursor.execute("UPDATE game_sessions SET status = 'pending', host_username = ?, state_json = ?, version = version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?", 
                                (new_host, json.dumps(new_state), session_id))
-                log_game_action(cursor, session_id, f\"AI {new_host} automatically restarted the game\")
+                log_game_action(cursor, session_id, f"AI {new_host} automatically restarted the game")
                 conn.commit(); conn.close(); return
 
         # --- LOBBY LOGIC (PENDING or STARTING) ---
