@@ -956,6 +956,7 @@ def get_game_session(session_id):
         
         status = row['status']
         host = row['host_username']
+        game_type = row['game_type']
         state = json.loads(row['state_json']) if row['state_json'] else None
         
         # Proactive trigger: if it's an AI's turn OR game is currently starting OR AI needs to restart
