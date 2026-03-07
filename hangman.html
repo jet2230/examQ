@@ -58,7 +58,7 @@
                     </div>
                     <button id="startBtn" class="btn-action" onclick="startGame()">Start Game</button>
                 </div>
-                <div id="guestWait" style="display:none;"><h3>Waiting for Host...</h3><div id="restartNotice" style="display:none; margin-top:15px; padding:15px; background:#fff3cd; border-radius:10px;">🔄 Host is restarting...</div></div>
+                <div id="guestWait" style="display:none;"><h3>Waiting for Host...</h3><div id="restartNotice" style="display:none; margin-top:15px; padding:15px; background:#fff3cd; border-radius:10px;">🔄 Waiting for the host to change the guess word</div></div>
                 <div class="players-panel" id="lobbyPlayers"></div>
                 <div id="hostInviteArea" style="display:none; margin-top:30px; padding:20px; background:#fff; border:1px solid #eee; border-radius:15px;">
                     <h4 style="margin-bottom:15px;">Invite Players</h4><div id="inviteUserList" style="max-height:150px; overflow-y:auto; display:grid; grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); gap:10px; margin-bottom:15px;"></div>
@@ -119,8 +119,64 @@
             const ra = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 4), skin); ra.position.set(2.2, -4.5, 0); ra.rotation.z = -Math.PI/4;
             const ll = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 5), cloth); ll.position.set(-1, -10, 0);
             const rl = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 5), cloth); rl.position.set(1, -10, 0);
-            bodyParts = [head, body, la, ra, ll, rl]; bodyParts.forEach(bp => { bp.visible = false; hangmanGroup.add(bp); });
-            function animate() { requestAnimationFrame(animate); gameTime += 0.03; if (isSwinging) { swingAngle += 0.05; hangmanGroup.rotation.z = Math.sin(swingAngle)*0.15; } else if (bodyParts[1].visible) hangmanGroup.position.y = 21 + Math.sin(gameTime)*0.02; if (isWonState) { camera.position.x = Math.cos(gameTime*0.2)*45; camera.position.z = Math.sin(gameTime*0.2)*45; camera.lookAt(0, 12, 0); } renderer.render(scene, camera); }
+            bodyParts = [head, body, la, ra, ll, rl]; 
+            bodyParts.forEach(bp => { 
+                bp.visible = false; 
+                bp.userData.origRot = bp.rotation.clone();
+                bp.userData.origPos = bp.position.clone();
+                hangmanGroup.add(bp); 
+            });
+
+            let raycaster = new THREE.Raycaster(), mouse = new THREE.Vector2(), draggedPart = null;
+            container.addEventListener('pointerdown', (e) => {
+                const rect = container.getBoundingClientRect();
+                mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+                mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObjects(bodyParts.filter(p => p.visible));
+                if (intersects.length > 0) draggedPart = intersects[0].object;
+            });
+            window.addEventListener('pointermove', (e) => {
+                if (!draggedPart) return;
+                const rect = container.getBoundingClientRect();
+                const newX = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+                const newY = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+                draggedPart.rotation.z += (newX - mouse.x) * 2;
+                draggedPart.rotation.x -= (newY - mouse.y) * 2;
+                draggedPart.position.x += (newX - mouse.x) * 5;
+                mouse.set(newX, newY);
+            });
+            window.addEventListener('pointerup', () => draggedPart = null);
+
+            function animate() { 
+                requestAnimationFrame(animate); 
+                gameTime += 0.03; 
+                
+                // Springy return logic for body parts
+                bodyParts.forEach(p => {
+                    if (p !== draggedPart) {
+                        p.rotation.x += (p.userData.origRot.x - p.rotation.x) * 0.1;
+                        p.rotation.y += (p.userData.origRot.y - p.rotation.y) * 0.1;
+                        p.rotation.z += (p.userData.origRot.z - p.rotation.z) * 0.1;
+                        p.position.x += (p.userData.origPos.x - p.position.x) * 0.1;
+                        p.position.y += (p.userData.origPos.y - p.position.y) * 0.1;
+                    }
+                });
+
+                if (isSwinging) { 
+                    swingAngle += 0.05; 
+                    hangmanGroup.rotation.z = Math.sin(swingAngle)*0.15; 
+                } else if (bodyParts[1].visible) hangmanGroup.position.y = 21 + Math.sin(gameTime)*0.02; 
+                
+                // Slow rotation during play, faster when won
+                const orbitSpeed = isWonState ? 0.2 : 0.05;
+                const radius = 45;
+                camera.position.x = Math.cos(gameTime * orbitSpeed) * radius;
+                camera.position.z = Math.sin(gameTime * orbitSpeed) * radius;
+                camera.lookAt(0, 12, 0);
+                
+                renderer.render(scene, camera); 
+            }
             animate();
         }
         function update3D(w, lost, won) { bodyParts.forEach((bp, i) => bp.visible = i < w); isSwinging = lost; isWonState = won; }
@@ -144,6 +200,9 @@
         // --- END_OF_CHUNK_2 ---
         function updateUI() {
             if (!session) return; const acc = session.players.filter(p => p.status === 'accepted'), isH = session.host?.toLowerCase() === username.toLowerCase();
+            
+            // Show Change Word button for host during active game
+            document.getElementById('restartBtn').style.display = (isH && session.status === 'active') ? 'block' : 'none';
             
             // Hide overlay by default unless finished
             if (session.status !== 'finished') {
@@ -212,7 +271,9 @@
             if (!isH) { const req = s.cluesRequestedBy?.includes(username); document.getElementById('requestClueBtn').disabled = req; document.getElementById('requestClueBtn').style.opacity = req ? '0.5' : '1'; }
             document.getElementById('hostClueBox').style.display = isH ? 'flex' : 'none';
             const kb = document.getElementById('keyboard'); kb.innerHTML = ''; kb.className = 'keyboard' + (!isMyT ? ' not-my-turn' : '');
-            let abc = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'; if (s.allowNumbers) abc += '0123456789';
+            let abc = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'; 
+            // Only show numbers if allowed AND word contains numbers
+            if (s.allowNumbers && /[0-9]/.test(s.word)) abc += '0123456789';
             abc.split('').forEach(l => {
                 const btn = document.createElement('button'); btn.className = 'key'; btn.textContent = l; btn.setAttribute('data-key', l);
                 const g = s.guessedLetters.some(x => x.toUpperCase() === l);
