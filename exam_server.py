@@ -388,8 +388,13 @@ def apply_uno_move(state, action, username, params):
         has_c = 'unoCalls' in new_state and username in new_state['unoCalls']
 
         if is_f:
-            if has_c: new_state['finishers'].append(username)
-            else: new_state['vulnerableWin'] = True; new_state['lastFinisher'] = username
+            if has_c:
+                if username not in new_state['finishers']:
+                    new_state['finishers'].append(username)
+                    if not new_state.get('winner'):
+                        new_state['winner'] = username
+            else:
+                new_state['vulnerableWin'] = True; new_state['lastFinisher'] = username
 
         # If it's a black card and color is provided in same action
         if card['color'] == 'black' and params.get('color'):
@@ -446,9 +451,12 @@ def apply_uno_move(state, action, username, params):
             step = 2
             
         if len(new_state['hands'][username]) == 0 and not new_state.get('vulnerableWin'):
-            if username not in new_state['finishers']: new_state['finishers'].append(username)
+            if username not in new_state['finishers']: 
+                new_state['finishers'].append(username)
+                if not new_state.get('winner'):
+                    new_state['winner'] = username
 
-        remaining = [u for u in order if u not in new_state['finishers'] and u != new_state.get('lastFinisher')]
+        remaining = [u for u in order if u not in new_state['finishers'] and u != new_state.get('vulnerableWin')]
         if len(remaining) <= 1:
             new_state['winner'] = new_state['finishers'][0] if new_state['finishers'] else username
             new_state['loser'] = remaining[0] if remaining else username
@@ -740,12 +748,20 @@ Respond ONLY with a JSON object in this format: {"word": "YOUR CHOICE"}"""
                                 best_color = max(counts, key=counts.get)
                                 new_state, err = apply_uno_move(new_state, 'SELECT_COLOR', current_turn, {'color': best_color})
                                 if not err:
-                                    # Recalculate based on color selection
-                                    final_next = get_next_uno_turn(order, curr_idx, new_state.get('direction', 1), new_state.get('finishers', []))
+                                    # Recalculate msg using the same logic as human players for consistency
+                                    order = new_state.get('playersOrder', [])
+                                    order_lower = [o.lower() for o in order]
+                                    curr_idx = order_lower.index(current_turn.lower())
+                                    finishers = new_state.get('finishers', [])
+                                    next_p = get_next_uno_turn(order, curr_idx, new_state.get('direction', 1), finishers)
+                                    
                                     if val == 'WildDraw4':
-                                        msg += f" and chose {best_color}, next is {actual_next}"
+                                        victim = next_p
+                                        v_idx = order_lower.index(victim.lower())
+                                        actual_next = get_next_uno_turn(order, v_idx, new_state.get('direction', 1), finishers)
+                                        msg = f"{current_turn} used a Wild Draw 4 and chose {best_color}, {victim} draws 4 and is skipped, next is {actual_next}"
                                     else:
-                                        msg += f" and chose {best_color}, next is {final_next}"
+                                        msg = f"{current_turn} played {val} and chose {best_color}, next is {next_p}"
                     else:
                         new_state, err = apply_uno_move(state, 'DRAW_CARD', current_turn, {})
                         if not err:
@@ -941,12 +957,13 @@ def game_action():
                             victim = next_p
                             victim_idx = order_lower.index(victim.lower())
                             actual_next = get_next_uno_turn(order, victim_idx, state.get('direction', 1), finishers)
-                            msg = f"{username} used a Wild Draw 4, {victim} draws 4 and is skipped, next is {actual_next}"
-                            if params.get('color'): msg += f" and chose {params.get('color')}"
+                            color_str = f" and chose {params.get('color')}" if params.get('color') else ""
+                            msg = f"{username} used a Wild Draw 4{color_str}, {victim} draws 4 and is skipped, next is {actual_next}"
+                        elif val == 'Wild':
+                            color_str = f" and chose {params.get('color')}" if params.get('color') else ""
+                            msg = f"{username} played a Wild{color_str}, next is {next_p}"
                         else:
                             msg = f"{username} played {pre_card_details['color']} {val}, next is {next_p}"
-                            if pre_card_details['color'] == 'black' and params.get('color'):
-                                msg = f"{username} played {val} and chose {params.get('color')}, next is {next_p}"
                     else:
                         msg = f"{username} played a card, next is {next_p}"
                 elif action == 'DRAW_CARD':
