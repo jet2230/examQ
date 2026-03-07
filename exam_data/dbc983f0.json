@@ -1,0 +1,199 @@
+{
+  "paper_id": "dbc983f0",
+  "title": "16. 1B-Jan-2020",
+  "subject": "Biology",
+  "qp_img_dir": "/static/exams/dbc983f0/qp/",
+  "er_text": "",
+  "questions": [
+    {
+      "id": 2,
+      "sub_questions": [
+        {
+          "sub_id": "2",
+          "type": "text",
+          "max_marks": 1,
+          "lines_provided": 4,
+          "ms_text": "Attach to / clump / kill / destroy pathogens / make memory cells (1)",
+          "options": [],
+          "final_label": "",
+          "final_unit": "",
+          "qp_pages": [
+            4
+          ]
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "sub_questions": [
+        {
+          "sub_id": "3",
+          "type": "text",
+          "max_marks": 1,
+          "lines_provided": 2,
+          "ms_text": "Complete marking criteria for this question: Only mention specific points or phrases from the text (e.g. 'antigens', 'foreign cells') without repeating them. Ignore arrows pointing upwards.",
+          "options": [],
+          "final_label": "",
+          "final_unit": "",
+          "qp_pages": [
+            5,
+            7
+          ]
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "sub_questions": [
+        {
+          "sub_id": "4",
+          "type": "text",
+          "max_marks": 1,
+          "lines_provided": 2,
+          "ms_text": "Value should be between 0.29 mm and 0.33 mm; answer should be accurate to two decimal places.",
+          "options": [],
+          "final_label": "",
+          "final_unit": "",
+          "qp_pages": [
+            8,
+            10
+          ]
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "sub_questions": [
+        {
+          "sub_id": "5",
+          "type": "text",
+          "max_marks": 1,
+          "lines_provided": 2,
+          "ms_text": "Complete marking criteria for this question: \n\nThe correct input format is based on the mark scheme and requires an explanation that makes reference to four of the following points:\n\t\u2022   killed / destroyed (1)\n\t\u2022   digested / broken down (1)\n\t\u2022   by enzymes / named enzyme (1)\n\t\u2022   products absorbed (by phagocyte) (1)",
+          "options": [],
+          "final_label": "",
+          "final_unit": "",
+          "qp_pages": [
+            12,
+            13
+          ]
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "sub_questions": [
+        {
+          "sub_id": "6",
+          "type": "text",
+          "max_marks": 1,
+          "lines_provided": 2,
+          "ms_text": "Marking details for sub-question 6: The correct input format is based on the marking criteria provided in the mark scheme. For this question, the answer should be written in a standard open-ended format with no specific label or unit required.",
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "final_label": "",
+          "final_unit": "",
+          "qp_pages": [
+            15,
+            17
+          ]
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "sub_questions": [
+        {
+          "sub_id": "7",
+          "type": "text",
+          "max_marks": 1,
+          "lines_provided": 2,
+          "ms_text": "Only A is correct as 85 per hour is the rate of ingestion of bacteria in the control. B is incorrect as the rate is not this per hour. C is incorrect as the rate is not this per hour. D is incorrect as the rate is not this per hour.",
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "final_label": null,
+          "final_unit": null,
+          "qp_pages": [
+            18,
+            20
+          ]
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "sub_questions": [
+        {
+          "sub_id": "8",
+          "type": "text",
+          "max_marks": 1,
+          "lines_provided": 2,
+          "ms_text": "Complete marking criteria for this question is:\nAn explanation that makes reference to four of the following points:...\n... (and so on)",
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "final_label": "",
+          "final_unit": "",
+          "qp_pages": [
+            22,
+            24
+          ]
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "sub_questions": [
+        {
+          "sub_id": "9",
+          "type": "text",
+          "max_marks": 14,
+          "lines_provided": 2,
+          "ms_text": "An explanation that makes reference to three of the following points:\n              \u2022   antibodies (1)\n              \u2022   specific (1)\n              \u2022   antigens / foreign / invading cells/ bacteria / virus\n                  /pathogen / eq (1)\n              \u2022   attach to / clump / kill / destroy pathogens / make memory cells (1)\n               \n              \u2022   killed / destroyed (1)\n              \u2022   digested / broken down (1)\n              \u2022   by enzymes / named enzyme (1)\n              \u2022   products absorbed (by phagocyte) (1)\n               \n              \u2022   only done once / not reliable / not repeated (1)\n               \n              \u2022   need to test with other bacteria / bacteria that are pathogenic / may not work with other\n                  bacteria / species (1)\n              \u2022   not all pathogens are bacteria / some\n                  pathogens are virus /eq (1)\n               \n              \u2022   not done at 37oC / not done at body temp / eq (1) (ignore)",
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "final_label": "",
+          "final_unit": "",
+          "qp_pages": [
+            25,
+            27
+          ]
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "sub_questions": [
+        {
+          "sub_id": "10",
+          "type": "text",
+          "max_marks": 1,
+          "lines_provided": 3,
+          "ms_text": "A description that makes reference to one the following:\n\u2022 (seed / testa) split / eq(1)\n\u2022 radicle / root (is seen) (1)\n\u2022 plumule / shoot (is seen)/ eq (1)\n\u2022 sprouts (1)",
+          "options": [],
+          "final_label": "",
+          "final_unit": "",
+          "qp_pages": [
+            30
+          ]
+        }
+      ]
+    }
+  ],
+  "extract_pages": []
+}

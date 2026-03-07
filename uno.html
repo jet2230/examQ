@@ -153,14 +153,21 @@
         .user-card { padding: 8px 12px; border: 1px solid #eee; border-radius: 8px; cursor: pointer; font-size: 0.8em; background: #fdfdfd; }
         .user-card.selected { background: #e3f2fd; border-color: #1e3c72; border-width: 2px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); box-shadow: 0 0 15px rgba(220,53,69,0.4); }
-            100% { transform: scale(1); }
+        @keyframes dealCard {
+            0% { transform: translate(var(--deal-start-x), var(--deal-start-y)) rotate(0deg); opacity: 0; }
+            20% { opacity: 1; }
+            100% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+        }
+        .animating-card {
+            position: absolute;
+            z-index: 1000;
+            pointer-events: none;
+            animation: dealCard 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
         }
     </style>
 </head>
 <body>
+    <div id="animationContainer" style="position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:9999;"></div>
     <div class="container">
         <div class="header">
             <div><h2 style="color: var(--primary-color);">UNO Multiplayer</h2><div id="gameStatus" style="font-size: 0.8em; color: #666;">Initializing...</div></div>
@@ -252,6 +259,10 @@
             await fetch('/api/games/respond', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ session_id: sessionId, username, action: 'accept' }) });
             await fetchSession(true); pollInterval = setInterval(() => fetchSession(false), 2000);
         }
+        let hasAnimatedDeal = false;
+        let isDealing = false;
+        let lastHandSize = 0;
+
         async function fetchSession(force = false) {
             try {
                 const res = await fetch(`/api/games/session/${sessionId}?t=${Date.now()}`);
@@ -260,25 +271,134 @@
                 if (data.success) {
                     const sc = !session || data.session.status !== session.status, vc = !session || data.session.version > session.version, pc = !session || JSON.stringify(data.session.players) !== JSON.stringify(session.players);
                     if (force || sc || vc || pc) {
-                        session = data.session; updateUI();
+                        const oldStatus = session ? session.status : null;
+                        const oldVersion = session ? session.version : -1;
+                        session = data.session;
+                        
+                        // Detect status change
+                        if (session.status === 'active' && oldStatus === 'pending') {
+                            hasAnimatedDeal = false; // reset for new game
+                            isDealing = false;
+                            lastHandSize = 0;
+                        }
+
+                        // Detect incremental draws before UI update
+                        const currentHand = (session.state?.hands && session.state.hands[username]) || [];
+                        const drawCount = (session.status === 'active' && hasAnimatedDeal && !isDealing && currentHand.length > lastHandSize && oldVersion !== -1 && session.version > oldVersion) ? (currentHand.length - lastHandSize) : 0;
+
+                        updateUI(drawCount);
+
+                        if (drawCount > 0) {
+                            animateDraw(drawCount);
+                        }
+                        
+                        lastHandSize = currentHand.length;
                     }
                 }
             } catch (e) { console.error(e); }
         }
-        function updateUI() {
+
+        function createAnimCard(startRect, endRect, content, colorClass = 'card-black') {
+            const container = document.getElementById('animationContainer');
+            const card = document.createElement('div');
+            card.className = `card ${colorClass} animating-card`;
+            card.style.width = endRect.width + 'px';
+            card.style.height = endRect.height + 'px';
+            card.style.position = 'fixed';
+            card.style.top = endRect.top + 'px';
+            card.style.left = endRect.left + 'px';
+            card.style.margin = '0';
+            
+            const startX = startRect.left - endRect.left;
+            const startY = startRect.top - endRect.top;
+            
+            card.style.setProperty('--deal-start-x', startX + 'px');
+            card.style.setProperty('--deal-start-y', startY + 'px');
+            card.innerHTML = content;
+            container.appendChild(card);
+            return card;
+        }
+
+        async function animateDraw(count) {
+            const handArea = document.getElementById('myHand');
+            const drawPile = document.querySelector('.draw-pile');
+            if (!handArea || !drawPile) return;
+
+            const drawRect = drawPile.getBoundingClientRect();
+            const allCards = handArea.querySelectorAll('.card');
+            const actualCards = Array.from(allCards).slice(-count);
+            if (actualCards.length === 0) return;
+
+            isDealing = true;
+            actualCards.forEach((targetCard, i) => {
+                targetCard.style.opacity = '0';
+                
+                setTimeout(() => {
+                    const targetRect = targetCard.getBoundingClientRect();
+                    const animCard = createAnimCard(drawRect, targetRect, '<div class="card-inner" style="background:var(--uno-black); color:var(--uno-red);">UNO</div>');
+                    
+                    setTimeout(() => {
+                        targetCard.style.opacity = '1';
+                        animCard.remove();
+                        if (i === actualCards.length - 1) {
+                            isDealing = false;
+                            actualCards.forEach(c => c.style.opacity = '1');
+                        }
+                    }, 600);
+                }, i * 150);
+            });
+        }
+
+        async function animateInitialDeal() {
+            const handArea = document.getElementById('myHand');
+            const drawPile = document.querySelector('.draw-pile');
+            if (!handArea || !drawPile) return;
+
+            isDealing = true;
+            const drawRect = drawPile.getBoundingClientRect();
+            const actualCards = handArea.querySelectorAll('.card');
+            if (actualCards.length === 0) { isDealing = false; hasAnimatedDeal = true; return; }
+
+            actualCards.forEach((targetCard, i) => {
+                targetCard.style.opacity = '0';
+                setTimeout(() => {
+                    const targetRect = targetCard.getBoundingClientRect();
+                    const animCard = createAnimCard(drawRect, targetRect, '<div class="card-inner" style="background:var(--uno-black); color:var(--uno-red);">UNO</div>');
+                    
+                    setTimeout(() => {
+                        targetCard.style.opacity = '1';
+                        animCard.remove();
+                        
+                        if (i === actualCards.length - 1) {
+                            setTimeout(() => {
+                                isDealing = false;
+                                hasAnimatedDeal = true;
+                                actualCards.forEach(c => c.style.opacity = '1');
+                                handArea.style.opacity = '1';
+                            }, 100);
+                        }
+                    }, 600);
+                }, i * 150);
+            });
+        }
+
+        function updateUI(drawCount = 0) {
             if (!session) return; 
             
-            // Hide initial loading overlay once we have session data and are either in lobby or game
             const isStarting = session.status === 'active' && (!session.state || session.state.starting);
             if (!isStarting) {
                 document.getElementById('loadingOverlay').style.display = 'none';
+                
+                if (session.status === 'active' && !hasAnimatedDeal) {
+                    hasAnimatedDeal = true;
+                    setTimeout(animateInitialDeal, 100);
+                }
             } else {
                 document.getElementById('loadingOverlay').style.display = 'flex';
             }
 
             const acc = session.players.filter(p => p.status === 'accepted'), isH = session.host?.toLowerCase() === username.toLowerCase();
             
-            // Hide overlay by default unless finished
             if (session.status !== 'finished') {
                 document.getElementById('gameOverlay').style.display = 'none';
             } else {
@@ -290,10 +410,8 @@
             }
 
             if (session.status === 'pending') {
-                confettiShown = false; // Reset ONLY when back in lobby
+                confettiShown = false;
                 document.getElementById('lobbyView').style.display = 'block'; document.getElementById('gameView').style.display = 'none';
-
-                // Accessible to ALL users
                 document.getElementById('hostInviteArea').style.display = 'block';
                 loadInvites();
 
@@ -312,7 +430,6 @@
                 }
                 else { document.getElementById('hostControls').style.display = 'none'; document.getElementById('guestWait').style.display = 'block'; }
 
-
                 document.getElementById('lobbyPlayers').innerHTML = acc.map(p => {
                     const disp = trunc(p.username);
                     const isPHost = p.username && session.host && p.username.toLowerCase() === session.host.toLowerCase();
@@ -321,18 +438,18 @@
                 }).join('');
             } else if (session.status === 'active') {
                 document.getElementById('lobbyView').style.display = 'none'; document.getElementById('gameView').style.display = 'block';
-                renderActive(); document.getElementById('gameOverlay').style.display = 'none';
+                renderActive(drawCount); document.getElementById('gameOverlay').style.display = 'none';
             } else if (session.status === 'finished') {
                 document.getElementById('lobbyView').style.display = 'none'; document.getElementById('gameView').style.display = 'block';
-                renderActive(); showGameOver();
+                renderActive(drawCount); showGameOver();
             }
         }
-        function renderActive() {
+
+        function renderActive(drawCount = 0) {
             const s = session.state; if (!s || !s.discard || !s.hands) return; 
             const turn = s.currentTurn || "";
             const isMyT = turn.toLowerCase() === username.toLowerCase();
 
-            // Turn Order Visualization
             const order = s.playersOrder || [];
             if (!order.length) return;
             const curIdx = order.findIndex(u => u.toLowerCase() === turn.toLowerCase());
@@ -341,19 +458,16 @@
 
             document.getElementById('gameStatus').textContent = (isMyT ? "YOUR TURN!" : `Waiting for ${trunc(turn)}...`) + (nextPlayer ? ` (Next: ${trunc(nextPlayer)})` : "");
 
-            // Show color picker if pending and it's my turn
             const picker = document.getElementById('colorPickerOverlay');
             if (picker) picker.style.display = (isMyT && s.pendingColorSelection) ? 'flex' : 'none';
 
             document.getElementById('myHand').className = 'hand-area' + (!isMyT ? ' not-my-turn' : '');
             document.querySelector('.draw-pile').className = 'draw-pile' + (!isMyT ? ' not-my-turn' : '');
 
-            // UNO Button: Only if I have 1 card and haven't called it yet (any time)
             const myCardCount = s.hands[username]?.length || 0;
             const hasCalled = s.unoCalls && s.unoCalls.includes(username);
             document.getElementById('unoBtn').style.display = (myCardCount === 1 && !hasCalled) ? 'block' : 'none';
 
-            // Dispute Button: Active if a vulnerable win is active
             const disputeBtn = document.getElementById('disputeBtn');
             disputeBtn.disabled = !s.vulnerableWin;
             if (s.vulnerableWin) {
@@ -364,26 +478,37 @@
                 disputeBtn.style.animation = 'none';
             }
 
-            // Action Log
             const logEl = document.getElementById('actionLog');
             if (logEl && session.logs) {
                 logEl.innerHTML = session.logs.map((l, idx) => `<div class="log-entry ${idx === 0 ? 'latest' : 'previous'}">${l.msg}</div>`).join('');
             }
 
-            // Top card
             const top = s.discard[s.discard.length - 1];
             document.getElementById('topCard').innerHTML = createCardHtml(top);
 
-            // Color indicator
             const ind = document.getElementById('colorIndicator');
             ind.textContent = `Current Color: ${s.currentColor}`;
             ind.style.backgroundColor = `var(--uno-${s.currentColor})`;
 
-            // My Hand
             const myHand = s.hands[username] || [];
-            document.getElementById('myHand').innerHTML = myHand.map((card, i) => createCardHtml(card, i, isMyT && canPlay(card))).join('');
+            const handEl = document.getElementById('myHand');
+            
+            if (!isDealing) {
+                handEl.innerHTML = myHand.map((card, i) => {
+                    let html = createCardHtml(card, i, isMyT && canPlay(card));
+                    if (i >= myHand.length - drawCount) {
+                        html = html.replace('class="card', 'style="opacity:0;" class="card');
+                    }
+                    return html;
+                }).join('');
+                
+                if (session.status === 'active' && !hasAnimatedDeal) {
+                    handEl.style.opacity = '0';
+                } else if (session.status === 'active') {
+                    handEl.style.opacity = '1';
+                }
+            }
 
-            // Turn Order UI generation
             let turnHtml = '';
             for(let i=0; i<order.length; i++) {
                 const u = order[i];
@@ -406,9 +531,9 @@
                 <div class="direction-indicator">${directionText}</div>
                 <div class="turn-order-container">${turnHtml}</div>
             `;
-            }
+        }
 
-            function createCardHtml(c, i = -1, p = false) { 
+        function createCardHtml(c, i = -1, p = false) { 
             const l = c.value === 'Draw2' ? '+2' : (c.value === 'WildDraw4' ? '+4' : c.value); 
             let tooltip = '';
             if (p && session && session.state) {
@@ -429,25 +554,56 @@
                 else if (c.value === 'Wild') tooltip = `<div class="card-tooltip">Change the current color to one of your choice</div>`;
             }
             return `<button class="card card-${c.color} ${!p && i !== -1 ? 'disabled' : ''}" ${p ? `onclick="playCard(${i})"` : ''}>${tooltip}<div class="card-inner">${l}</div></button>`; 
-            }
+        }
 
         function canPlay(c) { const s = session.state, top = s.discard[s.discard.length - 1], cur = s.currentColor || top.color; return c.color === 'black' || c.color === cur || c.value === top.value; }
+        
         async function playCard(i) { 
             if (isUpdating) return; 
-            if (session.state.hands[username][i].color === 'black') { 
+            const cardData = session.state.hands[username][i];
+            
+            if (cardData.color === 'black') { 
                 window.pendingPlayIndex = i; 
                 document.getElementById('colorPickerOverlay').style.display = 'flex'; 
                 return; 
             } 
-            await perform('PLAY_CARD', { card_idx: i }); 
+
+            await animateAndPerformPlay(i);
         }
+
+        async function animateAndPerformPlay(i, chosenColor = null) {
+            const handArea = document.getElementById('myHand');
+            const targetPile = document.getElementById('topCard');
+            const cards = handArea.querySelectorAll('.card');
+            const cardEl = cards[i];
+
+            if (cardEl && targetPile) {
+                const startRect = cardEl.getBoundingClientRect();
+                const endRect = targetPile.getBoundingClientRect();
+                const content = cardEl.innerHTML;
+                const colorClass = Array.from(cardEl.classList).find(c => c.startsWith('card-')) || 'card-black';
+                
+                cardEl.style.opacity = '0';
+                const animCard = createAnimCard(startRect, endRect, content, colorClass);
+                
+                setTimeout(() => {
+                    perform('PLAY_CARD', { card_idx: i, color: chosenColor });
+                }, 300);
+
+                setTimeout(() => animCard.remove(), 600);
+            } else {
+                perform('PLAY_CARD', { card_idx: i, color: chosenColor });
+            }
+        }
+
         async function selectColor(c) { 
             document.getElementById('colorPickerOverlay').style.display = 'none'; 
             if (window.pendingPlayIndex !== undefined) { 
                 const idx = window.pendingPlayIndex; delete window.pendingPlayIndex; 
-                await perform('PLAY_CARD', { card_idx: idx, color: c }); 
+                await animateAndPerformPlay(idx, c);
             } 
         }
+
         function closeColorPicker(e) {
             if (e.target.id === 'colorPickerOverlay') {
                 document.getElementById('colorPickerOverlay').style.display = 'none';
@@ -468,7 +624,7 @@
             const loser = session.loser || session.state?.loser || "Unknown";
             const win = winner.toLowerCase() === username.toLowerCase();
             const lose = loser.toLowerCase() === username.toLowerCase();
-            const isH = winner.toLowerCase() === username.toLowerCase(); // winner becomes new host
+            const isH = winner.toLowerCase() === username.toLowerCase();
             const title = document.getElementById('overlayTitle');
             const msg = document.getElementById('overlayMessage');
 
