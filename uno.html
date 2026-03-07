@@ -516,8 +516,10 @@
                 const next = i === nextIdx;
                 const count = s.hands[u]?.length || 0;
                 const disp = trunc(u);
-                const called = s.unoCalls && s.unoCalls.includes(u);
-                const finished = s.finishers && s.finishers.includes(u);
+                
+                // Case-insensitive check for UNO calls
+                const called = s.unoCalls && s.unoCalls.some(name => name.toLowerCase() === u.toLowerCase());
+                const finished = s.finishers && s.finishers.some(name => name.toLowerCase() === u.toLowerCase());
 
                 turnHtml += `<div class="player-chip ${active ? 'active-turn' : (next ? 'next-turn' : '')}" title="${u}">
                     <strong>${disp}</strong> <span>(${count})</span> 

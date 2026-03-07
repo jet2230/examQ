@@ -209,6 +209,18 @@
                 if (container) {
                     let displayUsers = [...data.users];
                     
+                    // Add any user who has sent an unread message but is not in the list
+                    Object.keys(unreadBySender).forEach(senderName => {
+                        if (senderName && unreadBySender[senderName] > 0 && !displayUsers.find(u => u.username === senderName)) {
+                            displayUsers.push({ 
+                                username: senderName, 
+                                is_online: false, 
+                                role: 'user', 
+                                last_online: null 
+                            });
+                        }
+                    });
+
                     // Add "System" if there are unread messages from it
                     if (unreadBySender['System'] && !displayUsers.find(u => u.username === 'System')) {
                         displayUsers.push({ username: 'System', is_online: true, role: 'system', last_online: new Date().toISOString() });

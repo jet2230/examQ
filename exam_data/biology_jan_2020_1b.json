@@ -1,0 +1,92 @@
+{
+  "paper_id": "biology_jan_2020_1b",
+  "title": "Pearson Edexcel International GCSE Biology Paper 1B - January 2020",
+  "subject": "Biology",
+  "qp_img_dir": "/static/exams/biology_jan_2020_1b/qp/",
+  "er_text": "",
+  "questions": [
+    {
+      "id": 1,
+      "sub_questions": [
+        { "sub_id": "1(a)(i)", "type": "mcq", "max_marks": 1, "lines_provided": 1, "ms_text": "B (three)", "options": ["A", "B", "C", "D"], "final_label": "", "final_unit": "", "qp_pages": [2] },
+        { "sub_id": "1(a)(ii)", "type": "mcq", "max_marks": 1, "lines_provided": 1, "ms_text": "C (four)", "options": ["A", "B", "C", "D"], "final_label": "", "final_unit": "", "qp_pages": [2] },
+        { "sub_id": "1(b)(i)", "type": "text", "max_marks": 1, "lines_provided": 1, "ms_text": "Sight / vision / seeing", "options": [], "final_label": "", "final_unit": "", "qp_pages": [3] },
+        { "sub_id": "1(b)(ii)", "type": "text", "max_marks": 2, "lines_provided": 2, "ms_text": "1. Sensory (neurone) / receptor (1)\n2. Relay (neurone) / inter (neurone) / intermediate (neurone) (1)\n3. Motor (neurone) (1)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [3] },
+        { "sub_id": "1(c)", "type": "text", "max_marks": 2, "lines_provided": 2, "ms_text": "An explanation that makes reference to two of the following points:\n1. Adrenaline (1)\n2. (increased) heart rate / breathing rate (1)\n3. (increased) blood flow to muscles / (increased) glucose (1)\n4. dilation of pupils (1)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [3] }
+      ]
+    },
+    {
+      "id": 2,
+      "sub_questions": [
+        { "sub_id": "2(a)", "type": "text", "max_marks": 3, "lines_provided": 3, "ms_text": "1. Nucleus (1)\n2. Mitochondria / mitochondrion (1)\n3. Cell wall (1)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [4] },
+        { "sub_id": "2(b)(i)", "type": "text", "max_marks": 1, "lines_provided": 1, "ms_text": "Hyphae / hypha / mycelium", "options": [], "final_label": "", "final_unit": "", "qp_pages": [5] },
+        { "sub_id": "2(b)(ii)", "type": "text", "max_marks": 2, "lines_provided": 2, "ms_text": "1. (Extracellular) enzymes (1)\n2. Digestion / breakdown (1)\n3. Absorption / eq (1)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [5] },
+        { "sub_id": "2(c)", "type": "text", "max_marks": 2, "lines_provided": 2, "ms_text": "1. Protein (1)\n2. Capsid / coat (1)\n3. DNA / RNA / nucleic acid / genetic material (1)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [5] }
+      ]
+    },
+    {
+      "id": 3,
+      "sub_questions": [
+        { "sub_id": "3(a)", "type": "calculation", "max_marks": 2, "lines_provided": 2, "ms_text": "6 / 6.0 (2)\nAllow 1 mark for 240 / 40 or 2.4 / 0.4 or 30 / 5", "options": [], "final_label": "Rate", "final_unit": "nuts per day", "qp_pages": [6] },
+        { "sub_id": "3(b)", "type": "text", "max_marks": 4, "lines_provided": 4, "ms_text": "An explanation that makes reference to four of the following points:\n1. Grey squirrels increase / red squirrels decrease (1)\n2. Competitive exclusion / competition for food / habitat / nests (1)\n3. Grey squirrels are more competitive / eq (1)\n4. Disease / parapox virus (1)\n5. Grey squirrels are resistant / red squirrels die from it (1)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [7] },
+        { "sub_id": "3(c)", "type": "draw", "max_marks": 2, "lines_provided": 0, "ms_text": "1. Pyramid shape (1)\n2. Labels: nuts, squirrels, (pine) martens (1)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [8] }
+      ]
+    },
+    {
+      "id": 4,
+      "sub_questions": [
+        { "sub_id": "4(a)", "type": "text", "max_marks": 2, "lines_provided": 2, "ms_text": "1. (Amylase) digests / breaks down starch (1)\n2. into maltose / glucose / sugar (1)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [9] },
+        { "sub_id": "4(b)(i)", "type": "calculation", "max_marks": 2, "lines_provided": 2, "ms_text": "0.31 (2)\nAllow 1 mark for 0.62 / 2", "options": [], "final_label": "Average", "final_unit": "mm", "qp_pages": [11] },
+        { "sub_id": "4(b)(ii)", "type": "text", "max_marks": 3, "lines_provided": 3, "ms_text": "1. Seeds at 4°C grow less / seeds at 20°C grow more (1)\n2. Enzymes have less kinetic energy / fewer collisions at 4°C (1)\n3. So less starch is digested / less glucose available for respiration / growth (1)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [11] }
+      ]
+    },
+    {
+      "id": 5,
+      "sub_questions": [
+        { "sub_id": "5(a)", "type": "text", "max_marks": 2, "lines_provided": 2, "ms_text": "1. carbon dioxide (1)\n2. water (1)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [12] },
+        { "sub_id": "5(b)", "type": "text", "max_marks": 2, "lines_provided": 2, "ms_text": "1. Light (intensity) (1)\n2. Carbon dioxide (concentration) (1)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [12] },
+        { "sub_id": "5(c)", "type": "text", "max_marks": 4, "lines_provided": 4, "ms_text": "An explanation that makes reference to four of the following points:\n1. (optimal) temperature for enzymes (1)\n2. kinetic energy / collisions / enzyme-substrate complexes (1)\n3. (not too high) otherwise enzymes denature (1)\n4. increased rate of photosynthesis (1)\n5. increased yield / more glucose / more growth (1)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [13] }
+      ]
+    },
+    {
+      "id": 6,
+      "sub_questions": [
+        { "sub_id": "6(a)", "type": "text", "max_marks": 1, "lines_provided": 1, "ms_text": "Emulsifies (lipids / fats) / increases surface area (for lipase)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [15] },
+        { "sub_id": "6(b)", "type": "text", "max_marks": 2, "lines_provided": 2, "ms_text": "Neutralises (stomach / gastric) acid (1) to provide optimal pH (for enzymes) (1)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [15] },
+        { "sub_id": "6(c)(i)", "type": "calculation", "max_marks": 2, "lines_provided": 2, "ms_text": "23.1 / 23 (2)\nAllow 1 mark for (1.2 / 5.2) * 100 or 0.2307...", "options": [], "final_label": "Percentage decrease", "final_unit": "%", "qp_pages": [17] }
+      ]
+    },
+    {
+      "id": 7,
+      "sub_questions": [
+        { "sub_id": "7(a)", "type": "text", "max_marks": 2, "lines_provided": 2, "ms_text": "1. Long wings (1)\n2. Both parents have long wings but produce short-winged offspring / 3:1 ratio (1)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [18] },
+        { "sub_id": "7(b)", "type": "text", "max_marks": 4, "lines_provided": 4, "ms_text": "1. Parents: Ll and Ll (1)\n2. Gametes: L and l from both (1)\n3. Offspring genotypes: LL, Ll, Ll, ll (1)\n4. Offspring phenotypes: Long, Long, Long, Short (1)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [19] },
+        { "sub_id": "7(c)", "type": "calculation", "max_marks": 2, "lines_provided": 2, "ms_text": "45 (2)\nAllow 1 mark for 0.75 * 60", "options": [], "final_label": "Number", "final_unit": "flies", "qp_pages": [20] }
+      ]
+    },
+    {
+      "id": 8,
+      "sub_questions": [
+        { "sub_id": "8(a)", "type": "text", "max_marks": 3, "lines_provided": 3, "ms_text": "P: waxy cuticle (1)\nQ: upper epidermis (1)\nR: palisade mesophyll (1)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [22] },
+        { "sub_id": "8(b)", "type": "text", "max_marks": 4, "lines_provided": 4, "ms_text": "An explanation that makes reference to four of the following points:\n1. R / palisade are near top to absorb more light (1)\n2. R / palisade contain many chloroplasts (1)\n3. T / spongy have air spaces (1)\n4. for diffusion / gas exchange (1)\n5. U / guard cells / stomata allow CO2 entry (1)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [23] }
+      ]
+    },
+    {
+      "id": 9,
+      "sub_questions": [
+        { "sub_id": "9(a)", "type": "text", "max_marks": 3, "lines_provided": 3, "ms_text": "1. antibodies (1)\n2. specific (to antigens) (1)\n3. clump / attach to / label pathogens (1)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [25] },
+        { "sub_id": "9(b)", "type": "text", "max_marks": 4, "lines_provided": 4, "ms_text": "1. phagocyte (1)\n2. engulfs / ingests (1)\n3. enzymes (1)\n4. digests / breaks down (1)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [26] },
+        { "sub_id": "9(c)", "type": "text", "max_marks": 6, "lines_provided": 6, "ms_text": "A description that makes reference to six of the following points:\n1. Use vitamin C and no vitamin C (1)\n2. Same volume / concentration of bacteria (1)\n3. Same type of bacteria (1)\n4. Repeat the experiment (1)\n5. Measure ingestion rate / count bacteria (1)\n6. Same temperature (1)\n7. Same pH (1)\n8. Same time period (1)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [27] }
+      ]
+    },
+    {
+      "id": 10,
+      "sub_questions": [
+        { "sub_id": "10(a)", "type": "draw", "max_marks": 3, "lines_provided": 0, "ms_text": "1. pollen tube shown growing down style (1)\n2. entering ovary / ovule (1)\n3. through micropyle (1)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [30] },
+        { "sub_id": "10(b)", "type": "text", "max_marks": 2, "lines_provided": 2, "ms_text": "1. Ovule becomes seed (1)\n2. Ovary becomes fruit (1)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [31] },
+        { "sub_id": "10(c)", "type": "text", "max_marks": 4, "lines_provided": 4, "ms_text": "An explanation that makes reference to four of the following points:\n1. water (for enzymes / to soften testa) (1)\n2. oxygen (for respiration) (1)\n3. warmth / optimal temperature (for enzymes) (1)\n4. light (some seeds) (1)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [32] }
+      ]
+    }
+  ],
+  "extract_pages": []
+}

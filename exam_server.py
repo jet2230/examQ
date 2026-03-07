@@ -377,24 +377,30 @@ def apply_uno_move(state, action, username, params):
     # Pre-action cleanup: solidified winners
     if action in ['DRAW_CARD', 'PLAY_CARD', 'SELECT_COLOR'] and new_state.get('vulnerableWin'):
         lf = new_state.get('lastFinisher')
-        if lf and lf not in new_state['finishers']: new_state['finishers'].append(lf)
-        new_state.pop('vulnerableWin', None); new_state.pop('lastFinisher', None)
+        # If the action is by the same person who finished, it's not a new turn yet (e.g. SELECT_COLOR)
+        if lf and lf.lower() != username.lower():
+            if lf not in new_state['finishers']: new_state['finishers'].append(lf)
+            new_state.pop('vulnerableWin', None); new_state.pop('lastFinisher', None)
     
     if action == 'CALL_UNO':
         if 'unoCalls' not in new_state: new_state['unoCalls'] = []
-        if username not in new_state['unoCalls']: new_state['unoCalls'].append(username)
+        # Store name as it appears in playersOrder for consistency
+        orig_name = next((o for o in order if o.lower() == username.lower()), username)
+        if orig_name not in new_state['unoCalls']: new_state['unoCalls'].append(orig_name)
         return new_state, None
 
     if action == 'DISPUTE':
         if not new_state.get('vulnerableWin'): return state, "No vulnerable win"
         target = new_state.get('lastFinisher')
+        print(f"  [UNO] Dispute! {username} caught {target}")
         for _ in range(2):
             if not new_state['deck'] and len(new_state['discard']) > 1:
                 top_c = new_state['discard'].pop(); random.shuffle(new_state['discard'])
                 new_state['deck'] = new_state['discard']; new_state['discard'] = [top_c]
             if new_state['deck']: new_state['hands'][target].append(new_state['deck'].pop())
+        
+        # If they had finished, they are now back in the game
         new_state.pop('vulnerableWin', None); new_state.pop('lastFinisher', None)
-        check_uno_game_over(new_state, order)
         return new_state, None
 
     if action == 'DRAW_CARD':
@@ -743,14 +749,29 @@ Respond ONLY with a JSON object in this format: {"word": "YOUR CHOICE"}"""
                     curr_idx = order_lower.index(current_turn.lower())
                     finishers = state.get('finishers', [])
                     
+                    # 1. AI DISPUTE LOGIC: Check if someone else finished without calling UNO
+                    if state.get('vulnerableWin'):
+                        lf = state.get('lastFinisher')
+                        if lf and lf.lower() != current_turn.lower():
+                            if random.random() < 0.8: # 80% chance AI catches you
+                                print(f"[AI-DEBUG] AI {current_turn} is DISPUTING {lf}'s win!")
+                                state, _ = apply_uno_move(state, 'DISPUTE', current_turn, {})
+                                cursor.execute("UPDATE game_sessions SET state_json = ?, version = version + 1 WHERE id = ?", (json.dumps(state), session_id))
+                                log_game_action(cursor, session_id, f"{current_turn} disputed {lf}'s win! {lf} draws 2 cards.")
+                                conn.commit()
+                                # After dispute, the turn order might have changed or we might still be at the same turn
+                                # Let's re-trigger AI logic to handle the actual turn
+                                threading.Timer(2.0, process_ai_action, [session_id]).start()
+                                conn.close(); return
+
                     my_hand = state['hands'].get(current_turn, [])
                     
-                    # 1. Probabilistic UNO Call: if have 1 card and haven't called yet
+                    # 2. Probabilistic UNO Call: if have 1 card OR 2 cards and about to play one
+                    # (Standard UNO: you must call it when you have 1 card left)
                     if len(my_hand) == 1 and current_turn not in state.get('unoCalls', []):
-                        if random.random() < 0.85: # 85% chance to call it
+                        if random.random() < 0.9: # 90% chance to call it
                             print(f"[AI-DEBUG] AI {current_turn} calling UNO!")
                             state, _ = apply_uno_move(state, 'CALL_UNO', current_turn, {})
-                            # PERSIST THE CALL IMMEDIATELY so it shows up in polling
                             cursor.execute("UPDATE game_sessions SET state_json = ?, version = version + 1 WHERE id = ?", (json.dumps(state), session_id))
                             log_game_action(cursor, session_id, f"{current_turn} called UNO!")
                             conn.commit()
@@ -766,6 +787,15 @@ Respond ONLY with a JSON object in this format: {"word": "YOUR CHOICE"}"""
                         card = my_hand[card_idx]
                         val = card['value']
                         
+                        # If playing this card leaves us with 1, 90% chance to call UNO first
+                        if len(my_hand) == 2 and current_turn not in state.get('unoCalls', []):
+                            if random.random() < 0.9:
+                                print(f"[AI-DEBUG] AI {current_turn} calling UNO (pre-emptive)!")
+                                state, _ = apply_uno_move(state, 'CALL_UNO', current_turn, {})
+                                cursor.execute("UPDATE game_sessions SET state_json = ?, version = version + 1 WHERE id = ?", (json.dumps(state), session_id))
+                                log_game_action(cursor, session_id, f"{current_turn} called UNO!")
+                                conn.commit()
+
                         new_state, err = apply_uno_move(state, 'PLAY_CARD', current_turn, {'card_idx': card_idx})
                         
                         if not err:
@@ -1262,11 +1292,6 @@ def get_messages():
         rows = cursor.fetchall(); conn.close()
         msgs = [dict(r) for r in rows]
         
-        if u == 'the22one98and7only68the78smartest6abdullah' or other == 'the22one98and7only68the78smartest6abdullah':
-            print(f"  [CHAT] DEBUG for long-name user. Found {len(msgs)} messages.", flush=True)
-            if len(msgs) > 0:
-                print(f"  [CHAT] First msg: {msgs[0]['sender']} -> {msgs[0]['recipient']}: {msgs[0]['message'][:20]}...", flush=True)
-        
         return jsonify({'success': True, 'messages': msgs}), 200
     except Exception as e: 
         print(f"  [CHAT] Error: {str(e)}", flush=True)
@@ -1300,7 +1325,8 @@ def health_check():
 def register():
     data = request.json
     u, p = data.get('username'), data.get('password')
-    if not u or not p: return jsonify({'success': False}), 400
+    if not u or not p: return jsonify({'success': False, 'message': 'Missing fields'}), 400
+    if len(u) > 10: return jsonify({'success': False, 'message': 'Username must be 10 characters or less'}), 400
     try:
         conn = get_db(); cursor = conn.cursor()
         cursor.execute("INSERT INTO users (username, password, created_at) VALUES (?, ?, CURRENT_TIMESTAMP)", (u, p))
@@ -1728,27 +1754,39 @@ def run_import_background(job_id, qp_path, ms_path, er_path, metadata):
 
             # Robust ID Identification
             id_prompt = f"""Analyze this IGCSE exam page text. Identify ALL question and sub-question IDs (e.g. 1, 1(a), 1(b)(i), 2(c), 10) that appear.
-Note: In English Language papers, questions might just be a number followed by text (e.g. "1 In lines 7-14..."). 
-Look for bold numbers or labels at the start of paragraphs.
+Look for bold numbers or labels at the start of paragraphs or in margins.
+Questions often start with a number followed by a description.
 
 TEXT:
 {page_content}
 
 Return a JSON list of strings only.
-Example: ["1", "2", "3", "4", "5"]"""
+Example: ["1(a)", "1(b)", "2", "3(a)(i)"]"""
             
             try:
                 resp = requests.post('http://localhost:11434/api/generate', json={'model': 'llama3', 'prompt': id_prompt, 'stream': False, 'format': 'json', 'temperature': 0}, timeout=45)
                 found_data = clean_ai_json(resp.json().get('response', '[]'))
                 
-                # Fallback: Use regex if AI returns nothing
-                if not found_data or not isinstance(found_data, list):
-                    found_data = re.findall(r'Question\s+(\d+)', page_content, re.IGNORECASE)
-                    # Also look for English-style single numbers at start of lines
-                    more = re.findall(r'^\s*(\d+)\s+[A-Z]', page_content, re.MULTILINE)
-                    found_data = list(set(found_data + more))
+                # FALLBACK: Aggressive Regex for Question Markers
+                regex_found = []
+                # Match "1 ", "1(a)", "1 (a)", " (a)", etc at start of lines or after whitespace
+                # Look for numbers at start of lines (standard for main questions)
+                regex_found += re.findall(r'^\s*(\d+)\s+[A-Z]', page_content, re.MULTILINE)
+                # Look for "Question X"
+                regex_found += re.findall(r'Question\s+(\d+)', page_content, re.IGNORECASE)
+                # Look for sub-question patterns like (a), (b), (i), (ii)
+                sub_matches = re.findall(r'\(([a-z]+|[ivx]+)\)', page_content)
                 
-                print(f"  [IMPORT] Page {page_num} found IDs: {found_data}", flush=True)
+                # Combine AI and Regex, ensuring we have main IDs
+                if not found_data or not isinstance(found_data, list):
+                    found_data = list(set(regex_found))
+                else:
+                    found_data = list(set(found_data + regex_found))
+                
+                # Ensure all sub-ids are strings and filtered
+                found_data = [str(x) for x in found_data if x]
+                
+                print(f"  [IMPORT] Page {page_num} IDs: {found_data}", flush=True)
 
                 if not found_data: continue
 
@@ -1757,40 +1795,45 @@ Example: ["1", "2", "3", "4", "5"]"""
                     if not m: continue
                     main_id = int(m.group(1))
 
-                    q_prompt = f"""Extract marking details for sub-question {sub_id} from the mark scheme AND determine the correct input format based on the question paper text.
+                    q_prompt = f"""Extract FULL marking details for sub-question {sub_id} from the mark scheme AND determine the correct input format based on the question paper text.
                     MATCHING QUESTION ID: {sub_id}
                     
                     QUESTION PAPER TEXT (Page Context):
                     {page_content}
 
                     MARK SCHEME TEXT:
-                    {ms_text[:40000]}
+                    {ms_text[:45000]}
 
                     Return ONLY a JSON object:
                     {{
                     "sub_id": "{sub_id}",
                     "type": "text/mcq/calculation/draw/list",
                     "max_marks": 1,
-                    "lines_provided": 2, // Number of physical lines for the answer in the question paper
-                    "ms_text": "Complete marking criteria for this question",
-                    "options": ["A", "B", "C", "D"], // Only for mcq type
-                    "final_label": "Value", // Only for calculation type
-                    "final_unit": "unit" // Only for calculation type
+                    "lines_provided": 2, 
+                    "ms_text": "Detailed marking criteria... MUST NOT BE TRUNCATED. Include all bullet points and marks.",
+                    "options": ["A", "B", "C", "D"], // ONLY if type is mcq
+                    "final_label": "", 
+                    "final_unit": "" 
                     }}
 
                     MANDATORY RULES:
-                    1. TYPE SELECTION (Look at the QUESTION PAPER TEXT):
-                       - Use 'list' ONLY if the question paper explicitly asks for distinct points (e.g., "State two...", "Give three...") or provides numbered/bulleted lines for the answer.
-                       - Use 'calculation' if the question paper asks to "calculate", "work out", or if there's a dotted line followed by a unit (e.g., "....... cm").
-                       - Use 'mcq' if the question paper provides options A, B, C, D.
-                       - Use 'draw' if the question paper asks to "draw", "plot", or "sketch" a diagram, pyramid, or chart (unless it's a line graph, then use 'graph').
-                       - Use 'text' for standard open-ended questions, explanations, or descriptions.
-                    2. ANSWER SPACE: Closely examine the QUESTION PAPER TEXT to see how many dotted lines (..........) are provided for the student to write on. Set 'lines_provided' to this count.
-                    3. For 'calculation' questions, closely examine the QUESTION PAPER TEXT near the dotted answer line to identify the exact label (e.g., 'rate', 'Length', 'Ratio') and unit (e.g., 'cm per second', 'µm').
-                    4. ms_text must be the full marking criteria from the MARK SCHEME TEXT.
+                    1. ms_text MUST be the complete, verbatim marking criteria for THIS SPECIFIC sub-question. Do not use "(rest of...)" or placeholders.
+                    2. TYPE SELECTION:
+                       - 'mcq': if there are options A, B, C, D to choose from.
+                       - 'calculation': if it's a math/numerical problem with a specific answer line.
+                       - 'draw'/'graph': if it requires a visual response.
+                       - 'text': for descriptions/explanations.
+                    3. Determine 'max_marks' by looking for brackets like (1) or (2) in the question paper or mark scheme.
                     """                    
                     q_resp = requests.post('http://localhost:11434/api/generate', json={'model': 'llama3', 'prompt': q_prompt, 'stream': False, 'format': 'json', 'temperature': 0}, timeout=90)
                     sq = clean_ai_json(q_resp.json().get('response', '{}'))
+                    
+                    # Basic validation of extracted content
+                    if sq and sq.get('ms_text') and ('rest of' in sq['ms_text'].lower() or 'placeholder' in sq['ms_text'].lower() or len(sq['ms_text']) < 10):
+                        print(f"    [IMPORT] Retrying sub-id {sub_id} due to low quality ms_text", flush=True)
+                        q_resp = requests.post('http://localhost:11434/api/generate', json={'model': 'llama3', 'prompt': q_prompt + "\nIMPORTANT: PREVIOUS ATTEMPT WAS TRUNCATED. PROVIDE FULL TEXT.", 'stream': False, 'format': 'json', 'temperature': 0}, timeout=90)
+                        sq = clean_ai_json(q_resp.json().get('response', '{}'))
+
                     print(f"    [IMPORT] Sub-ID {sub_id} detail AI raw: {q_resp.json().get('response', '')[:100]}...", flush=True)
                     if not sq or not sq.get('sub_id'): continue
                     

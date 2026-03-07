@@ -1,0 +1,76 @@
+{
+  "paper_id": "biology_jan_2020_2b",
+  "title": "Pearson Edexcel International GCSE Biology Paper 2B - January 2020",
+  "subject": "Biology",
+  "qp_img_dir": "/static/exams/biology_jan_2020_2b/qp/",
+  "er_text": "",
+  "questions": [
+    {
+      "id": 1,
+      "sub_questions": [
+        { "sub_id": "1(a)", "type": "text", "max_marks": 2, "lines_provided": 6, "ms_text": "An explanation that makes reference to two of the following points:\n• (damage to) alveoli (1)\n• reduces / less / small surface area (1)\n• (less) diffusion / (less) oxygen in / (less) carbon dioxide out (1)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [2] },
+        { "sub_id": "1(b)", "type": "text", "max_marks": 2, "lines_provided": 6, "ms_text": "An explanation that makes reference to the following points:\n• bacteria / microorganisms / pathogens are killed / destroyed / removed / eq (1)\n• no / less chance of infection (with TB) / disease / catching Mycobacterium / Mycobacterium bovis / catching TB / eq (1)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [2] },
+        { "sub_id": "1(c)", "type": "text", "max_marks": 2, "lines_provided": 4, "ms_text": "An answer that makes reference to two of the following points:\n• fewer cattle (to be infected) (1)\n• fewer people in Europe (than in rest of world) (1)\n• cattle are screened / if infected are killed (1)\n• cattle are given antibiotics (1)\n• vaccination (of cattle / people / badgers in Europe) (1)\n• more pasteurised milk drunk / milk pasteurised (1)\n• fewer badgers (in Europe to transmit TB) / fewer other animals (in Europe to transmit TB) / badgers culled (in Europe) (1)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [3] },
+        { "sub_id": "1(d)", "type": "calculation", "max_marks": 2, "lines_provided": 2, "ms_text": "• 149 000 – 1290 = 147 710 and 13 400 – 103 = 13 297 (1)\n• 147 710 ÷ 13 297 = 11.1 : 1 (2)\nAllow 11.11, 11.108 etc. Allow 11.1 to 1.", "options": [], "final_label": "case to death ratio", "final_unit": "", "qp_pages": [3] },
+        { "sub_id": "1(e)", "type": "text", "max_marks": 2, "lines_provided": 4, "ms_text": "An answer that makes reference to two of the following points:\n• (find / protect / less competition for) mates / females (1)\n• (protect) food / less competition for food / resources / obtain more food (1)\n• protect young (1)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [4] },
+        { "sub_id": "1(f)", "type": "text", "max_marks": 3, "lines_provided": 9, "ms_text": "An explanation that makes reference to three of the following points:\n• use attenuated / dead / weak / inactive pathogen / bacterium / eq (1)\n• antigens (1)\n• memory cells (1)\n• secondary immune (response) (1)\n• antibody production fast(er) / soon(er) / more / large amounts (1)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [4] },
+        { "sub_id": "1(g)", "type": "text", "max_marks": 3, "lines_provided": 9, "ms_text": "An answer that makes reference to three of the following points:\n• vaccinate badgers in one area and not in another / eq (1)\n• (count) number of cattle with TB / see if there are fewer / more cases of TB (1)\n• same number / control number of badgers in each area (1)\n• same field size / area (1)\n• same number of cattle (1)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [5] }
+      ]
+    },
+    {
+      "id": 2,
+      "sub_questions": [
+        { "sub_id": "2(a)", "type": "text", "max_marks": 2, "lines_provided": 2, "ms_text": "An explanation that makes reference to the following points:\n• draws water up (to leaves) / enables water to be taken up (by roots) (1)\n• cooling (1)\n• (transport) minerals / named mineral (1)\n• prevent wilting / eq (1)\n• (water for) photosynthesis (1)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [6] },
+        { "sub_id": "2(b)(i)", "type": "calculation", "max_marks": 2, "lines_provided": 1, "ms_text": "• reading from graph multiplied = 21. 5 x 10-4 = 0.00215\n• multiply by 250\nAnswer: 0.5375 or 0.538 or 0.537 or 0.54 scores two (2)", "options": [], "final_label": "loss of water", "final_unit": "mg per hour", "qp_pages": [7] },
+        { "sub_id": "2(b)(ii)", "type": "text", "max_marks": 3, "lines_provided": 6, "ms_text": "An explanation that makes reference to the following points:\n• wind moves water (away from plant surface) / blows water away (1)\n• creates / maintains / increases (concentration) gradient (1)\n• (more) (water moves out of plant by) diffusion / evaporation (1)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [7] },
+        { "sub_id": "2(c)", "type": "text", "max_marks": 4, "lines_provided": 6, "ms_text": "An answer that makes reference to the following points:\n• (same) light (intensity) (1) as it affects stomata opening / eq (1)\nOR\n• (same) temperature (1) as it affects diffusion / speed of molecules / (kinetic) energy / evaporation (1)\nOR\n• humidity (1) reduces / affects concentration / diffusion gradient (1)\nOR\n• (same) species / age / size / mass / leaf area of plant (1) as this affects number of stomata / thickness of leaves / eq (1)\nOR\n• same CO2 concentration (1) as it affects stomata opening (1)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [7] }
+      ]
+    },
+    {
+      "id": 3,
+      "sub_questions": [
+        { "sub_id": "3(a)", "type": "mcq", "max_marks": 1, "lines_provided": 1, "ms_text": "A the left ventricle is thick to pump blood to the body", "options": ["A", "B", "C", "D"], "final_label": "", "final_unit": "", "qp_pages": [9] },
+        { "sub_id": "3(b)", "type": "text", "max_marks": 3, "lines_provided": 9, "ms_text": "An explanation that makes reference to three of the following points:\n• ventricle (wall) is thinner / ventricle (wall) has less muscle (1)\n• coronary artery is blocked / coronary artery has less blood passing through / eq (1)\n• less oxygen / glucose (1)\n• less (aerobic) respiration / anaerobic respiration occurs / not enough energy / less ATP (1)\n• cell / muscle / tissue death (1)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [10] },
+        { "sub_id": "3(c)(i)", "type": "text", "max_marks": 2, "lines_provided": 6, "ms_text": "An explanation that makes reference to three of the following points:\n• (stem cells can) differentiate / can become muscle cells / can make any cell types / stem cells are undifferentiated / unspecialised cells / eq (1)\n• stem cells divide / (carry out) mitosis / cell division (1)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [11] },
+        { "sub_id": "3(c)(ii)", "type": "text", "max_marks": 2, "lines_provided": 6, "ms_text": "An explanation that makes reference to two of the following points:\n• cells have same DNA / genes / alleles / eq (1)\n• same antigens / tissue type / blood group (1)\n• less risk of rejection / not rejected (1)\n• no immune response / by immune system / no need to take immunosuppressants (1)\n• no risk of infection / disease spread (1)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [11] }
+      ]
+    },
+    {
+      "id": 4,
+      "sub_questions": [
+        { "sub_id": "4(a)", "type": "text", "max_marks": 3, "lines_provided": 2, "ms_text": "An answer that makes reference to three of the following points:\n• (DNA is) double stranded / helix (1)\n• (DNA has) thymine / T / does not have uracil / U (1)\n• (DNA has) deoxyribose (1)\n• (DNA is) long(er) / large(r) (1)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [12] },
+        { "sub_id": "4(b)", "type": "text", "max_marks": 5, "lines_provided": 10, "ms_text": "A description that makes reference to five the following points:\n• transcription occurs in the nucleus (1)\n• transcription uses DNA to make RNA / eq (1)\n• DNA unzips / one strand is copied / eq (1)\n• transcription makes / produces messenger RNA / mRNA (1)\n• translation takes place at the ribosomes / in cytoplasm (1)\n• translation involves messenger RNA / mRNA and transfer RNA / tRNA (1)\n• anticodons bind to codons / eq (1)\n• translation produces amino acid chain / protein / polypeptide / eq (1)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [13] },
+        { "sub_id": "4(c)", "type": "calculation", "max_marks": 3, "lines_provided": 4, "ms_text": "• (if read in threes) = 4^3 or 4 x 4 x 4 (1)\n• = 64 (1)\n• (64 is) greater / more than 20 (combinations) required / needed / eq (1)\n• (if read in twos) = 4^2 or 4 x 4 = 16 (1)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [14] }
+      ]
+    },
+    {
+      "id": 5,
+      "sub_questions": [
+        { "sub_id": "5(a)(i)", "type": "mcq", "max_marks": 1, "lines_provided": 1, "ms_text": "A collecting duct", "options": ["A", "B", "C", "D"], "final_label": "", "final_unit": "", "qp_pages": [16] },
+        { "sub_id": "5(a)(ii)", "type": "mcq", "max_marks": 1, "lines_provided": 1, "ms_text": "D T (glomerulus)", "options": ["A", "B", "C", "D"], "final_label": "", "final_unit": "", "qp_pages": [16] },
+        { "sub_id": "5(a)(iii)", "type": "mcq", "max_marks": 1, "lines_provided": 1, "ms_text": "A P (collecting duct)", "options": ["A", "B", "C", "D"], "final_label": "", "final_unit": "", "qp_pages": [16] },
+        { "sub_id": "5(a)(iv)", "type": "mcq", "max_marks": 1, "lines_provided": 1, "ms_text": "B R (proximal convoluted tubule)", "options": ["A", "B", "C", "D"], "final_label": "", "final_unit": "", "qp_pages": [16] },
+        { "sub_id": "5(b)(i)", "type": "text", "max_marks": 2, "lines_provided": 2, "ms_text": "An answer that makes reference to the following points:\n• increasing birth mass associated with more nephrons / eq (1)\n• a positive correlation / linear / straight line / (directly) proportional (1)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [17] },
+        { "sub_id": "5(b)(ii)", "type": "text", "max_marks": 4, "lines_provided": 4, "ms_text": "An explanation that makes reference to four of the following points:\n• proteins are big / large / only small molecules (1)\n• normally will not pass out of glomerulus / through basement membrane / into Bowman’s capsule / not present in glomerular filtrate (1)\n• (high blood pressure) forces / squeezes / pushes protein molecules out (1)\n• damage to glomerulus / Bowman’s capsule / basement membrane / nephron (1)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [17] },
+        { "sub_id": "5(b)(iii)", "type": "text", "max_marks": 2, "lines_provided": 2, "ms_text": "• add Biuret (1)\n• (changes to) purple/ lilac / mauve (1)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [17] }
+      ]
+    },
+    {
+      "id": 6,
+      "sub_questions": [
+        { "sub_id": "6(a)", "type": "text", "max_marks": 2, "lines_provided": 3, "ms_text": "An explanation that makes reference to two of the following points:\n• to mix microorganisms / bacteria / fungi with the food substrates / prevent microorganisms / food settling / eq (1)\n• to mix / distribute / eq oxygen (1)\n• to keep temperature uniform / distribute heat (1)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [18] },
+        { "sub_id": "6(b)", "type": "text", "max_marks": 2, "lines_provided": 2, "ms_text": "An explanation that makes reference to the following points:\n• oxygen for respiration / for aerobic respiration (1)\n• (filter) remove bacteria / fungi / microorganisms / prevent competition / contamination (1)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [19] },
+        { "sub_id": "6(c)", "type": "text", "max_marks": 2, "lines_provided": 3, "ms_text": "An explanation that makes reference to two of the following points:\n• monitor temperature (in fermenter) / control / maintain temperature / detect changes in temperature / keep temperature same (1)\n• turn on water supply to cooling jacket if temperature increases / turn off water supply to cooling jacket if temperature drops / eq (1)\n• prevent enzymes being denatured / maintains optimal temperature for enzymes (1)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [19] }
+      ]
+    },
+    {
+      "id": 7,
+      "sub_questions": [
+        { "sub_id": "7(a)", "type": "text", "max_marks": 1, "lines_provided": 1, "ms_text": "• Hh / Hh and Hh / hH / hH and hH / hH and Hh / Hh and hH (all heterozygous parents)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [20] },
+        { "sub_id": "7(b)", "type": "calculation", "max_marks": 1, "lines_provided": 1, "ms_text": "• 2.1 : 1 (Allow 21 : 10, 2 : 1)", "options": [], "final_label": "Ratio", "final_unit": "", "qp_pages": [21] },
+        { "sub_id": "7(c)", "type": "text", "max_marks": 4, "lines_provided": 6, "ms_text": "An answer that makes reference to two of the following points:\n• small sample size / too few crosses / eq (1)\n• random / chance (of fertilisation) (1)\n• of fertilisation / fusion of gametes / eq (1)\n• fewer yellow (than predicted) / more brown (than predicted) (1)\n• no HH offspring survive / ratio is 2 Hh : yellow to 1 hh brown / yellow mice more likely die / brown mice less likely to die (1)\n• mutations (may have occurred) (1)", "options": [], "final_label": "", "final_unit": "", "qp_pages": [21] }
+      ]
+    }
+  ],
+  "extract_pages": []
+}
