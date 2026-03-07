@@ -128,9 +128,26 @@
             font-weight: 600;
         }
 
-        .color-picker { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 50px rgba(0,0,0,0.5); z-index: 1000; }
+        .color-picker-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .color-picker-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.5);
+            text-align: center;
+        }
         .color-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
-        .color-btn { width: 80px; height: 80px; border-radius: 10px; border: 4px solid white; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .color-btn { width: 80px; height: 80px; border-radius: 10px; border: 4px solid white; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: transform 0.1s; }
+        .color-btn:hover { transform: scale(1.1); }
+        .close-btn:hover { background: #5a6268 !important; transform: scale(1.05); }
         #gameOverlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 100; flex-direction: column; justify-content: center; align-items: center; }
         .overlay-title { font-size: 3em; font-weight: 800; margin-bottom: 20px; }
         .user-card { padding: 8px 12px; border: 1px solid #eee; border-radius: 8px; cursor: pointer; font-size: 0.8em; background: #fdfdfd; }
@@ -205,16 +222,20 @@
                 <div style="margin-top:15px; font-weight:700; color:var(--primary-color);">Processing...</div>
             </div>
         </div>
-    </div>
-    <div id="colorPicker" class="color-picker">
-        <h3>Choose a Color</h3>
-        <div class="color-grid">
-            <button class="color-btn" style="background:var(--uno-red);" onclick="selectColor('red')"></button>
-            <button class="color-btn" style="background:var(--uno-blue);" onclick="selectColor('blue')"></button>
-            <button class="color-btn" style="background:var(--uno-green);" onclick="selectColor('green')"></button>
-            <button class="color-btn" style="background:var(--uno-yellow);" onclick="selectColor('yellow')"></button>
+    <!-- Wild Color Picker -->
+    <div id="colorPickerOverlay" class="color-picker-overlay" onclick="closeColorPicker(event)">
+        <div class="color-picker-content" onclick="event.stopPropagation()">
+            <h3>Choose a Color</h3>
+            <div class="color-grid">
+                <button class="color-btn" style="background:var(--uno-red);" onclick="selectColor('red')"></button>
+                <button class="color-btn" style="background:var(--uno-blue);" onclick="selectColor('blue')"></button>
+                <button class="color-btn" style="background:var(--uno-green);" onclick="selectColor('green')"></button>
+                <button class="color-btn" style="background:var(--uno-yellow);" onclick="selectColor('yellow')"></button>
+            </div>
+            <button class="btn-action close-btn" style="margin-top:20px; background:#6c757d;" onclick="document.getElementById('colorPickerOverlay').style.display='none'">Close</button>
         </div>
     </div>
+
     <script>
         const urlParams = new URLSearchParams(window.location.search), sessionId = urlParams.get('id'), username = (localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username') || '').trim();
         let session = null, pollInterval = null, isUpdating = false, overlayTimeout = null;
@@ -239,7 +260,8 @@
             } catch (e) { console.error(e); }
         }
         function updateUI() {
-            if (!session) return; const acc = session.players.filter(p => p.status === 'accepted'), isH = session.host?.toLowerCase() === username.toLowerCase();
+            if (!session) return; 
+            const acc = session.players.filter(p => p.status === 'accepted'), isH = session.host?.toLowerCase() === username.toLowerCase();
             
             // Hide overlay by default unless finished
             if (session.status !== 'finished') {
@@ -282,27 +304,35 @@
                     const removeBtn = (isH && !isPHost) ? `<button onclick="removePlayer('${p.username}')" style="background:none; border:none; color:#dc3545; cursor:pointer; font-weight:bold; margin-left:5px; padding:0 5px;" title="Remove Player">&times;</button>` : '';
                     return `<div class="player-chip"><strong>${disp}</strong>${isPHost ? ' (H)' : ''}${removeBtn}</div>`;
                 }).join('');
-            } else {
+            } else if (session.status === 'active') {
                 document.getElementById('lobbyView').style.display = 'none'; document.getElementById('gameView').style.display = 'block';
-                renderActive(); if (session.status === 'finished') showGameOver(); else document.getElementById('gameOverlay').style.display = 'none';
+                renderActive(); document.getElementById('gameOverlay').style.display = 'none';
+            } else if (session.status === 'finished') {
+                document.getElementById('lobbyView').style.display = 'none'; document.getElementById('gameView').style.display = 'block';
+                renderActive(); showGameOver();
             }
         }
         function renderActive() {
             const s = session.state; if (!s || !s.discard || !s.hands) return; 
-            const isMyT = s.currentTurn?.toLowerCase() === username.toLowerCase();
-            
+            const turn = s.currentTurn || "";
+            const isMyT = turn.toLowerCase() === username.toLowerCase();
             // Turn Order Visualization
-            const order = s.playersOrder;
-            const curIdx = order.findIndex(u => u.toLowerCase() === s.currentTurn.toLowerCase());
-            const nextIdx = (curIdx + s.direction + order.length) % order.length;
+            const order = s.playersOrder || [];
+            if (!order.length) return;
+            const curIdx = order.findIndex(u => u.toLowerCase() === turn.toLowerCase());
+            const nextIdx = (curIdx + (s.direction || 1) + order.length) % order.length;
             const nextPlayer = order[nextIdx];
 
-            document.getElementById('gameStatus').textContent = (isMyT ? "YOUR TURN!" : `Waiting for ${s.currentTurn}...`) + ` (Next: ${nextPlayer})`;
+            document.getElementById('gameStatus').textContent = (isMyT ? "YOUR TURN!" : `Waiting for ${turn}...`) + (nextPlayer ? ` (Next: ${nextPlayer})` : "");
+            
+            // Show color picker if pending and it's my turn
+            const picker = document.getElementById('colorPickerOverlay');
+            if (picker) picker.style.display = (isMyT && s.pendingColorSelection) ? 'flex' : 'none';
 
             document.getElementById('myHand').className = 'hand-area' + (!isMyT ? ' not-my-turn' : '');
             document.querySelector('.draw-pile').className = 'draw-pile' + (!isMyT ? ' not-my-turn' : '');
 
-            // UNO Button: Only if I have 1 card and haven't called it yet
+            // UNO Button: Only if I have 1 card and haven't called it yet (any time)
             const myCardCount = s.hands[username]?.length || 0;
             const hasCalled = s.unoCalls && s.unoCalls.includes(username);
             document.getElementById('unoBtn').style.display = (myCardCount === 1 && !hasCalled) ? 'block' : 'none';
@@ -385,13 +415,27 @@
             return `<button class="card card-${c.color} ${!p && i !== -1 ? 'disabled' : ''}" ${p ? `onclick="playCard(${i})"` : ''}>${tooltip}<div class="card-inner">${l}</div></button>`; 
         }
         function canPlay(c) { const s = session.state, top = s.discard[s.discard.length - 1], cur = s.currentColor || top.color; return c.color === 'black' || c.color === cur || c.value === top.value; }
-        async function playCard(i) { if (isUpdating) return; if (session.state.hands[username][i].color === 'black') { window.pendingPlayIndex = i; document.getElementById('colorPicker').style.display = 'block'; return; } await perform('PLAY_CARD', { card_idx: i }); }
+        async function playCard(i) { 
+            if (isUpdating) return; 
+            if (session.state.hands[username][i].color === 'black') { 
+                window.pendingPlayIndex = i; 
+                document.getElementById('colorPickerOverlay').style.display = 'flex'; 
+                return; 
+            } 
+            await perform('PLAY_CARD', { card_idx: i }); 
+        }
         async function selectColor(c) { 
-            document.getElementById('colorPicker').style.display = 'none'; 
+            document.getElementById('colorPickerOverlay').style.display = 'none'; 
             if (window.pendingPlayIndex !== undefined) { 
                 const idx = window.pendingPlayIndex; delete window.pendingPlayIndex; 
                 await perform('PLAY_CARD', { card_idx: idx, color: c }); 
             } 
+        }
+        function closeColorPicker(e) {
+            if (e.target.id === 'colorPickerOverlay') {
+                document.getElementById('colorPickerOverlay').style.display = 'none';
+                window.pendingPlayIndex = undefined;
+            }
         }
         async function drawCard() { if (isUpdating || session.state.currentTurn.toLowerCase() !== username.toLowerCase()) return; await perform('DRAW_CARD', {}); }
         async function perform(a, p) {
@@ -403,9 +447,11 @@
         async function resetGame() { isUpdating = true; try { await fetch('/api/games/update', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ session_id: sessionId, state: { restarting: true, updatedAt: Date.now() }, status: 'pending', new_host: username }) }); await fetchSession(true); } finally { isUpdating = false; } }
         function showGameOver() {
             const o = document.getElementById('gameOverlay'); o.style.display = 'flex';
-            const win = session.state.winner?.toLowerCase() === username.toLowerCase();
-            const lose = session.state.loser?.toLowerCase() === username.toLowerCase();
-            const isH = session.host?.toLowerCase() === username.toLowerCase();
+            const winner = session.winner || session.state?.winner || "Unknown";
+            const loser = session.loser || session.state?.loser || "Unknown";
+            const win = winner.toLowerCase() === username.toLowerCase();
+            const lose = loser.toLowerCase() === username.toLowerCase();
+            const isH = winner.toLowerCase() === username.toLowerCase(); // winner becomes new host
             const title = document.getElementById('overlayTitle');
             const msg = document.getElementById('overlayMessage');
 
@@ -421,12 +467,10 @@
                 title.textContent = "GAME OVER"; title.style.color = "#1e3c72";
             }
             
-            let messageHtml = `Winner: <strong>${session.state.winner}</strong><br>Loser: <strong>${session.state.loser}</strong>`;
-            const isActualWinner = session.state.winner?.toLowerCase() === username.toLowerCase();
-            
-            if (!win && !lose && !isActualWinner) {
-                messageHtml += `<br><br><span style="color:#1e3c72; font-weight:bold;">Please wait for the new host (${session.state.winner}) to restart the game...</span>`;
-            } else if (isActualWinner) {
+            let messageHtml = `Winner: <strong>${winner}</strong><br>Loser: <strong>${loser}</strong>`;
+            if (!win && !lose && !isH) {
+                messageHtml += `<br><br><span style="color:#1e3c72; font-weight:bold;">Please wait for the new host (${winner}) to restart the game...</span>`;
+            } else if (isH) {
                 messageHtml += `<br><br><span style="color:#28a745; font-weight:bold;">The other players are waiting for you to start a new game!</span><br>`;
                 messageHtml += `<button class="btn-action" style="background:#28a745; margin-top:15px;" onclick="resetGame()">🎮 Play Again</button>`;
             }
