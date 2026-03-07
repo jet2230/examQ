@@ -311,6 +311,14 @@ def log_game_action(cursor, session_id, message):
     # Keep last 50 logs
     cursor.execute("UPDATE game_sessions SET logs_json = ? WHERE id = ?", (json.dumps(logs[:50]), session_id))
 
+def fmt_name(s):
+    if not s: return ""
+    # Capitalize first letter
+    name = s[0].upper() + s[1:] if len(s) > 0 else ""
+    # Truncate
+    truncated = name[:10] + "..." if len(name) > 10 else name
+    return f"<b>{truncated}</b>"
+
 def get_next_uno_turn(order, current_idx, direction, finishers):
     """Calculate next player, skipping those who have finished."""
     idx = current_idx
@@ -766,18 +774,18 @@ Respond ONLY with a JSON object in this format: {"word": "YOUR CHOICE"}"""
                             next_p = get_next_uno_turn(order, curr_idx, new_state.get('direction', 1), finishers)
                             
                             if val == 'Reverse': 
-                                msg = f"{current_turn} used reverse card, reversing turn order to {next_p}"
+                                msg = f"{fmt_name(current_turn)} used reverse card, reversing turn order to {fmt_name(next_p)}"
                             elif val == 'Skip':
                                 skipped_idx = order_lower.index(next_p.lower())
                                 actual_next = get_next_uno_turn(order, skipped_idx, new_state.get('direction', 1), finishers)
-                                msg = f"{current_turn} skipped {next_p}, it is now {actual_next}'s turn"
+                                msg = f"{fmt_name(current_turn)} skipped {fmt_name(next_p)}, it is now {fmt_name(actual_next)}'s turn"
                             elif val == 'Draw2':
                                 actual_next = get_next_uno_turn(order, order_lower.index(next_p.lower()), new_state.get('direction', 1), finishers)
-                                msg = f"{current_turn} used a Draw 2, {next_p} draws 2 and is skipped, next is {actual_next}"
+                                msg = f"{fmt_name(current_turn)} used a Draw 2, {fmt_name(next_p)} draws 2 and is skipped, next is {fmt_name(actual_next)}"
                             elif val == 'WildDraw4':
                                 actual_next = get_next_uno_turn(order, order_lower.index(next_p.lower()), new_state.get('direction', 1), finishers)
-                                msg = f"{current_turn} used a Wild Draw 4, {next_p} draws 4 and is skipped, next is {actual_next}"
-                            else: msg = f"{current_turn} played {card['color']} {val}, next is {next_p}"
+                                msg = f"{fmt_name(current_turn)} used a Wild Draw 4, {fmt_name(next_p)} draws 4 and is skipped, next is {fmt_name(actual_next)}"
+                            else: msg = f"{fmt_name(current_turn)} played {card['color']} {val}, next is {fmt_name(next_p)}"
 
                             if card['color'] == 'black':
                                 # AI chooses color
@@ -790,17 +798,17 @@ Respond ONLY with a JSON object in this format: {"word": "YOUR CHOICE"}"""
                                     final_finishers = new_state.get('finishers', [])
                                     final_next = get_next_uno_turn(order, curr_idx, new_state.get('direction', 1), final_finishers)
                                     if val == 'WildDraw4':
-                                        msg = f"{current_turn} used a Wild Draw 4 and chose {best_color}, {next_p} draws 4 and is skipped, next is {actual_next}"
+                                        msg = f"{fmt_name(current_turn)} used a Wild Draw 4 and chose {best_color}, {fmt_name(next_p)} draws 4 and is skipped, next is {fmt_name(actual_next)}"
                                     else:
-                                        msg = f"{current_turn} played {val} and chose {best_color}, next is {final_next}"
+                                        msg = f"{fmt_name(current_turn)} played {val} and chose {best_color}, next is {fmt_name(final_next)}"
                     else:
                         new_state, err = apply_uno_move(state, 'DRAW_CARD', current_turn, {})
                         if not err:
                             if new_state.get('justDrewPlayable'):
-                                msg = f"{current_turn} drew a playable card and can still move"
+                                msg = f"{fmt_name(current_turn)} drew a playable card and can still move"
                             else:
                                 next_p = get_next_uno_turn(order, curr_idx, new_state.get('direction', 1), new_state.get('finishers', []))
-                                msg = f"{current_turn} drew a card, it is now {next_p}'s turn"
+                                msg = f"{fmt_name(current_turn)} drew a card, it is now {fmt_name(next_p)}'s turn"
 
                     if not err:
                         new_status = new_state.get('status', 'active')
@@ -976,50 +984,50 @@ def game_action():
             except:
                 next_p = new_state.get('currentTurn', 'Unknown')
 
-            msg = f"{username} performed {action}"
+            msg = f"{fmt_name(username)} performed {action}"
             try:
                 if action == 'PLAY_CARD':
                     if pre_card_details:
                         val = pre_card_details['value']
                         if val == 'Reverse':
                             # For Reverse, next_p is already calculated correctly above using get_next_uno_turn
-                            msg = f"{username} used reverse card, reversing turn order to {next_p}"
+                            msg = f"{fmt_name(username)} used reverse card, reversing turn order to {fmt_name(next_p)}"
                         elif val == 'Skip':
                             # Skip means skip one active player and go to the one after
                             skipped_p = next_p
                             skipped_idx = order_lower.index(skipped_p.lower())
                             actual_next = get_next_uno_turn(order, skipped_idx, state.get('direction', 1), finishers)
-                            msg = f"{username} skipped {skipped_p}, it is now {actual_next}'s turn"
+                            msg = f"{fmt_name(username)} skipped {fmt_name(skipped_p)}, it is now {fmt_name(actual_next)}'s turn"
                         elif val == 'Draw2':
                             victim = next_p
                             victim_idx = order_lower.index(victim.lower())
                             actual_next = get_next_uno_turn(order, victim_idx, state.get('direction', 1), finishers)
-                            msg = f"{username} used a Draw 2, {victim} draws 2 and is skipped, next is {actual_next}"
+                            msg = f"{fmt_name(username)} used a Draw 2, {fmt_name(victim)} draws 2 and is skipped, next is {fmt_name(actual_next)}"
                         elif val == 'WildDraw4':
                             victim = next_p
                             victim_idx = order_lower.index(victim.lower())
                             actual_next = get_next_uno_turn(order, victim_idx, state.get('direction', 1), finishers)
                             color_str = f" and chose {params.get('color')}" if params.get('color') else ""
-                            msg = f"{username} used a Wild Draw 4{color_str}, {victim} draws 4 and is skipped, next is {actual_next}"
+                            msg = f"{fmt_name(username)} used a Wild Draw 4{color_str}, {fmt_name(victim)} draws 4 and is skipped, next is {fmt_name(actual_next)}"
                         elif val == 'Wild':
                             color_str = f" and chose {params.get('color')}" if params.get('color') else ""
-                            msg = f"{username} played a Wild{color_str}, next is {next_p}"
+                            msg = f"{fmt_name(username)} played a Wild{color_str}, next is {fmt_name(next_p)}"
                         else:
-                            msg = f"{username} played {pre_card_details['color']} {val}, next is {next_p}"
+                            msg = f"{fmt_name(username)} played {pre_card_details['color']} {val}, next is {fmt_name(next_p)}"
                     else:
-                        msg = f"{username} played a card, next is {next_p}"
+                        msg = f"{fmt_name(username)} played a card, next is {fmt_name(next_p)}"
                 elif action == 'DRAW_CARD':
                     if new_state.get('justDrewPlayable'):
-                        msg = f"{username} drew a playable card and can still move"
+                        msg = f"{fmt_name(username)} drew a playable card and can still move"
                     else:
-                        msg = f"{username} drew a card, it is now {next_p}'s turn"
+                        msg = f"{fmt_name(username)} drew a card, it is now {fmt_name(next_p)}'s turn"
                 elif action == 'SELECT_COLOR':
-                    msg = f"{username} chose {params.get('color')}, next is {next_p}"
+                    msg = f"{fmt_name(username)} chose {params.get('color')}, next is {fmt_name(next_p)}"
                 elif action == 'CALL_UNO':
-                    msg = f"{username} called UNO!"
+                    msg = f"{fmt_name(username)} called UNO!"
                 elif action == 'DISPUTE':
                     target = state.get('lastFinisher', 'someone')
-                    msg = f"{username} disputed the win! {target} draws 2 and is back in!"
+                    msg = f"{fmt_name(username)} disputed the win! {fmt_name(target)} draws 2 and is back in!"
             except Exception as le:
                 print(f"[LOG-ERROR] Failed to construct message: {le}")
         elif game_type == 'Hangman':

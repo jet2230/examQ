@@ -221,6 +221,11 @@
                 <div style="width:50px; height:50px; border:5px solid #f3f3f3; border-top:5px solid var(--primary-color); border-radius:50%; animation: spin 1s linear infinite;"></div>
                 <div style="margin-top:15px; font-weight:700; color:var(--primary-color);">Processing...</div>
             </div>
+            <div id="loadingOverlay" style="display:flex; position:fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:3000; justify-content:center; align-items:center; flex-direction:column;">
+                <div style="width:60px; height:60px; border:6px solid #f3f3f3; border-top:6px solid var(--uno-red); border-radius:50%; animation: spin 1s linear infinite; margin-bottom:20px;"></div>
+                <h2 style="color:var(--primary-color);">Initializing UNO...</h2>
+                <p style="color:#666;">Setting up the deck and dealing cards</p>
+            </div>
         </div>
     <!-- Wild Color Picker -->
     <div id="colorPickerOverlay" class="color-picker-overlay" onclick="closeColorPicker(event)">
@@ -240,6 +245,7 @@
         const urlParams = new URLSearchParams(window.location.search), sessionId = urlParams.get('id'), username = (localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username') || '').trim();
         let session = null, pollInterval = null, isUpdating = false, overlayTimeout = null;
         let confettiShown = false;
+        function trunc(s) { if(!s) return ""; return s.length > 10 ? s.substring(0, 10) + '...' : s; }
 
         async function init() {
             if (!sessionId || !username) { location.href = 'games.html'; return; }
@@ -261,6 +267,15 @@
         }
         function updateUI() {
             if (!session) return; 
+            
+            // Hide initial loading overlay once we have session data and are either in lobby or game
+            const isStarting = session.status === 'active' && (!session.state || session.state.starting);
+            if (!isStarting) {
+                document.getElementById('loadingOverlay').style.display = 'none';
+            } else {
+                document.getElementById('loadingOverlay').style.display = 'flex';
+            }
+
             const acc = session.players.filter(p => p.status === 'accepted'), isH = session.host?.toLowerCase() === username.toLowerCase();
             
             // Hide overlay by default unless finished
@@ -270,14 +285,14 @@
                 const listEl = document.getElementById('overlayPlayerList');
                 if (listEl) {
                     listEl.innerHTML = `<div style="font-weight:bold; margin-bottom:10px; color:var(--primary-color);">Players waiting (${acc.length}):</div>` + 
-                        acc.map(p => `<span>${p.username}${p.username.toLowerCase() === session.host.toLowerCase() ? ' (Host)' : ''}</span>`).join(', ');
+                        acc.map(p => `<span>${trunc(p.username)}${p.username.toLowerCase() === session.host.toLowerCase() ? ' (Host)' : ''}</span>`).join(', ');
                 }
             }
 
             if (session.status === 'pending') {
                 confettiShown = false; // Reset ONLY when back in lobby
                 document.getElementById('lobbyView').style.display = 'block'; document.getElementById('gameView').style.display = 'none';
-                
+
                 // Accessible to ALL users
                 document.getElementById('hostInviteArea').style.display = 'block';
                 loadInvites();
@@ -297,9 +312,9 @@
                 }
                 else { document.getElementById('hostControls').style.display = 'none'; document.getElementById('guestWait').style.display = 'block'; }
 
-                
+
                 document.getElementById('lobbyPlayers').innerHTML = acc.map(p => {
-                    const disp = p.username.length > 10 ? p.username.substring(0,10) + '...' : p.username;
+                    const disp = trunc(p.username);
                     const isPHost = p.username && session.host && p.username.toLowerCase() === session.host.toLowerCase();
                     const removeBtn = (isH && !isPHost) ? `<button onclick="removePlayer('${p.username}')" style="background:none; border:none; color:#dc3545; cursor:pointer; font-weight:bold; margin-left:5px; padding:0 5px;" title="Remove Player">&times;</button>` : '';
                     return `<div class="player-chip"><strong>${disp}</strong>${isPHost ? ' (H)' : ''}${removeBtn}</div>`;
@@ -316,6 +331,7 @@
             const s = session.state; if (!s || !s.discard || !s.hands) return; 
             const turn = s.currentTurn || "";
             const isMyT = turn.toLowerCase() === username.toLowerCase();
+
             // Turn Order Visualization
             const order = s.playersOrder || [];
             if (!order.length) return;
@@ -323,8 +339,8 @@
             const nextIdx = (curIdx + (s.direction || 1) + order.length) % order.length;
             const nextPlayer = order[nextIdx];
 
-            document.getElementById('gameStatus').textContent = (isMyT ? "YOUR TURN!" : `Waiting for ${turn}...`) + (nextPlayer ? ` (Next: ${nextPlayer})` : "");
-            
+            document.getElementById('gameStatus').textContent = (isMyT ? "YOUR TURN!" : `Waiting for ${trunc(turn)}...`) + (nextPlayer ? ` (Next: ${trunc(nextPlayer)})` : "");
+
             // Show color picker if pending and it's my turn
             const picker = document.getElementById('colorPickerOverlay');
             if (picker) picker.style.display = (isMyT && s.pendingColorSelection) ? 'flex' : 'none';
@@ -374,10 +390,10 @@
                 const active = i === curIdx;
                 const next = i === nextIdx;
                 const count = s.hands[u]?.length || 0;
-                const disp = u.length > 10 ? u.substring(0,10) + '...' : u;
+                const disp = trunc(u);
                 const called = s.unoCalls && s.unoCalls.includes(u);
                 const finished = s.finishers && s.finishers.includes(u);
-                
+
                 turnHtml += `<div class="player-chip ${active ? 'active-turn' : (next ? 'next-turn' : '')}" title="${u}">
                     <strong>${disp}</strong> <span>(${count})</span> 
                     ${called && !finished ? '<span style="color:#28a745; font-weight:bold; margin-left:5px;">(Uno)</span>' : ''}
@@ -390,9 +406,9 @@
                 <div class="direction-indicator">${directionText}</div>
                 <div class="turn-order-container">${turnHtml}</div>
             `;
-        }
+            }
 
-        function createCardHtml(c, i = -1, p = false) { 
+            function createCardHtml(c, i = -1, p = false) { 
             const l = c.value === 'Draw2' ? '+2' : (c.value === 'WildDraw4' ? '+4' : c.value); 
             let tooltip = '';
             if (p && session && session.state) {
@@ -401,19 +417,20 @@
                 const curIdx = order.findIndex(u => u.toLowerCase() === username.toLowerCase());
                 const nextIdx = (curIdx + s.direction + order.length) % order.length;
                 const nextP = order[nextIdx];
-                
-                if (c.value === 'Skip') tooltip = `<div class="card-tooltip">Next player ${nextP} will be skipped</div>`;
+
+                if (c.value === 'Skip') tooltip = `<div class="card-tooltip">Next player ${trunc(nextP)} will be skipped</div>`;
                 else if (c.value === 'Reverse') {
                     const prevIdx = (curIdx - s.direction + order.length) % order.length;
                     const prevP = order[prevIdx];
-                    tooltip = `<div class="card-tooltip">Reverse order, next will be ${prevP}</div>`;
+                    tooltip = `<div class="card-tooltip">Reverse order, next will be ${trunc(prevP)}</div>`;
                 }
-                else if (c.value === 'Draw2') tooltip = `<div class="card-tooltip">Next player ${nextP} will draw 2 cards and skip a go</div>`;
-                else if (c.value === 'WildDraw4') tooltip = `<div class="card-tooltip">Next player ${nextP} will draw 4 cards and skip a go</div>`;
+                else if (c.value === 'Draw2') tooltip = `<div class="card-tooltip">Next player ${trunc(nextP)} will draw 2 cards and skip a go</div>`;
+                else if (c.value === 'WildDraw4') tooltip = `<div class="card-tooltip">Next player ${trunc(nextP)} will draw 4 cards and skip a go</div>`;
                 else if (c.value === 'Wild') tooltip = `<div class="card-tooltip">Change the current color to one of your choice</div>`;
             }
             return `<button class="card card-${c.color} ${!p && i !== -1 ? 'disabled' : ''}" ${p ? `onclick="playCard(${i})"` : ''}>${tooltip}<div class="card-inner">${l}</div></button>`; 
-        }
+            }
+
         function canPlay(c) { const s = session.state, top = s.discard[s.discard.length - 1], cur = s.currentColor || top.color; return c.color === 'black' || c.color === cur || c.value === top.value; }
         async function playCard(i) { 
             if (isUpdating) return; 
@@ -443,8 +460,8 @@
             try { await fetch('/api/games/action', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ session_id: sessionId, username, action: a, params: p, version: session.version }) }); await fetchSession(true); }
             finally { clearTimeout(overlayTimeout); document.getElementById('processingOverlay').style.display = 'none'; setTimeout(() => isUpdating = false, 500); }
         }
-        async function startGame() { isUpdating = true; try { await fetch('/api/games/update', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ session_id: sessionId, state: { starting: true, updatedAt: Date.now() }, status: 'active' }) }); await fetchSession(true); } finally { isUpdating = false; } }
-        async function resetGame() { isUpdating = true; try { await fetch('/api/games/update', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ session_id: sessionId, state: { restarting: true, updatedAt: Date.now() }, status: 'pending', new_host: username }) }); await fetchSession(true); } finally { isUpdating = false; } }
+        async function startGame() { document.getElementById('loadingOverlay').style.display = 'flex'; isUpdating = true; try { await fetch('/api/games/update', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ session_id: sessionId, state: { starting: true, updatedAt: Date.now() }, status: 'active' }) }); await fetchSession(true); } finally { isUpdating = false; } }
+        async function resetGame() { document.getElementById('loadingOverlay').style.display = 'flex'; isUpdating = true; try { await fetch('/api/games/update', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ session_id: sessionId, state: { restarting: true, updatedAt: Date.now() }, status: 'pending', new_host: username }) }); await fetchSession(true); } finally { isUpdating = false; } }
         function showGameOver() {
             const o = document.getElementById('gameOverlay'); o.style.display = 'flex';
             const winner = session.winner || session.state?.winner || "Unknown";
@@ -467,9 +484,9 @@
                 title.textContent = "GAME OVER"; title.style.color = "#1e3c72";
             }
             
-            let messageHtml = `Winner: <strong>${winner}</strong><br>Loser: <strong>${loser}</strong>`;
+            let messageHtml = `Winner: <strong>${trunc(winner)}</strong><br>Loser: <strong>${trunc(loser)}</strong>`;
             if (!win && !lose && !isH) {
-                messageHtml += `<br><br><span style="color:#1e3c72; font-weight:bold;">Please wait for the new host (${winner}) to restart the game...</span>`;
+                messageHtml += `<br><br><span style="color:#1e3c72; font-weight:bold;">Please wait for the new host (${trunc(winner)}) to restart the game...</span>`;
             } else if (isH) {
                 messageHtml += `<br><br><span style="color:#28a745; font-weight:bold;">The other players are waiting for you to start a new game!</span><br>`;
                 messageHtml += `<button class="btn-action" style="background:#28a745; margin-top:15px;" onclick="resetGame()">🎮 Play Again</button>`;

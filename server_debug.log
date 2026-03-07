@@ -1,0 +1,380 @@
+ * Serving Flask app 'exam_server'
+ * Debug mode: on
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5001
+ * Running on http://192.168.0.206:5001
+[33mPress CTRL+C to quit[0m
+192.168.0.206 - - [06/Mar/2026 07:10:24] "[36mGET /games.html HTTP/1.1[0m" 304 -
+192.168.0.206 - - [06/Mar/2026 07:10:24] "[36mGET /static/theme_manager.js HTTP/1.1[0m" 304 -
+192.168.0.206 - - [06/Mar/2026 07:10:24] "[36mGET /static/online_status.js HTTP/1.1[0m" 304 -
+192.168.0.206 - - [06/Mar/2026 07:10:25] "[36mGET /games.html HTTP/1.1[0m" 304 -
+192.168.0.206 - - [06/Mar/2026 07:10:25] "[36mGET /static/online_status.js HTTP/1.1[0m" 304 -
+192.168.0.206 - - [06/Mar/2026 07:10:25] "[36mGET /static/theme_manager.js HTTP/1.1[0m" 304 -
+192.168.0.206 - - [06/Mar/2026 07:10:27] "[35m[1mPOST /api/games/create HTTP/1.1[0m" 201 -
+192.168.0.206 - - [06/Mar/2026 07:10:27] "GET /hangman.html?id=68663648 HTTP/1.1" 200 -
+192.168.0.206 - - [06/Mar/2026 07:10:27] "[36mGET /static/theme_manager.js HTTP/1.1[0m" 304 -
+192.168.0.206 - - [06/Mar/2026 07:10:27] "[36mGET /static/online_status.js HTTP/1.1[0m" 304 -
+192.168.0.206 - - [06/Mar/2026 07:10:27] "POST /api/games/respond HTTP/1.1" 200 -
+192.168.0.206 - - [06/Mar/2026 07:10:31] "POST /api/games/respond HTTP/1.1" 200 -
+192.168.0.206 - - [06/Mar/2026 07:10:31] "GET /hangman.html?id=68663648 HTTP/1.1" 200 -
+192.168.0.206 - - [06/Mar/2026 07:10:31] "[36mGET /static/theme_manager.js HTTP/1.1[0m" 304 -
+192.168.0.206 - - [06/Mar/2026 07:10:31] "[36mGET /static/online_status.js HTTP/1.1[0m" 304 -
+192.168.0.206 - - [06/Mar/2026 07:10:31] "POST /api/games/respond HTTP/1.1" 200 -
+192.168.0.206 - - [06/Mar/2026 07:10:39] "POST /api/games/update HTTP/1.1" 200 -
+[AI-DEBUG] Session 68663648 | Type: Hangman | Status: active | Host: admin | Turn: test
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': 'G'}, 'version': 4}
+192.168.0.206 - - [06/Mar/2026 07:10:41] "POST /api/games/action HTTP/1.1" 200 -
+[AI-DEBUG] Session 68663648 | Type: Hangman | Status: active | Host: admin | Turn: test
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': 'U'}, 'version': 5}
+192.168.0.206 - - [06/Mar/2026 07:10:45] "POST /api/games/action HTTP/1.1" 200 -
+[AI-DEBUG] Session 68663648 | Type: Hangman | Status: active | Host: admin | Turn: test
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': 'V'}, 'version': 6}
+192.168.0.206 - - [06/Mar/2026 07:10:50] "POST /api/games/action HTTP/1.1" 200 -
+[AI-DEBUG] Session 68663648 | Type: Hangman | Status: active | Host: admin | Turn: test
+192.168.0.206 - - [06/Mar/2026 07:10:54] "POST /api/games/update HTTP/1.1" 200 -
+[AI-DEBUG] Session 68663648 | Type: Hangman | Status: active | Host: admin | Turn: test
+192.168.0.206 - - [06/Mar/2026 07:10:58] "POST /api/games/update HTTP/1.1" 200 -
+[AI-DEBUG] Session 68663648 | Type: Hangman | Status: active | Host: admin | Turn: test
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': 'C'}, 'version': 9}
+192.168.0.206 - - [06/Mar/2026 07:11:01] "POST /api/games/action HTTP/1.1" 200 -
+[AI-DEBUG] Session 68663648 | Type: Hangman | Status: active | Host: admin | Turn: test
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': 'A'}, 'version': 10}
+192.168.0.206 - - [06/Mar/2026 07:11:44] "POST /api/games/action HTTP/1.1" 200 -
+[AI-DEBUG] Session 68663648 | Type: Hangman | Status: active | Host: admin | Turn: test
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': 'H'}, 'version': 11}
+192.168.0.206 - - [06/Mar/2026 07:11:46] "POST /api/games/action HTTP/1.1" 200 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': 'J'}, 'version': 12}
+192.168.0.206 - - [06/Mar/2026 07:11:48] "POST /api/games/action HTTP/1.1" 200 -
+[AI-DEBUG] Session 68663648 | Type: Hangman | Status: finished | Host: admin | Turn: test
+[AI-DEBUG] Session 68663648 | Type: Hangman | Status: finished | Host: admin | Turn: test
+192.168.0.206 - - [06/Mar/2026 07:11:55] "POST /api/games/update HTTP/1.1" 200 -
+[AI-DEBUG] Session 68663648 | Type: Hangman | Status: pending | Host: admin | Turn: None
+192.168.0.206 - - [06/Mar/2026 07:11:58] "POST /api/games/update HTTP/1.1" 200 -
+[AI-DEBUG] Session 68663648 | Type: Hangman | Status: pending | Host: admin | Turn: None
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:12:46] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:12:47] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:12:48] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:12:49] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:12:50] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:12:51] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:12:52] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:12:53] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:12:54] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:12:55] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:12:56] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:12:57] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:12:58] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:12:59] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:00] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:01] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:02] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:03] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:04] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:05] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:06] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:07] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:08] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:09] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:10] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:11] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:12] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:13] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:14] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:15] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:16] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:17] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:18] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:19] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:20] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:21] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:22] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:23] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:24] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:25] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:26] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:27] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:28] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:29] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:30] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:31] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:32] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:33] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:34] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:35] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:36] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:37] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:38] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:39] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:40] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:41] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:42] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:43] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:44] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:45] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:46] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:47] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:48] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:49] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:50] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:51] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+[ACTION-DEBUG] Incoming action: {'session_id': '68663648', 'username': 'test', 'action': 'GUESS', 'params': {'letter': None}, 'version': 15}
+[ACTION-REJECTED] Session 68663648 | User test | Action GUESS | Error: Not your turn
+192.168.0.206 - - [06/Mar/2026 07:13:52] "[31m[1mPOST /api/games/action HTTP/1.1[0m" 400 -
+192.168.0.206 - - [06/Mar/2026 07:13:52] "[36mGET /games.html HTTP/1.1[0m" 304 -
+192.168.0.206 - - [06/Mar/2026 07:13:52] "[36mGET /static/theme_manager.js HTTP/1.1[0m" 304 -
+192.168.0.206 - - [06/Mar/2026 07:13:52] "[36mGET /static/online_status.js HTTP/1.1[0m" 304 -
+192.168.0.206 - - [06/Mar/2026 07:13:55] "[36mGET /games.html HTTP/1.1[0m" 304 -
+192.168.0.206 - - [06/Mar/2026 07:13:55] "[36mGET /static/theme_manager.js HTTP/1.1[0m" 304 -
+192.168.0.206 - - [06/Mar/2026 07:13:55] "[36mGET /static/online_status.js HTTP/1.1[0m" 304 -
+192.168.0.206 - - [06/Mar/2026 07:14:03] "POST /api/games/delete HTTP/1.1" 200 -
+192.168.0.206 - - [06/Mar/2026 07:20:21] "[36mGET /games.html HTTP/1.1[0m" 304 -
+192.168.0.206 - - [06/Mar/2026 07:20:21] "[36mGET /static/theme_manager.js HTTP/1.1[0m" 304 -
+192.168.0.206 - - [06/Mar/2026 07:20:21] "[36mGET /static/online_status.js HTTP/1.1[0m" 304 -
+192.168.0.206 - - [06/Mar/2026 07:20:22] "[36mGET /games.html HTTP/1.1[0m" 304 -
+192.168.0.206 - - [06/Mar/2026 07:20:23] "[36mGET /static/theme_manager.js HTTP/1.1[0m" 304 -
+192.168.0.206 - - [06/Mar/2026 07:20:23] "[36mGET /static/online_status.js HTTP/1.1[0m" 304 -
+192.168.0.206 - - [06/Mar/2026 07:20:25] "[35m[1mPOST /api/games/create HTTP/1.1[0m" 201 -
+192.168.0.206 - - [06/Mar/2026 07:20:25] "GET /hangman.html?id=672eeb1e HTTP/1.1" 200 -
+192.168.0.206 - - [06/Mar/2026 07:20:25] "[36mGET /static/theme_manager.js HTTP/1.1[0m" 304 -
+192.168.0.206 - - [06/Mar/2026 07:20:25] "[36mGET /static/online_status.js HTTP/1.1[0m" 304 -
+192.168.0.206 - - [06/Mar/2026 07:20:25] "POST /api/games/respond HTTP/1.1" 200 -
+192.168.0.206 - - [06/Mar/2026 07:20:29] "POST /api/games/respond HTTP/1.1" 200 -
+192.168.0.206 - - [06/Mar/2026 07:20:29] "GET /hangman.html?id=672eeb1e HTTP/1.1" 200 -
+192.168.0.206 - - [06/Mar/2026 07:20:29] "[36mGET /static/online_status.js HTTP/1.1[0m" 304 -
+192.168.0.206 - - [06/Mar/2026 07:20:29] "[36mGET /static/theme_manager.js HTTP/1.1[0m" 304 -
+192.168.0.206 - - [06/Mar/2026 07:20:29] "POST /api/games/respond HTTP/1.1" 200 -
+192.168.0.206 - - [06/Mar/2026 07:20:42] "POST /api/games/update HTTP/1.1" 200 -
+[AI-DEBUG] Session 672eeb1e | Type: Hangman | Status: active | Host: admin | Turn: test
+[ACTION-DEBUG] Incoming action: {'session_id': '672eeb1e', 'username': 'test', 'action': 'GUESS', 'params': {'letter': 'O'}, 'version': 4}
+192.168.0.206 - - [06/Mar/2026 07:20:45] "POST /api/games/action HTTP/1.1" 200 -
+[AI-DEBUG] Session 672eeb1e | Type: Hangman | Status: active | Host: admin | Turn: test
+[ACTION-DEBUG] Incoming action: {'session_id': '672eeb1e', 'username': 'test', 'action': 'GUESS', 'params': {'letter': 'U'}, 'version': 5}
+192.168.0.206 - - [06/Mar/2026 07:20:49] "POST /api/games/action HTTP/1.1" 200 -
+[AI-DEBUG] Session 672eeb1e | Type: Hangman | Status: active | Host: admin | Turn: test
+[ACTION-DEBUG] Incoming action: {'session_id': '672eeb1e', 'username': 'test', 'action': 'GUESS', 'params': {'letter': 'V'}, 'version': 6}
+192.168.0.206 - - [06/Mar/2026 07:20:51] "POST /api/games/action HTTP/1.1" 200 -
+[ACTION-DEBUG] Incoming action: {'session_id': '672eeb1e', 'username': 'test', 'action': 'GUESS', 'params': {'letter': 'W'}, 'version': 7}
+192.168.0.206 - - [06/Mar/2026 07:20:53] "POST /api/games/action HTTP/1.1" 200 -
+[AI-DEBUG] Session 672eeb1e | Type: Hangman | Status: active | Host: admin | Turn: test
+[AI-DEBUG] Session 672eeb1e | Type: Hangman | Status: active | Host: admin | Turn: test
+192.168.0.206 - - [06/Mar/2026 07:20:56] "POST /api/games/update HTTP/1.1" 200 -
+[AI-DEBUG] Session 672eeb1e | Type: Hangman | Status: active | Host: admin | Turn: test
+192.168.0.206 - - [06/Mar/2026 07:21:00] "POST /api/games/update HTTP/1.1" 200 -
+[AI-DEBUG] Session 672eeb1e | Type: Hangman | Status: active | Host: admin | Turn: test
+[ACTION-DEBUG] Incoming action: {'session_id': '672eeb1e', 'username': 'test', 'action': 'GUESS', 'params': {'letter': 'G'}, 'version': 10}
+192.168.0.206 - - [06/Mar/2026 07:21:04] "POST /api/games/action HTTP/1.1" 200 -
+[AI-DEBUG] Session 672eeb1e | Type: Hangman | Status: active | Host: admin | Turn: test
+[ACTION-DEBUG] Incoming action: {'session_id': '672eeb1e', 'username': 'test', 'action': 'GUESS', 'params': {'letter': 'Y'}, 'version': 11}
+192.168.0.206 - - [06/Mar/2026 07:21:07] "POST /api/games/action HTTP/1.1" 200 -
+[ACTION-DEBUG] Incoming action: {'session_id': '672eeb1e', 'username': 'test', 'action': 'GUESS', 'params': {'letter': 'X'}, 'version': 12}
+192.168.0.206 - - [06/Mar/2026 07:21:09] "POST /api/games/action HTTP/1.1" 200 -
+[AI-DEBUG] Session 672eeb1e | Type: Hangman | Status: finished | Host: admin | Turn: test
+[AI-DEBUG] Session 672eeb1e | Type: Hangman | Status: finished | Host: admin | Turn: test
+192.168.0.206 - - [06/Mar/2026 07:21:11] "POST /api/games/update HTTP/1.1" 200 -
+[AI-DEBUG] Session 672eeb1e | Type: Hangman | Status: pending | Host: admin | Turn: None
+192.168.0.206 - - [06/Mar/2026 07:21:18] "POST /api/games/update HTTP/1.1" 200 -
+192.168.0.206 - - [06/Mar/2026 07:21:20] "POST /api/games/update HTTP/1.1" 200 -
+[AI-DEBUG] Session 672eeb1e | Type: Hangman | Status: pending | Host: admin | Turn: None
+[AI-DEBUG] Session 672eeb1e | Type: Hangman | Status: pending | Host: admin | Turn: None
+192.168.0.206 - - [06/Mar/2026 07:21:51] "POST /api/games/update HTTP/1.1" 200 -
+[AI-DEBUG] Session 672eeb1e | Type: Hangman | Status: pending | Host: admin | Turn: None
+192.168.0.206 - - [06/Mar/2026 07:21:59] "[36mGET /hangman.html?id=672eeb1e HTTP/1.1[0m" 304 -
+192.168.0.206 - - [06/Mar/2026 07:21:59] "[36mGET /static/theme_manager.js HTTP/1.1[0m" 304 -
+192.168.0.206 - - [06/Mar/2026 07:21:59] "[36mGET /static/online_status.js HTTP/1.1[0m" 304 -
+192.168.0.206 - - [06/Mar/2026 07:21:59] "POST /api/games/respond HTTP/1.1" 200 -
+192.168.0.206 - - [06/Mar/2026 07:22:04] "[36mGET /games.html HTTP/1.1[0m" 304 -
+192.168.0.206 - - [06/Mar/2026 07:22:04] "[36mGET /static/theme_manager.js HTTP/1.1[0m" 304 -
+192.168.0.206 - - [06/Mar/2026 07:22:04] "[36mGET /static/online_status.js HTTP/1.1[0m" 304 -
+192.168.0.206 - - [06/Mar/2026 07:22:06] "[36mGET /hangman.html?id=672eeb1e HTTP/1.1[0m" 304 -
+192.168.0.206 - - [06/Mar/2026 07:22:06] "[36mGET /static/online_status.js HTTP/1.1[0m" 304 -
+192.168.0.206 - - [06/Mar/2026 07:22:06] "[36mGET /static/theme_manager.js HTTP/1.1[0m" 304 -
+192.168.0.206 - - [06/Mar/2026 07:22:07] "POST /api/games/respond HTTP/1.1" 200 -
+192.168.0.206 - - [06/Mar/2026 07:25:23] "GET /hangman.html?id=672eeb1e HTTP/1.1" 200 -
+192.168.0.206 - - [06/Mar/2026 07:25:23] "[36mGET /static/theme_manager.js HTTP/1.1[0m" 304 -
+192.168.0.206 - - [06/Mar/2026 07:25:23] "[36mGET /static/online_status.js HTTP/1.1[0m" 304 -
+192.168.0.206 - - [06/Mar/2026 07:25:23] "POST /api/games/respond HTTP/1.1" 200 -
+192.168.0.206 - - [06/Mar/2026 07:25:27] "GET /hangman.html?id=672eeb1e HTTP/1.1" 200 -
+192.168.0.206 - - [06/Mar/2026 07:25:27] "[36mGET /static/theme_manager.js HTTP/1.1[0m" 304 -
+192.168.0.206 - - [06/Mar/2026 07:25:27] "[36mGET /static/online_status.js HTTP/1.1[0m" 304 -
+192.168.0.206 - - [06/Mar/2026 07:25:27] "POST /api/games/respond HTTP/1.1" 200 -
+192.168.0.206 - - [06/Mar/2026 07:26:28] "GET /hangman.html?id=672eeb1e HTTP/1.1" 200 -
+192.168.0.206 - - [06/Mar/2026 07:26:28] "[36mGET /static/theme_manager.js HTTP/1.1[0m" 304 -
+192.168.0.206 - - [06/Mar/2026 07:26:28] "[36mGET /static/online_status.js HTTP/1.1[0m" 304 -
+192.168.0.206 - - [06/Mar/2026 07:26:28] "POST /api/games/respond HTTP/1.1" 200 -
+192.168.0.206 - - [06/Mar/2026 07:27:03] "GET /hangman.html?id=672eeb1e HTTP/1.1" 200 -
+192.168.0.206 - - [06/Mar/2026 07:27:03] "[36mGET /static/theme_manager.js HTTP/1.1[0m" 304 -
+192.168.0.206 - - [06/Mar/2026 07:27:03] "[36mGET /static/online_status.js HTTP/1.1[0m" 304 -
+192.168.0.206 - - [06/Mar/2026 07:27:03] "POST /api/games/respond HTTP/1.1" 200 -
+192.168.0.206 - - [06/Mar/2026 07:27:16] "GET /hangman.html?id=672eeb1e HTTP/1.1" 200 -
+192.168.0.206 - - [06/Mar/2026 07:27:16] "[36mGET /static/online_status.js HTTP/1.1[0m" 304 -
+192.168.0.206 - - [06/Mar/2026 07:27:16] "[36mGET /static/theme_manager.js HTTP/1.1[0m" 304 -
+192.168.0.206 - - [06/Mar/2026 07:27:16] "POST /api/games/respond HTTP/1.1" 200 -
+192.168.0.206 - - [06/Mar/2026 07:27:26] "POST /api/games/update HTTP/1.1" 200 -
+[AI-DEBUG] Session 672eeb1e | Type: Hangman | Status: active | Host: admin | Turn: test
+[ACTION-DEBUG] Incoming action: {'session_id': '672eeb1e', 'username': 'test', 'action': 'GUESS', 'params': {'letter': 'Q'}, 'version': 25}
+192.168.0.206 - - [06/Mar/2026 07:27:30] "POST /api/games/action HTTP/1.1" 200 -
+[AI-DEBUG] Session 672eeb1e | Type: Hangman | Status: active | Host: admin | Turn: test
+[ACTION-DEBUG] Incoming action: {'session_id': '672eeb1e', 'username': 'test', 'action': 'GUESS', 'params': {'letter': 'U'}, 'version': 26}
+192.168.0.206 - - [06/Mar/2026 07:27:32] "POST /api/games/action HTTP/1.1" 200 -
+[AI-DEBUG] Session 672eeb1e | Type: Hangman | Status: active | Host: admin | Turn: test
+192.168.0.206 - - [06/Mar/2026 07:27:39] "POST /api/games/update HTTP/1.1" 200 -
+[AI-DEBUG] Session 672eeb1e | Type: Hangman | Status: active | Host: admin | Turn: test
+[ACTION-DEBUG] Incoming action: {'session_id': '672eeb1e', 'username': 'test', 'action': 'GUESS', 'params': {'letter': 'E'}, 'version': 28}
+192.168.0.206 - - [06/Mar/2026 07:27:42] "POST /api/games/action HTTP/1.1" 200 -
+[ACTION-DEBUG] Incoming action: {'session_id': '672eeb1e', 'username': 'test', 'action': 'GUESS', 'params': {'letter': 'O'}, 'version': 29}
+192.168.0.206 - - [06/Mar/2026 07:27:44] "POST /api/games/action HTTP/1.1" 200 -
+[AI-DEBUG] Session 672eeb1e | Type: Hangman | Status: active | Host: admin | Turn: test
+[ACTION-DEBUG] Incoming action: {'session_id': '672eeb1e', 'username': 'test', 'action': 'GUESS', 'params': {'letter': 'D'}, 'version': 30}
+192.168.0.206 - - [06/Mar/2026 07:27:45] "POST /api/games/action HTTP/1.1" 200 -
+[ACTION-DEBUG] Incoming action: {'session_id': '672eeb1e', 'username': 'test', 'action': 'GUESS', 'params': {'letter': 'F'}, 'version': 31}
+192.168.0.206 - - [06/Mar/2026 07:27:45] "POST /api/games/action HTTP/1.1" 200 -
+[AI-DEBUG] Session 672eeb1e | Type: Hangman | Status: active | Host: admin | Turn: test
+[ACTION-DEBUG] Incoming action: {'session_id': '672eeb1e', 'username': 'test', 'action': 'GUESS', 'params': {'letter': 'V'}, 'version': 32}
+192.168.0.206 - - [06/Mar/2026 07:27:46] "POST /api/games/action HTTP/1.1" 200 -
+[AI-DEBUG] Session 672eeb1e | Type: Hangman | Status: active | Host: admin | Turn: test
+[AI-DEBUG] Session 672eeb1e | Type: Hangman | Status: active | Host: admin | Turn: test
+[ACTION-DEBUG] Incoming action: {'session_id': '672eeb1e', 'username': 'test', 'action': 'GUESS', 'params': {'letter': 'M'}, 'version': 33}
+192.168.0.206 - - [06/Mar/2026 07:27:48] "POST /api/games/action HTTP/1.1" 200 -
+[AI-DEBUG] Session 672eeb1e | Type: Hangman | Status: finished | Host: admin | Turn: test
+[AI-DEBUG] Session 672eeb1e | Type: Hangman | Status: finished | Host: admin | Turn: test
+192.168.0.206 - - [06/Mar/2026 07:27:50] "POST /api/games/update HTTP/1.1" 200 -
+[AI-DEBUG] Session 672eeb1e | Type: Hangman | Status: pending | Host: admin | Turn: None
+192.168.0.206 - - [06/Mar/2026 07:27:55] "POST /api/games/update HTTP/1.1" 200 -
+192.168.0.206 - - [06/Mar/2026 07:27:56] "POST /api/games/update HTTP/1.1" 200 -
+192.168.0.206 - - [06/Mar/2026 07:27:56] "POST /api/games/update HTTP/1.1" 200 -
+[AI-DEBUG] Session 672eeb1e | Type: Hangman | Status: pending | Host: admin | Turn: None
+[AI-DEBUG] Session 672eeb1e | Type: Hangman | Status: pending | Host: admin | Turn: None
+[AI-DEBUG] Session 672eeb1e | Type: Hangman | Status: pending | Host: admin | Turn: None
