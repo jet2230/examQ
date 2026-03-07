@@ -1,0 +1,97 @@
+{
+  "paper_id": "maths_nov_2024_2h",
+  "title": "Pearson Edexcel International GCSE Maths Paper 2H - November 2024",
+  "subject": "Maths",
+  "qp_img_dir": "/static/exams/maths_nov_2024_2h/qp/",
+  "er_text": "",
+  "questions": [
+    { "id": 1, "sub_questions": [
+      { "sub_id": "1", "type": "calculation", "max_marks": 3, "ms_text": "12/7 * 35/16 = 420/112 = 15/4 = 3 3/4 shown M2 A1", "qp_pages": [3] }
+    ]},
+    { "id": 2, "sub_questions": [
+      { "sub_id": "2(a)", "type": "calculation", "max_marks": 1, "ms_text": "1.45 B1", "qp_pages": [3] },
+      { "sub_id": "2(b)", "type": "calculation", "max_marks": 1, "ms_text": "1.35 B1", "qp_pages": [3] }
+    ]},
+    { "id": 3, "sub_questions": [
+      { "sub_id": "3", "type": "calculation", "max_marks": 3, "ms_text": "M1 cos 43 = x/8.6. M1 calculation. A1 6.3", "qp_pages": [4] }
+    ]},
+    { "id": 4, "sub_questions": [
+      { "sub_id": "4(a)", "type": "calculation", "max_marks": 2, "ms_text": "M1 357/0.17. A1 2100", "qp_pages": [5] },
+      { "sub_id": "4(b)", "type": "calculation", "max_marks": 3, "ms_text": "M1 diff 156. M1 156/650. A1 24", "qp_pages": [5] }
+    ]},
+    { "id": 5, "sub_questions": [
+      { "sub_id": "5", "type": "calculation", "max_marks": 4, "ms_text": "M1 sum known P. M1 P(4)=0.24. M1 0.24*400. A1 96", "qp_pages": [6] }
+    ]},
+    { "id": 6, "sub_questions": [
+      { "sub_id": "6", "type": "calculation", "max_marks": 3, "ms_text": "M1 two faces. M1 summing. A1 408", "qp_pages": [7] }
+    ]},
+    { "id": 7, "sub_questions": [
+      { "sub_id": "7(a)", "type": "draw", "max_marks": 3, "ms_text": "B3 for three lines", "qp_pages": [8] },
+      { "sub_id": "7(b)", "type": "draw", "max_marks": 1, "ms_text": "B1 correct region R", "qp_pages": [8] }
+    ]},
+    { "id": 8, "sub_questions": [
+      { "sub_id": "8", "type": "calculation", "max_marks": 3, "ms_text": "M1 sum 4. M1 total for 5. A1 130", "qp_pages": [9] }
+    ]},
+    { "id": 9, "sub_questions": [
+      { "sub_id": "9", "type": "calculation", "max_marks": 3, "ms_text": "M2 method. A1 22 174", "qp_pages": [9] }
+    ]},
+    { "id": 10, "sub_questions": [
+      { "sub_id": "10", "type": "calculation", "max_marks": 5, "ms_text": "M1 yr 11 eq. A1 x=21. M1 yr 11 Bio. M1 yr 10 Bio. A1 36", "qp_pages": [10] }
+    ]},
+    { "id": 11, "sub_questions": [
+      { "sub_id": "11", "type": "calculation", "max_marks": 5, "ms_text": "M1 pent int angle. M1 hex int angle. M1 reflex angle. M1 angle EAF. A1 24", "qp_pages": [11] }
+    ]},
+    { "id": 12, "sub_questions": [
+      { "sub_id": "12(a)", "type": "calculation", "max_marks": 3, "ms_text": "M1 common denom. M1 equation. A1 1/16", "qp_pages": [12] },
+      { "sub_id": "12(b)", "type": "calculation", "max_marks": 4, "ms_text": "M1 square. M1 mult. M1 isolate c. A1 c=(a+df^2)/(f^2-b)", "qp_pages": [12] }
+    ]},
+    { "id": 13, "sub_questions": [
+      { "sub_id": "13(a)", "type": "calculation", "max_marks": 1, "ms_text": "4, 19, 39, 50, 56, 60 B1", "qp_pages": [13] },
+      { "sub_id": "13(b)", "type": "graph", "max_marks": 2, "ms_text": "B2 correct cf graph", "qp_pages": [14] },
+      { "sub_id": "13(c)", "type": "calculation", "max_marks": 1, "ms_text": "2.3 - 2.7 B1ft", "qp_pages": [14] },
+      { "sub_id": "13(d)", "type": "calculation", "max_marks": 2, "ms_text": "M1 reading at 3.7. A1 12-15 range", "qp_pages": [14] }
+    ]},
+    { "id": 14, "sub_questions": [
+      { "sub_id": "14", "type": "calculation", "max_marks": 3, "ms_text": "M1 one index rule. M1 correct powers. A1 5/4", "qp_pages": [15] }
+    ]},
+    { "id": 15, "sub_questions": [
+      { "sub_id": "15", "type": "calculation", "max_marks": 2, "ms_text": "M1 algebra steps. A1 42/55 shown", "qp_pages": [15] }
+    ]},
+    { "id": 16, "sub_questions": [
+      { "sub_id": "16(a)(i)", "type": "calculation", "max_marks": 1, "ms_text": "108 B1", "qp_pages": [16] },
+      { "sub_id": "16(a)(ii)", "type": "text", "max_marks": 1, "ms_text": "Angle at centre is twice angle at circumference B1", "qp_pages": [16] },
+      { "sub_id": "16(b)", "type": "calculation", "max_marks": 1, "ms_text": "26 B1", "qp_pages": [16] },
+      { "sub_id": "16(c)", "type": "calculation", "max_marks": 2, "ms_text": "M1ft follow through. A1 116", "qp_pages": [16] }
+    ]},
+    { "id": 17, "sub_questions": [
+      { "sub_id": "17", "type": "calculation", "max_marks": 3, "ms_text": "M1 find HF vector. M1 magnitude method. A1 15", "qp_pages": [17] }
+    ]},
+    { "id": 18, "sub_questions": [
+      { "sub_id": "18", "type": "calculation", "max_marks": 4, "ms_text": "M1 grad L1=-2. M1 grad L2=1/2. M1 line eq. A1 y=1/2x+7", "qp_pages": [18] }
+    ]},
+    { "id": 19, "sub_questions": [
+      { "sub_id": "19(i)", "type": "calculation", "max_marks": 1, "ms_text": "(0,4) B1", "qp_pages": [19] },
+      { "sub_id": "19(ii)", "type": "calculation", "max_marks": 1, "ms_text": "(5,12) B1", "qp_pages": [19] },
+      { "sub_id": "19(iii)", "type": "calculation", "max_marks": 1, "ms_text": "(5,-3) B1", "qp_pages": [19] }
+    ]},
+    { "id": 20, "sub_questions": [
+      { "sub_id": "20", "type": "calculation", "max_marks": 3, "ms_text": "M1 factorise/formula. A1 crits. A1 range -2.1 < x < 1", "qp_pages": [20] }
+    ]},
+    { "id": 21, "sub_questions": [
+      { "sub_id": "21", "type": "calculation", "max_marks": 4, "ms_text": "M1 eq for x. A1 x=3. M1 region 7x. A1 21", "qp_pages": [21] }
+    ]},
+    { "id": 22, "sub_questions": [
+      { "sub_id": "22", "type": "calculation", "max_marks": 5, "ms_text": "M1 sub. M1 quad. M1 solve. M1 find pairs. A1 result", "qp_pages": [22] }
+    ]},
+    { "id": 23, "sub_questions": [
+      { "sub_id": "23", "type": "calculation", "max_marks": 4, "ms_text": "M1 factorise 16x^2-36. M1 factorise quadratics. M1 linear expression. A1 -19", "qp_pages": [23] }
+    ]},
+    { "id": 24, "sub_questions": [
+      { "sub_id": "24", "type": "calculation", "max_marks": 6, "ms_text": "M1 angle sum. M1 cosine rule AC. M1 AC found. M1 sine/cosine rule for angle. M1 angle found. A1 280", "qp_pages": [24, 25] }
+    ]},
+    { "id": 25, "sub_questions": [
+      { "sub_id": "25", "type": "calculation", "max_marks": 5, "ms_text": "M1 trig relation. M1 side expression. M1 area ABC. M1 shaded area eq. A1 2.05", "qp_pages": [26, 27] }
+    ]}
+  ],
+  "extract_pages": []
+}

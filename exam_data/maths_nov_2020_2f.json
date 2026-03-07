@@ -1,0 +1,110 @@
+{
+  "paper_id": "maths_nov_2020_2f",
+  "title": "Pearson Edexcel International GCSE Maths Paper 2F - November 2020",
+  "subject": "Maths",
+  "qp_img_dir": "/static/exams/maths_nov_2020_2f/qp/",
+  "er_text": "",
+  "questions": [
+    { "id": 1, "sub_questions": [
+      { "sub_id": "1(a)", "type": "text", "max_marks": 1, "ms_text": "26 or 64", "qp_pages": [3] },
+      { "sub_id": "1(b)", "type": "text", "max_marks": 1, "ms_text": "21 or 39", "qp_pages": [3] },
+      { "sub_id": "1(c)", "type": "text", "max_marks": 1, "ms_text": "17 or 31", "qp_pages": [3] },
+      { "sub_id": "1(d)", "type": "text", "max_marks": 1, "ms_text": "1 or 64", "qp_pages": [3] }
+    ]},
+    { "id": 2, "sub_questions": [
+      { "sub_id": "2(a)", "type": "calculation", "max_marks": 1, "ms_text": "3000", "qp_pages": [3] },
+      { "sub_id": "2(b)", "type": "calculation", "max_marks": 1, "ms_text": "6.5", "qp_pages": [3] }
+    ]},
+    { "id": 3, "sub_questions": [
+      { "sub_id": "3(a)", "type": "calculation", "max_marks": 2, "ms_text": "2, 5, 4, 3, 2", "qp_pages": [4] },
+      { "sub_id": "3(b)", "type": "text", "max_marks": 1, "ms_text": "1", "qp_pages": [4] },
+      { "sub_id": "3(c)", "type": "calculation", "max_marks": 1, "ms_text": "4", "qp_pages": [4] }
+    ]},
+    { "id": 4, "sub_questions": [
+      { "sub_id": "4(a)", "type": "text", "max_marks": 1, "ms_text": "New York", "qp_pages": [5] },
+      { "sub_id": "4(b)", "type": "calculation", "max_marks": 1, "ms_text": "25", "qp_pages": [5] },
+      { "sub_id": "4(c)", "type": "calculation", "max_marks": 1, "ms_text": "-28", "qp_pages": [5] }
+    ]},
+    { "id": 5, "sub_questions": [
+      { "sub_id": "5(a)", "type": "text", "max_marks": 1, "ms_text": "0.003, 0.035, 0.5, 0.539, 0.9", "qp_pages": [6] },
+      { "sub_id": "5(b)", "type": "calculation", "max_marks": 1, "ms_text": "60", "qp_pages": [6] },
+      { "sub_id": "5(c)", "type": "calculation", "max_marks": 1, "ms_text": "8 4/7", "qp_pages": [6] },
+      { "sub_id": "5(d)", "type": "calculation", "max_marks": 2, "ms_text": "M1 for 0.95 - 0.68. A1 0.27", "qp_pages": [6] }
+    ]},
+    { "id": 6, "sub_questions": [
+      { "sub_id": "6(a)", "type": "calculation", "max_marks": 1, "ms_text": "23", "qp_pages": [7] },
+      { "sub_id": "6(b)", "type": "text", "max_marks": 1, "ms_text": "Added 4", "qp_pages": [7] },
+      { "sub_id": "6(c)", "type": "calculation", "max_marks": 2, "ms_text": "M1 for list. A1 71", "qp_pages": [7] },
+      { "sub_id": "6(d)", "type": "text", "max_marks": 1, "ms_text": "No with reason", "qp_pages": [7] }
+    ]},
+    { "id": 7, "sub_questions": [
+      { "sub_id": "7(a)", "type": "text", "max_marks": 1, "ms_text": "(3, -1)", "qp_pages": [8] },
+      { "sub_id": "7(b)", "type": "draw", "max_marks": 1, "ms_text": "at (-2, -4)", "qp_pages": [8] },
+      { "sub_id": "7(c)", "type": "calculation", "max_marks": 2, "ms_text": "(-1, 2)", "qp_pages": [8] },
+      { "sub_id": "7(d)", "type": "draw", "max_marks": 1, "ms_text": "x = 4", "qp_pages": [8] }
+    ]},
+    { "id": 8, "sub_questions": [
+      { "sub_id": "8", "type": "calculation", "max_marks": 3, "ms_text": "13 50", "qp_pages": [9] }
+    ]},
+    { "id": 9, "sub_questions": [
+      { "sub_id": "9(a)(i)", "type": "calculation", "max_marks": 1, "ms_text": "33 (32-34)", "qp_pages": [10] },
+      { "sub_id": "9(a)(ii)", "type": "calculation", "max_marks": 1, "ms_text": "15 (15-16)", "qp_pages": [10] },
+      { "sub_id": "9(b)", "type": "calculation", "max_marks": 2, "ms_text": "M1 conversion method. A1 2850 feet supported", "qp_pages": [10] }
+    ]},
+    { "id": 10, "sub_questions": [
+      { "sub_id": "10", "type": "calculation", "max_marks": 4, "ms_text": "Angles: 120. Freqs: 12, 66. A1 fully correct", "qp_pages": [11] }
+    ]},
+    { "id": 11, "sub_questions": [
+      { "sub_id": "11", "type": "calculation", "max_marks": 2, "ms_text": "M1 0.23 * 450. A1 103.5", "qp_pages": [11] }
+    ]},
+    { "id": 12, "sub_questions": [
+      { "sub_id": "12(a)", "type": "list", "max_marks": 1, "ms_text": "1, 3, 9", "qp_pages": [12] },
+      { "sub_id": "12(b)", "type": "calculation", "max_marks": 2, "ms_text": "M1 multiples or factors. A1 210", "qp_pages": [12] }
+    ]},
+    { "id": 13, "sub_questions": [
+      { "sub_id": "13", "type": "calculation", "max_marks": 5, "ms_text": "M2 area 276. M1 div 20 (=13.8). M1 cost calculation. A1 146", "qp_pages": [13] }
+    ]},
+    { "id": 14, "sub_questions": [
+      { "sub_id": "14(a)", "type": "calculation", "max_marks": 1, "ms_text": "5(5f - 2)", "qp_pages": [14] },
+      { "sub_id": "14(b)", "type": "calculation", "max_marks": 2, "ms_text": "M1 c+h=5y. A1 y=(c+h)/5", "qp_pages": [14] },
+      { "sub_id": "14(c)", "type": "calculation", "max_marks": 2, "ms_text": "M1 4x > -5. A1 x > -1.25", "qp_pages": [14] }
+    ]},
+    { "id": 15, "sub_questions": [
+      { "sub_id": "15", "type": "calculation", "max_marks": 2, "ms_text": "M1 2/5 * 20/11. A1 8/11", "qp_pages": [14] }
+    ]},
+    { "id": 16, "sub_questions": [
+      { "sub_id": "16(a)", "type": "text", "max_marks": 1, "ms_text": "50 < L <= 60", "qp_pages": [15] },
+      { "sub_id": "16(b)", "type": "calculation", "max_marks": 4, "ms_text": "M2 sum products 5760. M1 div 120. A1 48", "qp_pages": [15] }
+    ]},
+    { "id": 17, "sub_questions": [
+      { "sub_id": "17(a)", "type": "calculation", "max_marks": 2, "ms_text": "350", "qp_pages": [16] },
+      { "sub_id": "17(b)", "type": "calculation", "max_marks": 2, "ms_text": "42", "qp_pages": [16] },
+      { "sub_id": "17(c)", "type": "calculation", "max_marks": 2, "ms_text": "36", "qp_pages": [17] }
+    ]},
+    { "id": 18, "sub_questions": [
+      { "sub_id": "18", "type": "calculation", "max_marks": 5, "ms_text": "M1 ADC=122. M1 (180-122)/2. A1 29. B2 reasons", "qp_pages": [18] }
+    ]},
+    { "id": 19, "sub_questions": [
+      { "sub_id": "19", "type": "calculation", "max_marks": 4, "ms_text": "M1 unit 19. M1 Paulo 57. M1 57-48.5. A1 8.50", "qp_pages": [19] }
+    ]},
+    { "id": 20, "sub_questions": [
+      { "sub_id": "20(a)", "type": "calculation", "max_marks": 3, "ms_text": "3 255 200", "qp_pages": [20] },
+      { "sub_id": "20(b)", "type": "calculation", "max_marks": 3, "ms_text": "M2 750000 * 0.85^3. A1 460 594", "qp_pages": [20] }
+    ]},
+    { "id": 21, "sub_questions": [
+      { "sub_id": "21(a)", "type": "calculation", "max_marks": 1, "ms_text": "g10", "qp_pages": [21] },
+      { "sub_id": "21(b)", "type": "calculation", "max_marks": 2, "ms_text": "9c2d8", "qp_pages": [21] },
+      { "sub_id": "21(c)", "type": "calculation", "max_marks": 3, "ms_text": "M1 elimination. M1 sub. A1 x=3.8, y=0.6", "qp_pages": [21] }
+    ]},
+    { "id": 22, "sub_questions": [
+      { "sub_id": "22", "type": "calculation", "max_marks": 3, "ms_text": "M1 tan x = 3.4/4.7. A1 35.9", "qp_pages": [22] }
+    ]},
+    { "id": 23, "sub_questions": [
+      { "sub_id": "23", "type": "calculation", "max_marks": 4, "ms_text": "M1 Pythagoras height 7.5. M1 area formula. A1 30", "qp_pages": [23] }
+    ]},
+    { "id": 24, "sub_questions": [
+      { "sub_id": "24", "type": "calculation", "max_marks": 5, "ms_text": "M1 h=8. M1 surface area components. A1 207", "qp_pages": [24] }
+    ]}
+  ],
+  "extract_pages": []
+}

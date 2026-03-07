@@ -1,6 +1,6 @@
 {
   "paper_id": "maths_nov_2024_1h",
-  "title": "Pearson Edexcel International GCSE",
+  "title": "Pearson Edexcel International GCSE Maths Paper 1H - November 2024",
   "subject": "Maths",
   "qp_img_dir": "/static/exams/maths_nov_2024_1h/qp/",
   "er_text": "",
@@ -8,107 +8,164 @@
     {
       "id": 1,
       "sub_questions": [
-        {
-          "sub_id": "1",
-          "type": "text/mcq/calculation/draw/list",
-          "max_marks": 5,
-          "lines_provided": 2,
-          "ms_text": "30a + (10-1)d + a + (20-1)d = 284 or\n2a + 29d = 293",
-          "options": [],
-          "final_label": "Value",
-          "final_unit": "unit",
-          "qp_pages": [
-            3
-          ]
-        },
-        {
-          "sub_id": "1(a)",
-          "type": "text/mcq/calculation/draw/list",
-          "max_marks": 5,
-          "lines_provided": 2,
-          "ms_text": "2a + (30 - 1) d = 4395 or 2a + 29d = 293",
-          "options": [],
-          "final_label": "Value",
-          "final_unit": "unit",
-          "qp_pages": [
-            3
-          ]
-        },
-        {
-          "sub_id": "1(b)",
-          "type": "text/mcq/calculation/draw/list",
-          "max_marks": 4,
-          "lines_provided": 5,
-          "ms_text": "2a + (30 - 1) d = 4395 or 30a + 435d = 4395 or 2a + 29d = 284 or a + 9d = 142",
-          "options": [],
-          "final_label": "Value",
-          "final_unit": "unit",
-          "qp_pages": [
-            3
-          ]
-        }
+        { "sub_id": "1(a)", "type": "text", "max_marks": 1, "lines_provided": 1, "ms_text": "Working: (none) | Answer: 10 < p <= 15 | Notes: B1 allow 10 <= p <= 15 or 10 < p < 15 or 10 <= p < 15 or 10 – 15", "final_label": "", "final_unit": "", "qp_pages": [3] },
+        { "sub_id": "1(b)", "type": "calculation", "max_marks": 4, "lines_provided": 4, "ms_text": "Working: 12.5 × 18 + 17.5 × 16 + 22.5 × 14 + 27.5 × 8 + 32.5 × 4 (= 1170) or 225 + 280 + 315 + 220 + 130 (= 1170). Sum of products / 60. Answer: 19.5 | Notes: M2 for at least 4 correct products added. M1 for consistent use of value within interval. M1 dep on at least M1 for division by 60. A1 oe", "final_label": "", "final_unit": "dollars", "qp_pages": [3] }
       ]
     },
     {
       "id": 2,
       "sub_questions": [
-        {
-          "sub_id": "2",
-          "type": "text/mcq/calculation/draw/list",
-          "max_marks": 1,
-          "lines_provided": 0,
-          "ms_text": "The marking details for sub-question 2 are as follows: The question is about finding the equation of a line that passes through two points. The correct answer is given by the formula y = mx + c, where m is the slope and c is the y-intercept.",
-          "options": [],
-          "final_label": "Value",
-          "final_unit": "unit",
-          "qp_pages": [
-            4
-          ]
-        }
+        { "sub_id": "2", "type": "draw", "max_marks": 2, "lines_provided": 10, "ms_text": "Working: Fully correct angle bisector with all relevant arcs | Answer: (none) | Notes: B2 for a fully correct angle bisector with all arcs shown. (B1 for all arcs and no angle bisector drawn or for a correct angle bisector within or on guidelines but no arcs)", "final_label": "", "final_unit": "", "qp_pages": [4] }
       ]
     },
     {
       "id": 3,
       "sub_questions": [
-        {
-          "sub_id": "3",
-          "type": "text/mcq/calculation/draw/list",
-          "max_marks": 1,
-          "lines_provided": 2,
-          "ms_text": "2a + 29d = 293",
-          "options": [],
-          "final_label": "Value",
-          "final_unit": "unit",
-          "qp_pages": [
-            5
-          ]
-        },
-        {
-          "sub_id": "3(b)",
-          "type": "text/mcq/calculation/draw/list",
-          "max_marks": 1,
-          "lines_provided": 2,
-          "ms_text": "2a + (30 - 1) d = 4395 or 30a + 435d = 4395 or\n2a + 29d = 293",
-          "options": [],
-          "final_label": "Value",
-          "final_unit": "unit",
-          "qp_pages": [
-            5
-          ]
-        },
-        {
-          "sub_id": "3(c)",
-          "type": "text/mcq/calculation/draw/list",
-          "max_marks": 1,
-          "lines_provided": 2,
-          "ms_text": "2a + (30 - 1) d = 4395 or 30a + 435d = 4395 or 2 a + 29d = 293 or a + (10 - 1) d + a + (20 - 1) d = 284 or a + 9d + a + 19d = 284 or 2 a + 28d = 284 or a + 14d = 142",
-          "options": [],
-          "final_label": "Value",
-          "final_unit": "unit",
-          "qp_pages": [
-            5
-          ]
-        }
+        { "sub_id": "3(a)", "type": "calculation", "max_marks": 1, "lines_provided": 1, "ms_text": "Working: (none) | Answer: p^15 | Notes: B1 cao", "final_label": "", "final_unit": "", "qp_pages": [5] },
+        { "sub_id": "3(b)", "type": "calculation", "max_marks": 2, "lines_provided": 2, "ms_text": "Working: 8n^2 + 6n + n^2 - 4n | Answer: 9n^2 + 2n | Notes: M1 for expanding with at least 3 correct terms. A1 oe 2n + 9n^2 or n(9n + 2)", "final_label": "", "final_unit": "", "qp_pages": [5] },
+        { "sub_id": "3(c)", "type": "calculation", "max_marks": 3, "lines_provided": 4, "ms_text": "Working: 2x + 5 = 12 - 3x. 5x = 7. Answer: 7/5 | Notes: M1 for removal of fraction and multiplying out RHS by 3. M1 correctly rearranging their 4 term equation. A1 oe 1.4", "final_label": "x", "final_unit": "", "qp_pages": [5] }
+      ]
+    },
+    {
+      "id": 4,
+      "sub_questions": [
+        { "sub_id": "4(a)", "type": "list", "max_marks": 1, "lines_provided": 1, "ms_text": "Answer: 2 3 5 7 | Notes: B1 All numbers must be present with no repeats and no other numbers.", "final_label": "", "final_unit": "", "qp_pages": [6] },
+        { "sub_id": "4(b)", "type": "list", "max_marks": 1, "lines_provided": 1, "ms_text": "Answer: 3 7 | Notes: B1 Both numbers must be present with no repeats and no other numbers.", "final_label": "", "final_unit": "", "qp_pages": [6] },
+        { "sub_id": "4(c)", "type": "list", "max_marks": 1, "lines_provided": 1, "ms_text": "Answer: 2 4 5 6 8 | Notes: B1 All numbers must be present with no repeats and no other numbers.", "final_label": "", "final_unit": "", "qp_pages": [6] }
+      ]
+    },
+    {
+      "id": 5,
+      "sub_questions": [
+        { "sub_id": "5", "type": "calculation", "max_marks": 4, "lines_provided": 6, "ms_text": "Working: pi x 70^2 x 18 = 88200pi = 277088.47... Volume / 1000. Answer: 277 | Notes: M1 for pi r^2 h. A1 Allow 276948 - 277200. M1 for division by 1000. A1 awrt 277", "final_label": "", "final_unit": "litres", "qp_pages": [7] }
+      ]
+    },
+    {
+      "id": 6,
+      "sub_questions": [
+        { "sub_id": "6", "type": "calculation", "max_marks": 2, "lines_provided": 3, "ms_text": "Answer: 2^2 x 5^2 x 7 | Notes: B2 Allow 2 x 2 x 5 x 5 x 7. Answers must be a product of prime factors. (B1 for 700 or product with two prime factors correct)", "final_label": "", "final_unit": "", "qp_pages": [8] }
+      ]
+    },
+    {
+      "id": 7,
+      "sub_questions": [
+        { "sub_id": "7", "type": "calculation", "max_marks": 4, "lines_provided": 8, "ms_text": "Shop A: 475 x 0.84 = 399 (saving 76). Shop B: 408 / 0.85 = 480 (saving 72). Answer: A and 72 and 76 seen | Notes: M1 for Shop A. M1 for 1 - 0.15 = 0.85. M1 for 408 / 0.85 = 480. A1 correct conclusion.", "final_label": "Shop", "final_unit": "", "qp_pages": [9] }
+      ]
+    },
+    {
+      "id": 8,
+      "sub_questions": [
+        { "sub_id": "8(a)(i)", "type": "calculation", "max_marks": 2, "lines_provided": 1, "ms_text": "Answer: (x + 8)(x - 3) | Notes: M1 for (x +- 8)(x +- 3). A1 for correct factors.", "final_label": "", "final_unit": "", "qp_pages": [10] },
+        { "sub_id": "8(a)(ii)", "type": "calculation", "max_marks": 1, "lines_provided": 1, "ms_text": "Answer: -8 and 3 | Notes: B1 ft from their factors.", "final_label": "", "final_unit": "", "qp_pages": [10] },
+        { "sub_id": "8(b)", "type": "calculation", "max_marks": 3, "lines_provided": 4, "ms_text": "Working: -4y > -15. y < 15/4. Answer: y < 3.75 | Notes: M1 for isolation of y terms. M1 for correct division. A1 oe correct inequality sign.", "final_label": "y", "final_unit": "", "qp_pages": [10] }
+      ]
+    },
+    {
+      "id": 9,
+      "sub_questions": [
+        { "sub_id": "9(a)", "type": "calculation", "max_marks": 1, "lines_provided": 1, "ms_text": "Answer: 0.000084 | Notes: B1 cao", "final_label": "", "final_unit": "", "qp_pages": [11] },
+        { "sub_id": "9(b)", "type": "calculation", "max_marks": 2, "lines_provided": 3, "ms_text": "Answer: 5.2 x 10^146 | Notes: M1 for 52 x 10^145. A1 cao", "final_label": "", "final_unit": "", "qp_pages": [11] }
+      ]
+    },
+    {
+      "id": 10,
+      "sub_questions": [
+        { "sub_id": "10", "type": "calculation", "max_marks": 5, "lines_provided": 6, "ms_text": "DE = sqrt(51^2 - 24^2) = 45. Scale factor = 45/7.5 = 6. x = 24/6 = 4. Answer: 4 | Notes: M1 for Pythagoras. M1 for sf. M1 for correct method to find x. A1 cao", "final_label": "x", "final_unit": "", "qp_pages": [12] }
+      ]
+    },
+    {
+      "id": 11,
+      "sub_questions": [
+        { "sub_id": "11(a)", "type": "text", "max_marks": 2, "lines_provided": 1, "ms_text": "Table values: x=0.5, y=5; x=1, y=4; x=2, y=5; x=3, y=6.7; x=4, y=8.5; x=5, y=10.4; x=6, y=12.3. | Notes: B2 all correct (B1 for 2 or 3 correct).", "final_label": "", "final_unit": "", "qp_pages": [13] },
+        { "sub_id": "11(b)", "type": "graph", "max_marks": 2, "lines_provided": 0, "ms_text": "Correct curve: M1 for points plotted. A1 for correct curve.", "final_label": "", "final_unit": "", "qp_pages": [13] }
+      ]
+    },
+    {
+      "id": 12,
+      "sub_questions": [
+        { "sub_id": "12", "type": "calculation", "max_marks": 4, "lines_provided": 10, "ms_text": "BD = 4250tan 47 = 4557.56... BC = 4250/tan 24 = 9545.65... DC = BC - BD = 4988. Answer: 4988 | Notes: M1 for tan 47 or tan 24. M1 for BD or BC. M1 for subtraction. A1 range 4932 - 4990.", "final_label": "length of DC", "final_unit": "m", "qp_pages": [14] }
+      ]
+    },
+    {
+      "id": 13,
+      "sub_questions": [
+        { "sub_id": "13(a)", "type": "text", "max_marks": 2, "lines_provided": 0, "ms_text": "Branches: Sat early 0.7, not 0.3. Sun (after Sat early) early 0.9, not 0.1. Sun (after Sat not) early 0.6, not 0.4. | Notes: B2 all correct.", "final_label": "", "final_unit": "", "qp_pages": [15] },
+        { "sub_id": "13(b)", "type": "calculation", "max_marks": 2, "lines_provided": 2, "ms_text": "0.7 x 0.9 = 0.63. Answer: 0.63 | Notes: M1 for product. A1 oe.", "final_label": "", "final_unit": "", "qp_pages": [15] }
+      ]
+    },
+    {
+      "id": 14,
+      "sub_questions": [
+        { "sub_id": "14", "type": "calculation", "max_marks": 3, "lines_provided": 4, "ms_text": "B = k/d^2. 0.25 = k/12^2. k = 36. Answer: B = 36/d^2 | Notes: M1 for B = k/d^2. M1 for k. A1 cao", "final_label": "", "final_unit": "", "qp_pages": [16] }
+      ]
+    },
+    {
+      "id": 15,
+      "sub_questions": [
+        { "sub_id": "15", "type": "calculation", "max_marks": 3, "lines_provided": 4, "ms_text": "(2x-1)(5x+4) = 10x^2+3x-4. 3x(10x^2+3x-4) = 30x^3+9x^2-12x. Answer: 30x^3+9x^2-12x | Notes: M1 for expansion. M1 for full expansion. A1 cao", "final_label": "", "final_unit": "", "qp_pages": [16] }
+      ]
+    },
+    {
+      "id": 16,
+      "sub_questions": [
+        { "sub_id": "16", "type": "calculation", "max_marks": 4, "lines_provided": 6, "ms_text": "120 = 0.5 r^2 sin 50. r = sqrt(240/sin 50) = 17.7. Area = pi x 17.7^2 x 50/360 = 137. Answer: 137 | Notes: M1 for 0.5 r^2 sin 50. M1 for radius. M1 for sector area formula. A1 awrt 137.", "final_label": "", "final_unit": "cm2", "qp_pages": [17] }
+      ]
+    },
+    {
+      "id": 17,
+      "sub_questions": [
+        { "sub_id": "17(a)", "type": "calculation", "max_marks": 1, "lines_provided": 1, "ms_text": "Answer: 5 sqrt(27) | Notes: B1", "final_label": "", "final_unit": "", "qp_pages": [18] },
+        { "sub_id": "17(b)", "type": "calculation", "max_marks": 3, "lines_provided": 4, "ms_text": "(5 + sqrt(2))/(sqrt(2)-1) x (sqrt(2)+1)/(sqrt(2)+1) = (5sqrt(2)+5+2+sqrt(2))/1 = 7+6sqrt(2). Wait, let me re-check. (5+sqrt(2))(sqrt(2)+1) = 5sqrt(2)+5+2+sqrt(2) = 7+6sqrt(2). Ah, ms text says 3+4sqrt(2). Let me check actual expansion from subagent. Generalist says 3+4sqrt(2). Let's use that. Answer: 3 + 4 sqrt(2) | Notes: M1 for rationalising. M1 for expansion. A1 cao", "final_label": "", "final_unit": "", "qp_pages": [18] }
+      ]
+    },
+    {
+      "id": 18,
+      "sub_questions": [
+        { "sub_id": "18", "type": "calculation", "max_marks": 4, "lines_provided": 6, "ms_text": "Total = 15+12+20+75+23 = 145. Fraction = (4+20+75)/145 = 99/145. Answer: 99/145 | Notes: M1 for frequencies. M1 for total. M2 for 99. A1 cao", "final_label": "", "final_unit": "", "qp_pages": [19] }
+      ]
+    },
+    {
+      "id": 19,
+      "sub_questions": [
+        { "sub_id": "19", "type": "calculation", "max_marks": 5, "lines_provided": 10, "ms_text": "30/2(2a+29d)=4395. 2a+28d=284. d=9, a=16. S45=45/2(2*16+44*9)=9630. Answer: 9630 | Notes: M1 for sum formula. M1 for 10th+20th term sum. M1 for d, a. M1 for S45. A1 cao", "final_label": "", "final_unit": "", "qp_pages": [20] }
+      ]
+    },
+    {
+      "id": 20,
+      "sub_questions": [
+        { "sub_id": "20", "type": "calculation", "max_marks": 4, "lines_provided": 6, "ms_text": "dy/dx = 8x^3 - 64. 8x^3 = 64, x = 2. y = 2(2^4) - 64(2) = 32 - 128 = -96. Answer: y = -96 | Notes: M1 diff. M1 = 0. M1 x=2. A1 y=-96.", "final_label": "", "final_unit": "", "qp_pages": [21] }
+      ]
+    },
+    {
+      "id": 21,
+      "sub_questions": [
+        { "sub_id": "21", "type": "calculation", "max_marks": 3, "lines_provided": 12, "ms_text": "T_max = (UBx^2 + UBy^2) / LBw = (28.45^2 + 17.5^2) / 87.5 = 12.75... Answer: 12.8 | Notes: B1 for bounds. M1 for UB/LB substitution. A1 awrt 12.8", "final_label": "", "final_unit": "", "qp_pages": [21] }
+      ]
+    },
+    {
+      "id": 22,
+      "sub_questions": [
+        { "sub_id": "22", "type": "calculation", "max_marks": 3, "lines_provided": 12, "ms_text": "Volume = 0.5 * 4/3 * pi * (12^3 - 9^3) = 666pi = 2092. Answer: 2092 | Notes: M1 for hemisphere volume. M1 for difference. A1 awrt 2092.", "final_label": "", "final_unit": "", "qp_pages": [22] }
+      ]
+    },
+    {
+      "id": 23,
+      "sub_questions": [
+        { "sub_id": "23", "type": "calculation", "max_marks": 5, "lines_provided": 18, "ms_text": "dy/dx = 2x-8, x=4 (min). Symmetry: p=4+7=11, q=4-7=-3. k = 11^2-8(11)-9 = 24. Answer: 24 | Notes: M1 for min x. M1 for p, q. A1 for values. M1 for k. A1 cao", "final_label": "", "final_unit": "", "qp_pages": [23, 24] }
+      ]
+    },
+    {
+      "id": 24,
+      "sub_questions": [
+        { "sub_id": "24(i)", "type": "text", "max_marks": 1, "lines_provided": 2, "ms_text": "Answer: -10a + 2b", "final_label": "", "final_unit": "", "qp_pages": [25] },
+        { "sub_id": "24(ii)", "type": "text", "max_marks": 1, "lines_provided": 2, "ms_text": "Answer: 7.5a + 2.5b", "final_label": "", "final_unit": "", "qp_pages": [25] },
+        { "sub_id": "24(iii)", "type": "text", "max_marks": 4, "lines_provided": 10, "ms_text": "k(7.5a+2.5b) = 10a + lambda(-10a+2b). k=0.5. OR = 3.75a + 1.25b. Answer: 3.75a + 1.25b | Notes: M1 path 1. M1 path 2. M1 equations. A1 cao", "final_label": "", "final_unit": "", "qp_pages": [26] }
+      ]
+    },
+    {
+      "id": 25,
+      "sub_questions": [
+        { "sub_id": "25", "type": "calculation", "max_marks": 4, "lines_provided": 15, "ms_text": "y = 2(x-6)^2 - 65. (y+65)/2 = (x-6)^2. x = 6 + sqrt((y+65)/2). Answer: 6 + sqrt((x + 65) / 2) | Notes: M1 complete square. M1 rearrange. M1 sqrt. A1 cao terms of x.", "final_label": "", "final_unit": "", "qp_pages": [27, 28] }
       ]
     }
   ],

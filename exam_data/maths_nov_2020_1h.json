@@ -1,0 +1,98 @@
+{
+  "paper_id": "maths_nov_2020_1h",
+  "title": "Pearson Edexcel International GCSE Maths Paper 1H - November 2020",
+  "subject": "Maths",
+  "qp_img_dir": "/static/exams/maths_nov_2020_1h/qp/",
+  "er_text": "",
+  "questions": [
+    { "id": 1, "sub_questions": [
+      { "sub_id": "1(a)", "type": "list", "max_marks": 1, "ms_text": "2, 4, 6, 12", "qp_pages": [3] },
+      { "sub_id": "1(b)", "type": "list", "max_marks": 1, "ms_text": "5, 7, 8, 9, 10, 11, 13, 14", "qp_pages": [3] },
+      { "sub_id": "1(c)", "type": "calculation", "max_marks": 2, "ms_text": "M1 for a/14 or 3/b. A1 for 3/14", "qp_pages": [3] }
+    ]},
+    { "id": 2, "sub_questions": [
+      { "sub_id": "2", "type": "calculation", "max_marks": 4, "ms_text": "M2 for 15*60*60*5/12 (=22500). M1 for 22500*0.002. A1 for 45", "qp_pages": [4] }
+    ]},
+    { "id": 3, "sub_questions": [
+      { "sub_id": "3", "type": "graph", "max_marks": 3, "ms_text": "B3 for correct line between x=-2 and x=3", "qp_pages": [5] }
+    ]},
+    { "id": 4, "sub_questions": [
+      { "sub_id": "4", "type": "calculation", "max_marks": 4, "ms_text": "M1 for x=8. M1 for sum/6=11. M1 for (66-4-7-10-8)/2. A1 for x=8, y=18.5", "qp_pages": [6] }
+    ]},
+    { "id": 5, "sub_questions": [
+      { "sub_id": "5(a)", "type": "calculation", "max_marks": 1, "ms_text": "0.0057", "qp_pages": [7] },
+      { "sub_id": "5(b)", "type": "calculation", "max_marks": 1, "ms_text": "8 * 10^5", "qp_pages": [7] },
+      { "sub_id": "5(c)", "type": "calculation", "max_marks": 2, "ms_text": "M1 for 273000 / (6*10^-2). A1 for 4550000", "qp_pages": [7] }
+    ]},
+    { "id": 6, "sub_questions": [
+      { "sub_id": "6", "type": "calculation", "max_marks": 3, "ms_text": "M1 for 100/28440. M1 for *3600. A1 for 13", "qp_pages": [7] }
+    ]},
+    { "id": 7, "sub_questions": [
+      { "sub_id": "7(a)", "type": "calculation", "max_marks": 3, "ms_text": "M1 for expansion. M1 for isolation. A1 for 6.5", "qp_pages": [8] },
+      { "sub_id": "7(b)", "type": "calculation", "max_marks": 2, "ms_text": "M1 for partial factorisation. A1 for 8m^2g^3(2m+3g^2)", "qp_pages": [8] },
+      { "sub_id": "7(c)(i)", "type": "calculation", "max_marks": 2, "ms_text": "M1 for (y+-6)(y+-8). A1 for (y-8)(y+6)", "qp_pages": [8] },
+      { "sub_id": "7(c)(ii)", "type": "calculation", "max_marks": 1, "ms_text": "8, -6", "qp_pages": [8] }
+    ]},
+    { "id": 8, "sub_questions": [
+      { "sub_id": "8", "type": "calculation", "max_marks": 4, "ms_text": "M1 for decagon sum 1440. M1 for 1440-1302=138. M1 for 360-138. A1 for 222", "qp_pages": [9] }
+    ]},
+    { "id": 9, "sub_questions": [
+      { "sub_id": "9", "type": "calculation", "max_marks": 3, "ms_text": "M1 for 1080/0.8. A1 for 1350", "qp_pages": [10] }
+    ]},
+    { "id": 10, "sub_questions": [
+      { "sub_id": "10(a)", "type": "calculation", "max_marks": 1, "ms_text": "2 * 3^37", "qp_pages": [11] },
+      { "sub_id": "10(b)", "type": "calculation", "max_marks": 2, "ms_text": "M1 for mult rules. A1 for 2^5 * 3^80", "qp_pages": [11] }
+    ]},
+    { "id": 11, "sub_questions": [
+      { "sub_id": "11", "type": "calculation", "max_marks": 6, "ms_text": "M1 for AX=4.6. M1 for 0.5(8.4+17.6)h=179.4. M1 for h=13.8. M1 for tan ABX=4.6/13.8. A1 for 108.4", "qp_pages": [12] }
+    ]},
+    { "id": 12, "sub_questions": [
+      { "sub_id": "12", "type": "calculation", "max_marks": 4, "ms_text": "M1 for elimination method. A1 for x=4 or y=-3. M1 for sub. A1 for x=4, y=-3", "qp_pages": [13] }
+    ]},
+    { "id": 13, "sub_questions": [
+      { "sub_id": "13", "type": "calculation", "max_marks": 3, "ms_text": "M1 for 8000*(1+x/100)^6=8877.62. M1 for (8877.62/8000)^(1/6). A1 for 1.75", "qp_pages": [14] }
+    ]},
+    { "id": 14, "sub_questions": [
+      { "sub_id": "14", "type": "calculation", "max_marks": 3, "ms_text": "M1 for F=k/v^2. M1 for k=104. A1 for F=104/v^2", "qp_pages": [15] }
+    ]},
+    { "id": 15, "sub_questions": [
+      { "sub_id": "15(a)", "type": "draw", "max_marks": 2, "ms_text": "B1 for 2/5, 3/5. B1 for 4/5, 1/5...", "qp_pages": [16] },
+      { "sub_id": "15(b)", "type": "calculation", "max_marks": 3, "ms_text": "M1 for product paths. M1 for summing or 1-complement. A1 for 17/25", "qp_pages": [17] }
+    ]},
+    { "id": 16, "sub_questions": [
+      { "sub_id": "16(a)(i)", "type": "calculation", "max_marks": 1, "ms_text": "122", "qp_pages": [18] },
+      { "sub_id": "16(a)(ii)", "type": "text", "max_marks": 1, "ms_text": "Opposite angles in a cyclic quadrilateral sum to 180", "qp_pages": [18] },
+      { "sub_id": "16(b)", "type": "calculation", "max_marks": 2, "ms_text": "M1 for 360-2*58. A1 for 244", "qp_pages": [18] }
+    ]},
+    { "id": 17, "sub_questions": [
+      { "sub_id": "17", "type": "calculation", "max_marks": 4, "ms_text": "B1 for 5.025. B1 for 1.835*10^-3. M1 for UB/LB. A1 for 2738.4", "qp_pages": [19] }
+    ]},
+    { "id": 18, "sub_questions": [
+      { "sub_id": "18(a)", "type": "draw", "max_marks": 3, "ms_text": "M1 for fd. M1 for bars. A1 for scale/labels", "qp_pages": [20] },
+      { "sub_id": "18(b)", "type": "calculation", "max_marks": 2, "ms_text": "M1 for 10*5+40+8. A1 for 98", "qp_pages": [21] }
+    ]},
+    { "id": 19, "sub_questions": [
+      { "sub_id": "19", "type": "calculation", "max_marks": 3, "ms_text": "M1 for rationalising. M1 for expand. A1 for 9+3sqrt(7)", "qp_pages": [21] }
+    ]},
+    { "id": 20, "sub_questions": [
+      { "sub_id": "20", "type": "calculation", "max_marks": 3, "ms_text": "M1 for sf 5/3. M1 for 135*(5/3)^3. A1 for 625", "qp_pages": [22] }
+    ]},
+    { "id": 21, "sub_questions": [
+      { "sub_id": "21", "type": "calculation", "max_marks": 5, "ms_text": "M1 for (3x+2)(3x-2). M1 for common denom. A1 for 2(17-3x)/(x-5)(x-1)", "qp_pages": [23] }
+    ]},
+    { "id": 22, "sub_questions": [
+      { "sub_id": "22", "type": "calculation", "max_marks": 4, "ms_text": "B1 grad AC=-7/2. M1 grad BD=2/7. M1 y-y1=m(x-x1). A1 (0,-89/7)", "qp_pages": [24] }
+    ]},
+    { "id": 23, "sub_questions": [
+      { "id": 23, "sub_id": "23", "type": "calculation", "max_marks": 4, "ms_text": "M1 diff. M1 < 0. B1 crit vals. A1 -sqrt(m/3p)<x<sqrt(m/3p)", "qp_pages": [25] }
+    ]},
+    { "id": 24, "sub_questions": [
+      { "id": 24, "sub_id": "24", "type": "calculation", "max_marks": 4, "ms_text": "M1 a=8,d=7. M1 S100 or S49. M1 S100-S49. A1 26826", "qp_pages": [26] }
+    ]},
+    { "id": 25, "sub_questions": [
+      { "id": 25, "sub_id": "25(a)", "type": "text", "max_marks": 1, "ms_text": "Reflection in y=0", "qp_pages": [27] },
+      { "id": 25, "sub_id": "25(b)", "type": "draw", "max_marks": 2, "ms_text": "B2 for correct points/curve", "qp_pages": [27] }
+    ]}
+  ],
+  "extract_pages": []
+}

@@ -1,0 +1,70 @@
+{
+  "paper_id": "bio_jun_nov_2020_2b",
+  "title": "Pearson Edexcel International GCSE Biology Paper 2B - June/November 2020",
+  "subject": "Biology",
+  "qp_img_dir": "/static/exams/bio_jun_nov_2020_2b/qp/",
+  "er_text": "",
+  "questions": [
+    {
+      "id": 1,
+      "sub_questions": [
+        { "sub_id": "1(a)", "type": "mcq", "max_marks": 1, "ms_text": "C ultrafiltration\n\nA is incorrect because digestion is not a process in the kidneys\nB is incorrect because mutation is not a process in the kidneys\nD is incorrect because vaccination is not a process in the kidneys", "options": ["A", "B", "C", "D"], "qp_pages": [3] },
+        { "sub_id": "1(b)", "type": "text", "max_marks": 3, "ms_text": "An answer that makes reference to three of the following points:\n• stay out of water / wear waterproof clothes / eq (1)\n• treat drinking water / boil water (before drinking) / do not drink water / drink bottled water / eq (1)\n• sanitation / no faeces in water / no urine in water /eq (1)\n• remove snails /eq (1)\n• vaccination (1)", "qp_pages": [3] },
+        { "sub_id": "1(c)", "type": "text", "max_marks": 2, "ms_text": "An answer that makes reference to two of the following points:\n• red blood cells / rbc (1)\n• white blood cells / wbc (1)\n• lymphocytes (1)\n• phagocytes / macrophages (1)", "qp_pages": [3] },
+        { "sub_id": "1(d)", "type": "mcq", "max_marks": 1, "ms_text": "D 4 800\n\nA is incorrect because it is the wrong value\nB is incorrect because it is the wrong value\nC is incorrect because it is the wrong value", "options": ["A", "B", "C", "D"], "qp_pages": [3] },
+        { "sub_id": "1(e)", "type": "calculation", "max_marks": 2, "ms_text": "• 8 x 10-4 = 0.0008\n• x 240 million = 192 000 ÷ 100 = 1920 (2)", "qp_pages": [4] },
+        { "sub_id": "1(f)", "type": "mcq", "max_marks": 1, "ms_text": "A a circle of DNA\n\nB is incorrect because it is not RNA\nC is incorrect because it is not a protein\nD is incorrect because it is not RNA", "options": ["A", "B", "C", "D"], "qp_pages": [4] },
+        { "sub_id": "1(g)", "type": "text", "max_marks": 3, "ms_text": "An explanation that makes reference to three of the following points:\n• antigen (1)\n• memory cells / lymphocytes (1)\n• (secondary) immune response (1)\n• more antibodies / antibodies made sooner / faster / faster immune response / eq (1)", "qp_pages": [4] },
+        { "sub_id": "1(h)(i)", "type": "text", "max_marks": 1, "ms_text": "• (a treatment with) no plasmid / no protein / only water / saline / eq (1)", "qp_pages": [4] },
+        { "sub_id": "1(h)(ii)", "type": "text", "max_marks": 3, "ms_text": "An answer that makes reference to three of the following points:\n• reduced numbers / eq (1)\n• by 19 or by 47% / about 50%\n• schistosomes / worms, still present in body (1)\n• no idea of group size / needs to be repeated (1)\n• no idea of age / sex / health (1)", "qp_pages": [5] }
+      ]
+    },
+    {
+      "id": 2,
+      "sub_questions": [
+        { "sub_id": "2(a)(i)", "type": "text", "max_marks": 2, "ms_text": "An answer that makes reference to the following points:\n• prevent loss of blood / stops bleeding (1)\n• prevent entry of pathogens / microbes / bacteria / viruses / fungi / eq / prevent infections (1)", "qp_pages": [6] },
+        { "sub_id": "2(a)(ii)", "type": "draw", "max_marks": 1, "ms_text": "An answer that makes reference to the following point:\n• graph showing drop at 37 oC then increase", "qp_pages": [6] },
+        { "sub_id": "2(b)(i)", "type": "text", "max_marks": 2, "ms_text": "An explanation that makes reference to the following points:\n• (have been given) genetic material / gene / allele / DNA / genetically alter (1)\n• from human / different species (1)", "qp_pages": [7] },
+        { "sub_id": "2(b)(ii)", "type": "text", "max_marks": 6, "ms_text": "An answer that makes reference to six of the following points:\n• use enucleated egg / empty egg / remove nucleus from egg / eq (1)\n• nucleus from body cell / diploid nucleus (placed into empty egg) / fuse adult cell with empty egg (1)\n• use of electricity / shock (1)\n• cell division / mitosis (1)\n• embryo (1)\n• uterus / womb (1)\n• surrogate mother (1)", "qp_pages": [7] }
+      ]
+    },
+    {
+      "id": 3,
+      "sub_questions": [
+        { "sub_id": "3(a)", "type": "text", "max_marks": 1, "ms_text": "spinal cord / chord", "qp_pages": [8] },
+        { "sub_id": "3(b)(i)", "type": "mcq", "max_marks": 1, "ms_text": "C 0.5\n\nA is incorrect because 0.5 is the answer\nB is incorrect because 0.5 is the answer\nD is incorrect because 0.5 is the answer", "options": ["A", "B", "C", "D"], "qp_pages": [8] },
+        { "sub_id": "3(b)(ii)", "type": "draw", "max_marks": 2, "ms_text": "A diagram that makes reference to the following points:\n• one circle and one square shown (1)\n• two shapes unshaded (1)", "qp_pages": [8, 9] },
+        { "sub_id": "3(c)", "type": "text", "max_marks": 3, "ms_text": "An explanation that makes reference to three of the following points:\n• prevents translation / no translation (1)\n• prevents ribosomes attaching (to mRNA) (1)\n• prevents / no, codon binding to anticodon (1)\n• prevents amino acids joining / amino acid chain not made (1)\n• huntingtin / protein / polypeptide not made (1)", "qp_pages": [9] }
+      ]
+    },
+    {
+      "id": 4,
+      "sub_questions": [
+        { "sub_id": "4(a)", "type": "text", "max_marks": 2, "ms_text": "An answer that makes reference to the following points:\n6CO2 + 6H20 -> C6H12O6 + 6O2 (2)", "qp_pages": [11] },
+        { "sub_id": "4(b)(i)", "type": "calculation", "max_marks": 2, "ms_text": "• 84 + 80 ÷ 2\n• 82 (2)", "qp_pages": [11] },
+        { "sub_id": "4(b)(ii)", "type": "text", "max_marks": 4, "ms_text": "An explanation that makes reference to four of the following points:\n• no filter has highest rate of photosynthesis / bubbling / oxygen (1)\n• (because) all light colours / wavelengths are present / has more light energy / most amount of light that can be absorbed / eq (1)\n• green has low(est) rate of photosynthesis, because green light is not absorbed / eq (1)\n• blue / red has a medium rate of photosynthesis because light is, absorbed / not reflected / eq (1)\n• chlorophyll / chloroplast absorbs red / blue light / does not absorb green light / eq (1)", "qp_pages": [11] },
+        { "sub_id": "4(b)(iii)", "type": "text", "max_marks": 2, "ms_text": "An answer that makes reference to two of the following points:\n• temperature (1)\n• carbon dioxide (1)\n• light intensity (1)", "qp_pages": [11] },
+        { "sub_id": "4(c)(i)", "type": "text", "max_marks": 2, "ms_text": "An explanation that makes reference to two the following points:\n• bubbles are different volumes / sizes (1)\n• O2 may dissolve in water (1)\n• bubbles may be CO2 not oxygen / may not be due to photosynthesis /other gases may be present (1)\n• easy to miscount / miss bubbles (1)\n• bubbles get trapped / stuck (1)", "qp_pages": [12] },
+        { "sub_id": "4(c)(ii)", "type": "text", "max_marks": 2, "ms_text": "An answer that makes reference to two the following points:\n• use measuring cylinder / (gas) syringe / burette / graduated test tube (1)\n• (to measure) volume (1)\nOR\n• use hydrogen carbonate indicator (1)\n• change colour (of hydrogen carbonate indicator) (1)", "qp_pages": [12] }
+      ]
+    },
+    {
+      "id": 5,
+      "sub_questions": [
+        { "sub_id": "5(a)", "type": "text", "max_marks": 6, "ms_text": "FSH: pituitary (1), stimulate follicle growth / mature eggs / develop eggs / eq (1)\nLH: pituitary, cause ovulation / egg / ovum release / eq / stimulate progesterone release (1)\noestrogen: ovaries (1)\nprogesterone: ovaries / corpus luteum / placenta (1)", "qp_pages": [14] },
+        { "sub_id": "5(b)", "type": "text", "max_marks": 1, "ms_text": "An answer that makes reference to one of the following points:\n• blood loss once a month / monthly period / eq (1)\n• breakdown of uterus lining / breakdown of endometrium / eq", "qp_pages": [15] },
+        { "sub_id": "5(c)", "type": "calculation", "max_marks": 3, "ms_text": "• 51 - 12 = 39\n• 39 x 52 x 7 = 14 196 days\n• 14 196 ÷ 28 = 507\n• = 510 to 2 sig figs (3)", "qp_pages": [15] },
+        { "sub_id": "5(d)", "type": "text", "max_marks": 1, "ms_text": "An reason why a female does not produce as many offspring as the number of eggs she releases:\n• not all eggs fertilised / eq (1)\n• no sexual intercourse / eq (1)\n• contraception / eq (1)\n• no implantation / eq (1)\n• miscarriages / eq (1)\n• some eggs not fertile / eq (1)", "qp_pages": [15] }
+      ]
+    },
+    {
+      "id": 6,
+      "sub_questions": [
+        { "sub_id": "6(a)(i)", "type": "text", "max_marks": 2, "ms_text": "A description that makes reference to two of the following points:\n• elongated / pointed / projections / extensions /eq (1)\n• increase surface area (1)\n• thin wall for short diffusion path / eq (1)\n• concentrated cell sap for osmosis / eq (1)", "qp_pages": [16] },
+        { "sub_id": "6(a)(ii)", "type": "text", "max_marks": 4, "ms_text": "An explanation that makes reference to four of the following points:\n• water enters (root) by osmosis (1)\n• from dilute solution to more concentrated solution / eq (1)\n• (water) enters / moves up xylem (1)\n• water pulled up to leaf due to transpiration / pulled along transpiration stream / eq (1)\n• (water vapour) exits through stomata (1)", "qp_pages": [16] },
+        { "sub_id": "6(b)", "type": "text", "max_marks": 4, "ms_text": "A description that makes reference to four of the following points:\n• use (bubble) / (weight) potometer (1)\n• cut shoot underwater / dry leaves / place mineral oil on surface of water / eq (1)\n• measure distance moved by bubble (in cm) / mass lost / change in volume of water (1)\n• (in set) time (1)\n• repeat / calculate mean rate (1)", "qp_pages": [17] }
+      ]
+    }
+  ],
+  "extract_pages": []
+}

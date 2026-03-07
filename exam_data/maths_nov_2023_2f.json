@@ -1,0 +1,113 @@
+{
+  "paper_id": "maths_nov_2023_2f",
+  "title": "Pearson Edexcel International GCSE Maths Paper 2F - November 2023",
+  "subject": "Maths",
+  "qp_img_dir": "/static/exams/maths_nov_2023_2f/qp/",
+  "er_text": "",
+  "questions": [
+    { "id": 1, "sub_questions": [
+      { "sub_id": "1(a)", "type": "text", "max_marks": 1, "ms_text": "Twenty eight thousand one hundred (and) forty nine B1", "qp_pages": [3] },
+      { "sub_id": "1(b)", "type": "text", "max_marks": 1, "ms_text": "Kenya B1", "qp_pages": [3] },
+      { "sub_id": "1(c)", "type": "calculation", "max_marks": 1, "ms_text": "80 B1", "qp_pages": [3] },
+      { "sub_id": "1(d)", "type": "calculation", "max_marks": 1, "ms_text": "16 000 B1", "qp_pages": [3] }
+    ]},
+    { "id": 2, "sub_questions": [
+      { "sub_id": "2(a)", "type": "calculation", "max_marks": 1, "ms_text": "52 B1", "qp_pages": [4] },
+      { "sub_id": "2(b)", "type": "draw", "max_marks": 1, "ms_text": "1 full symbol and a half symbol B1", "qp_pages": [4] },
+      { "sub_id": "2(c)", "type": "calculation", "max_marks": 1, "ms_text": "20 B1", "qp_pages": [4] },
+      { "sub_id": "2(d)", "type": "calculation", "max_marks": 2, "ms_text": "M1 for 56:48. A1 7:6", "qp_pages": [4] }
+    ]},
+    { "id": 3, "sub_questions": [
+      { "sub_id": "3(a)", "type": "calculation", "max_marks": 1, "ms_text": "3/100 B1", "qp_pages": [5] },
+      { "sub_id": "3(b)", "type": "calculation", "max_marks": 1, "ms_text": "90 B1", "qp_pages": [5] },
+      { "sub_id": "3(c)", "type": "text", "max_marks": 1, "ms_text": "0.204, 0.24, 0.4, 0.408, 0.48 B1", "qp_pages": [5] },
+      { "sub_id": "3(d)", "type": "calculation", "max_marks": 1, "ms_text": "1.63 B1", "qp_pages": [5] }
+    ]},
+    { "id": 4, "sub_questions": [
+      { "sub_id": "4", "type": "calculation", "max_marks": 3, "ms_text": "B1 conversion. M1 correct equation. A1 1750", "qp_pages": [6] }
+    ]},
+    { "id": 5, "sub_questions": [
+      { "sub_id": "5(i)", "type": "draw", "max_marks": 1, "ms_text": "cross at notch between 1/2 and 1 B1", "qp_pages": [6] },
+      { "sub_id": "5(ii)", "type": "draw", "max_marks": 1, "ms_text": "cross at 0 B1", "qp_pages": [6] }
+    ]},
+    { "id": 6, "sub_questions": [
+      { "sub_id": "6(a)", "type": "draw", "max_marks": 1, "ms_text": "Right-angled triangle drawn B1", "qp_pages": [7] },
+      { "sub_id": "6(b)", "type": "draw", "max_marks": 2, "ms_text": "B2 rectangle area 20", "qp_pages": [7] }
+    ]},
+    { "id": 7, "sub_questions": [
+      { "sub_id": "7(a)", "type": "text", "max_marks": 1, "ms_text": "16 30 B1", "qp_pages": [8] },
+      { "sub_id": "7(b)", "type": "calculation", "max_marks": 3, "ms_text": "M1 time B to C. M1 time C to P. A1 19", "qp_pages": [8] }
+    ]},
+    { "id": 8, "sub_questions": [
+      { "sub_id": "8(a)", "type": "calculation", "max_marks": 1, "ms_text": "32 B1", "qp_pages": [9] },
+      { "sub_id": "8(b)(i)", "type": "calculation", "max_marks": 2, "ms_text": "M1 180-125. A1 55", "qp_pages": [9] },
+      { "sub_id": "8(b)(ii)", "type": "text", "max_marks": 1, "ms_text": "angles on straight line add to 180 B1", "qp_pages": [9] }
+    ]},
+    { "id": 9, "sub_questions": [
+      { "sub_id": "9", "type": "calculation", "max_marks": 4, "ms_text": "M1 unit cost. M1 potatoes total. M1 potatoes unit. A1 27", "qp_pages": [10] }
+    ]},
+    { "id": 10, "sub_questions": [
+      { "sub_id": "10(a)", "type": "calculation", "max_marks": 2, "ms_text": "M1 method. A1 11", "qp_pages": [11] },
+      { "sub_id": "10(b)", "type": "calculation", "max_marks": 2, "ms_text": "B2 (x+7)/5", "qp_pages": [11] }
+    ]},
+    { "id": 11, "sub_questions": [
+      { "sub_id": "11(a)(i)", "type": "calculation", "max_marks": 1, "ms_text": "21.5 - 22.5 B1", "qp_pages": [12] },
+      { "sub_id": "11(a)(ii)", "type": "calculation", "max_marks": 1, "ms_text": "31 - 32 B1", "qp_pages": [12] },
+      { "sub_id": "11(b)", "type": "calculation", "max_marks": 2, "ms_text": "M1ft conversion method. A1 300 - 325", "qp_pages": [12] }
+    ]},
+    { "id": 12, "sub_questions": [
+      { "sub_id": "12(a)", "type": "calculation", "max_marks": 1, "ms_text": "x^2 + 3x B1", "qp_pages": [13] },
+      { "sub_id": "12(b)", "type": "calculation", "max_marks": 1, "ms_text": "2(4p + 5) B1", "qp_pages": [13] },
+      { "sub_id": "12(c)", "type": "calculation", "max_marks": 2, "ms_text": "M1 one step from answer. A1 (y+f)/h", "qp_pages": [13] },
+      { "sub_id": "12(d)", "type": "list", "max_marks": 2, "ms_text": "8, 9, 10 B2", "qp_pages": [13] }
+    ]},
+    { "id": 13, "sub_questions": [
+      { "sub_id": "13", "type": "calculation", "max_marks": 4, "ms_text": "M1 0.1*150. M1 total target. M1 division. A1 16", "qp_pages": [14] }
+    ]},
+    { "id": 14, "sub_questions": [
+      { "sub_id": "14", "type": "calculation", "max_marks": 2, "ms_text": "M1 35.74 or 3.8... A1 9.38578", "qp_pages": [14] }
+    ]},
+    { "id": 15, "sub_questions": [
+      { "sub_id": "15", "type": "calculation", "max_marks": 3, "ms_text": "M1 unit price. M1 compatible calcs. A1 Small", "qp_pages": [15] }
+    ]},
+    { "id": 16, "sub_questions": [
+      { "sub_id": "16", "type": "calculation", "max_marks": 4, "ms_text": "M1 120/20. M1 layers. M1 height eq. A1 80", "qp_pages": [15] }
+    ]},
+    { "id": 17, "sub_questions": [
+      { "sub_id": "17(a)", "type": "text", "max_marks": 1, "ms_text": "25 < m <= 30 B1", "qp_pages": [16] },
+      { "sub_id": "17(b)", "type": "calculation", "max_marks": 3, "ms_text": "M2 products midpoints. A1 945", "qp_pages": [16] }
+    ]},
+    { "id": 18, "sub_questions": [
+      { "sub_id": "18", "type": "calculation", "max_marks": 4, "ms_text": "M1 BC=6. M1 EC=11. M1 Pythagoras. A1 17.8", "qp_pages": [17] }
+    ]},
+    { "id": 19, "sub_questions": [
+      { "sub_id": "19(a)", "type": "draw", "max_marks": 2, "ms_text": "B2 reflection", "qp_pages": [18] },
+      { "sub_id": "19(b)", "type": "text", "max_marks": 3, "ms_text": "Enlargement, sf 3, centre (7,2) B3", "qp_pages": [19] }
+    ]},
+    { "id": 20, "sub_questions": [
+      { "sub_id": "20(a)", "type": "calculation", "max_marks": 3, "ms_text": "M1 mult out. M1 rearrange. A1 3.5", "qp_pages": [20] },
+      { "sub_id": "20(b)", "type": "calculation", "max_marks": 1, "ms_text": "h^12 B1", "qp_pages": [20] },
+      { "sub_id": "20(c)", "type": "calculation", "max_marks": 2, "ms_text": "B2 16g^12 k^20", "qp_pages": [20] },
+      { "sub_id": "20(d)", "type": "calculation", "max_marks": 2, "ms_text": "M1 n-2=12. A1 14", "qp_pages": [20] }
+    ]},
+    { "id": 21, "sub_questions": [
+      { "sub_id": "21", "type": "calculation", "max_marks": 3, "ms_text": "M1 butter 180. M1 flour 216. A1 216", "qp_pages": [21] }
+    ]},
+    { "id": 22, "sub_questions": [
+      { "sub_id": "22", "type": "calculation", "max_marks": 3, "ms_text": "M1 improper fractions. M1 multiply. A1 conclusion", "qp_pages": [22] }
+    ]},
+    { "id": 23, "sub_questions": [
+      { "sub_id": "23", "type": "calculation", "max_marks": 3, "ms_text": "M1 0.92. M1 cubing. A1 20869", "qp_pages": [23] }
+    ]},
+    { "id": 24, "sub_questions": [
+      { "sub_id": "24", "type": "calculation", "max_marks": 3, "ms_text": "M1 sums 48, 70. M1 diff 22. A1 11", "qp_pages": [24] }
+    ]},
+    { "id": 25, "sub_questions": [
+      { "sub_id": "25", "type": "calculation", "max_marks": 2, "ms_text": "B2 y=1.5x-3", "qp_pages": [25] }
+    ]},
+    { "id": 26, "sub_questions": [
+      { "sub_id": "26", "type": "calculation", "max_marks": 5, "ms_text": "M2 area expressions. M1 equation. A1 6.4", "qp_pages": [26] }
+    ]}
+  ],
+  "extract_pages": []
+}

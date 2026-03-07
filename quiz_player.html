@@ -582,8 +582,12 @@
         }
 
         async function submitQuiz() {
-            let score = 0;
             const total = currentQuestions.length;
+            if (total === 0) {
+                showLineAlert("This quiz has no questions and cannot be submitted.", "error");
+                return;
+            }
+            let score = 0;
             if (Object.keys(userAnswers).length < total) {
                 showLineAlert("Please answer all questions first.", "error");
                 return;

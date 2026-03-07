@@ -223,7 +223,33 @@
             update3D(s.wrongGuesses, s.wrongGuesses >= 6, isW);
             document.getElementById('gamePlayers').innerHTML = session.players.filter(p => p.status === 'accepted').map(p => `<div class="player-chip ${p.username === s.currentTurn ? 'active-turn' : ''}"><strong>${p.username}</strong>${p.username.toLowerCase() === session.host.toLowerCase() ? ' (H)' : ''}</div>`).join('');
         }
-        async function startGame() { const w = document.getElementById('secretWordInput').value.trim().toUpperCase(); if (w.length < 3) return; const n = document.getElementById('allowNumbersToggle').checked, acc = session.players.filter(p => p.status === 'accepted'), g = acc.filter(p => p.username.toLowerCase() !== session.host.toLowerCase()); await updateState({ word: w, guessedLetters: [], wrongGuesses: 0, currentTurn: g.length ? g[0].username : session.host, playersOrder: acc.map(p => p.username), allowNumbers: n, turnStartedAt: Date.now(), updatedAt: Date.now() }, 'active'); }
+        async function startGame() { 
+            const wordInput = document.getElementById('secretWordInput');
+            const w = wordInput.value.trim().toUpperCase(); 
+            if (w.length < 3) return; 
+            
+            const n = document.getElementById('allowNumbersToggle').checked;
+            
+            // Validation: No numbers if toggle is off
+            if (!n && /[0-9]/.test(w)) {
+                alert("The secret word contains numbers, but 'Allow Numbers' is turned off. Please remove the numbers or enable the toggle.");
+                return;
+            }
+
+            const acc = session.players.filter(p => p.status === 'accepted'), 
+                  g = acc.filter(p => p.username.toLowerCase() !== session.host.toLowerCase()); 
+            
+            await updateState({ 
+                word: w, 
+                guessedLetters: [], 
+                wrongGuesses: 0, 
+                currentTurn: g.length ? g[0].username : session.host, 
+                playersOrder: acc.map(p => p.username), 
+                allowNumbers: n, 
+                turnStartedAt: Date.now(), 
+                updatedAt: Date.now() 
+            }, 'active'); 
+        }
         async function makeGuess(l) { if (isUpdating || (l !== null && session.state.currentTurn.toLowerCase() !== username.toLowerCase())) return; isUpdating = true; await perform('GUESS', { letter: l }); }
         async function requestClue() { if (isUpdating || session.state.cluesRequestedBy?.includes(username)) return; const s = JSON.parse(JSON.stringify(session.state)); if (!s.cluesRequestedBy) s.cluesRequestedBy = []; s.cluesRequestedBy.push(username); if (!s.clueStack) s.clueStack = []; s.clueStack.push({ type: 'request', user: username }); await updateState(s); }
         async function sendClue() { const i = document.getElementById('clueInput'), c = i.value.trim(); if (!c || isUpdating) return; const s = JSON.parse(JSON.stringify(session.state)); if (!s.clueStack) s.clueStack = []; s.clueStack.push({ type: 'clue', text: c }); i.value = ''; await updateState(s); }

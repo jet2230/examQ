@@ -1,0 +1,106 @@
+{
+  "paper_id": "bio_jun_nov_2020_1b",
+  "title": "Pearson Edexcel International GCSE Biology Paper 1B - June/November 2020",
+  "subject": "Biology",
+  "qp_img_dir": "/static/exams/bio_jun_nov_2020_1b/qp/",
+  "er_text": "",
+  "questions": [
+    {
+      "id": 1,
+      "sub_questions": [
+        { "sub_id": "1(a)(i)", "type": "mcq", "max_marks": 1, "ms_text": "C cytoplasm\n\nA is not correct as cellulose is not found in the bacterium\nB is not correct as chitin is not found in the bacterium\nD is not correct as a nucleus is not found in the bacterium", "options": ["A", "B", "C", "D"], "qp_pages": [2] },
+        { "sub_id": "1(a)(ii)", "type": "mcq", "max_marks": 1, "ms_text": "C 7\n\nA is not correct because 1 is not neutral pH\nB is not correct because 2 is not neutral pH\nD is not correct because 12 is not neutral pH", "options": ["A", "B", "C", "D"], "qp_pages": [2] },
+        { "sub_id": "1(a)(iii)", "type": "text", "max_marks": 5, "ms_text": "An explanation that makes reference the following points:\n• mutation (1)\n• variation (1)\n• survive (1)\n• reproduce / breed / offspring (1)\n• pass on allele / gene (1)", "qp_pages": [3] },
+        { "sub_id": "1(b)", "type": "text", "max_marks": 3, "ms_text": "An answer that makes reference the following points:\n• probiotic / cranberry / both / treatments (better than control) reduce (bacteria) /eq(1)\n• more reduction if taken together / eq (1)\n• cranberry (alone) reduces more than probiotic (alone) / eq(1)", "qp_pages": [4] }
+      ]
+    },
+    {
+      "id": 2,
+      "sub_questions": [
+        { "sub_id": "2", "type": "text", "max_marks": 8, "ms_text": "• sexual (1)\n• pollen (1)\n• anther (1)\n• stigma (1)\n• bees / moths / flies (1)\n• large / big / scented / (sweet) smelling (1)\n• style (1)\n• fertilisation (1)", "qp_pages": [5] }
+      ]
+    },
+    {
+      "id": 3,
+      "sub_questions": [
+        { "sub_id": "3(a)", "type": "text", "max_marks": 1, "ms_text": "• nucleus", "qp_pages": [6] },
+        { "sub_id": "3(b)", "type": "calculation", "max_marks": 2, "ms_text": "convert length into µm (60 mm = 60 000 µm) (1)\ndivision (60 000 ÷ 6 = ×10 000) (1)\naward full marks for correct numerical answer without working\n1 mark for 60 000 or dividing by 6", "qp_pages": [6] },
+        { "sub_id": "3(c)(i)", "type": "mcq", "max_marks": 1, "ms_text": "A 0.33\n\nB is not correct as 3 is not the mean\nC is not correct as 10 000 is not the mean\nD is not correct as 75 000 000 is not the mean", "options": ["A", "B", "C", "D"], "qp_pages": [7] },
+        { "sub_id": "3(c)(ii)", "type": "text", "max_marks": 5, "ms_text": "An answer that makes reference to the following (allow converse for egg):\n• sperm smaller / sperm is small cell / eq (1) [larger]\n• fewer (total) mitochondria (per cell) (1) [more]\n• more mitochondria per volume / per µm3 (1) [fewer]\n• uses energy to swim / move / get to /eq (1) [does not move]\n• fertilise egg (1) [egg is fertilised]", "qp_pages": [7] }
+      ]
+    },
+    {
+      "id": 4,
+      "sub_questions": [
+        { "sub_id": "4(a)(i)", "type": "mcq", "max_marks": 1, "ms_text": "C primary consumer\n\nA is not correct as krill is not a predator\nB is not correct as prey is not a trophic level\nD is not correct as krill is not a secondary consumer", "options": ["A", "B", "C", "D"], "qp_pages": [8] },
+        { "sub_id": "4(a)(ii)", "type": "draw", "max_marks": 2, "ms_text": "A sketch that shows the following points:\n• upright pyramid shape (1) [ignore names]\n• names in correct order: plants at bottom, krill in middle, whale at top (1) [ignore shape]", "qp_pages": [8] },
+        { "sub_id": "4(b)", "type": "calculation", "max_marks": 2, "ms_text": "division (10 000 ÷ 1.6 = 6 250 s) (1)\ndivision (÷ 60 = 104.17 / 100 / 104 / 104.16 recurring)\naward full marks for correct numerical answer without working\nallow 100 mins as 2 sig figs\nallow 1 mark for dividing by 1.6 or dividing by 96\nor 1.6 x 60 = 96 cm2 per minute\n10 000 ÷ 96 = 104.17 / 100 / 104 / 104.2 / / 104.167 / 104.16 recurring", "qp_pages": [9] },
+        { "sub_id": "4(c)", "type": "text", "max_marks": 6, "ms_text": "An answer that makes reference to the following points:\n• use container of sea water (1)\n• add same / stated number/ amount/ count number / mass of microscopic plants (1)\n• add stated number / mass of krill (1)\n• leave for same / stated time / measure time taken to (1)\n• (re)measure number / amount/mass / percentage change in plants(1)\n• repeat /eq (1)", "qp_pages": [9] },
+        { "sub_id": "4(d)", "type": "text", "max_marks": 4, "ms_text": "An explanation that makes reference the four of the following points:\n• fewer whales / whales die / migrate (1)\n• ice melts (1)\n• no / less surface for microscopic plants (1)\n• so fewer microscopic plants (available) (1)\n• fewer krill / krill die / migrate (1)\n• carbon dioxide causes acidification (1)\n• could affect krill (eggs) (1)", "qp_pages": [10] }
+      ]
+    },
+    {
+      "id": 5,
+      "sub_questions": [
+        { "sub_id": "5(a)", "type": "text", "max_marks": 3, "ms_text": "A description that makes reference to three of the following points:\n• (same) restriction enzyme to cut / remove / open /eq (1)\n• plasmid / vector and target gene / gene for making poison / eq (1)\n• ligase enzyme to join / stick / insert /eq (1)\n• complementary shapes / sticky ends /eq (1)", "qp_pages": [12] },
+        { "sub_id": "5(b)", "type": "text", "max_marks": 6, "ms_text": "An answer that makes reference to six of the following points:\n\nGood decision to use GM:\n• GM plants are specific / kill specific insects / pesticides kill other insects / plants / pesticide kills non-specific insects (1)\n• GM plants reduce need for pesticide (1)\n• pesticide needs reapplication / do not last long (1)\n• insects can become resistant to pesticide (1)\n• pesticides can enter food chains / bioaccumulation (1) [ignore harmful unqualified pollution, allow poisons humans]\n• pesticides can lead to health problems / affect human health /eq (1) eg: organophosphates and nervous system\n\nPoor decision to use GM:\n• pesticides are quick to kill (1)\n• GM plants could result in cross pollination of other species (1)\n• GM pollen may kill insect pollinators (1)\n• insects may develop resistance to poison produced by GM crops (1)\n• customers may not buy GM crops (1)\n• patents mean farmers become dependent on companies for their seed (1)", "qp_pages": [13] }
+      ]
+    },
+    {
+      "id": 6,
+      "sub_questions": [
+        { "sub_id": "6(a)", "type": "mcq", "max_marks": 1, "ms_text": "D C6H12O6 + 6O2 -> 6CO2 + 6H2O\n\nA is not the correct equation for aerobic respiration\nB is not the correct equation for aerobic respiration\nC is not the correct equation for aerobic respiration", "options": ["A", "B", "C", "D"], "qp_pages": [14] },
+        { "sub_id": "6(b)(i)", "type": "text", "max_marks": 2, "ms_text": "An explanation that makes reference to two of the following points:\n• moves left / towards locust (1)\n• carbon dioxide produced by insect absorbed by KOH / filter paper (1)\n• oxygen (used by insect) (1) [ignore air]\n• in respiration (1) [ignore breathing /inhaling/eq]", "qp_pages": [14] },
+        { "sub_id": "6(b)(ii)", "type": "text", "max_marks": 6, "ms_text": "An answer that makes reference to six of the following points:\n• size / mass /(of locusts )/eq (1) [mark 3 variables to maximise score]\n• (more cells) (more) respiration (1)\nor\n• movement / size of flask /eq (1)\n• more room for movement means more respiration (1)\nor\n• volume / concentration of KOH / size of filter paper (1) [ignore amount but allow stated volume]\n• affects carbon dioxide absorption /eq (1)\nor\n• temperature (1)\n• affects enzymes / increase kinetic energy / particle movement /eq (1)\nor\n• time / duration (1) [ignore time of day / light / oxygen / humidity etc]\n• more time to respire / more oxygen absorbed (1)", "qp_pages": [15] },
+        { "sub_id": "6(c)(i)", "type": "calculation", "max_marks": 1, "ms_text": "• 5.3 or 5.27 or 5.267 or 5.26 recurring", "qp_pages": [16] },
+        { "sub_id": "6(c)(ii)", "type": "text", "max_marks": 4, "ms_text": "An answer that makes reference to the following points:\n• not reliable / reliability can be increased /eq (1)\n• not enough repeats / only three results / (1) [ignore not repeated]\n• one result is anomalous / male 3 result is anomalous (1)\n• more variation within sex than between sexes / eq (1)", "qp_pages": [16] }
+      ]
+    },
+    {
+      "id": 7,
+      "sub_questions": [
+        { "sub_id": "7(a)", "type": "text", "max_marks": 2, "ms_text": "A description that makes reference to two the following:\n• biuret (1)\n• deepest / darker / intensity purple contains most protein (1)\n• reference to same volume of milk / biuret (1)\n[allow other quantitative methods such as solidify the milk protein by denaturing (1), mass of the protein (1)]", "qp_pages": [18] },
+        { "sub_id": "7(b)", "type": "text", "max_marks": 2, "ms_text": "An explanation that makes reference to two of the following points:\n• prevent infection / disease (1) [ignore illness]\n• (by destroying / due to) virus / bacteria / pathogen (1)\n• provides immunity / eq (1)", "qp_pages": [18] },
+        { "sub_id": "7(c)", "type": "text", "max_marks": 2, "ms_text": "An answer that includes two of:\n• use as a source of / for energy / respiration (1)\n• use as store of energy (1)\n• insulation / myelin sheath / protection fat around organs/ eq(1) [ignore for warmth]", "qp_pages": [19] },
+        { "sub_id": "7(d)(i)", "type": "text", "max_marks": 1, "ms_text": "lactose", "qp_pages": [19] },
+        { "sub_id": "7(d)(ii)", "type": "text", "max_marks": 1, "ms_text": "Lactobacillus / Streptococcus [Allow species names]", "qp_pages": [19] },
+        { "sub_id": "7(d)(iii)", "type": "text", "max_marks": 2, "ms_text": "An explanation that makes reference to two of the following points:\n• sterilise milk / pasteurise (1)\n• kill bacteria / pathogen / microorganisms (1)\n• prevent competition (for carbohydrate / sugar) (1)", "qp_pages": [19] }
+      ]
+    },
+    {
+      "id": 8,
+      "sub_questions": [
+        { "sub_id": "8(a)(i)", "type": "mcq", "max_marks": 1, "ms_text": "D testis\n\nA is incorrect as meiosis does not occur in kidney\nB is incorrect as meiosis does not occur in penis\nC is incorrect as meiosis does not occur in skin", "options": ["A", "B", "C", "D"], "qp_pages": [20] },
+        { "sub_id": "8(a)(ii)", "type": "mcq", "max_marks": 1, "ms_text": "C root tip\n\nA is incorrect as mitosis is not observed in anther\nB is incorrect as mitosis is not observed in cotyledon\nD is incorrect as mitosis is not observed in xylem", "options": ["A", "B", "C", "D"], "qp_pages": [20] },
+        { "sub_id": "8(b)", "type": "text", "max_marks": 6, "ms_text": "number of chromosomes in each original cell: Meiosis 46, Mitosis 46\nnumber of daughter cells produced from each original cell: Meiosis 4, Mitosis 2\nnumber of chromosomes in each daughter cell: Meiosis 23, Mitosis 46\nploidy level of daughter cells produced: Meiosis haploid, Mitosis diploid\ngenetic differences in daughter cells: Meiosis present, Mitosis absent /none/identical /eq\ntype of cell produced: Meiosis gamete / sperm / egg / sex cell, Mitosis body cell\n[1 mark for each row]", "qp_pages": [20] },
+        { "sub_id": "8(c)(i)", "type": "text", "max_marks": 4, "ms_text": "A description that makes reference to the following:\n• random mating (1)\n• random fertilisation / gametes received/ eq (1)\n• environment (1)\n• mutation (1)", "qp_pages": [21] },
+        { "sub_id": "8(c)(ii)", "type": "text", "max_marks": 2, "ms_text": "An explanation to the following points:\n• little / no genetic variation / have same genotype / alleles (1)\n• no genotype environment interaction / respond to drugs in same way /eq (1)", "qp_pages": [21] }
+      ]
+    },
+    {
+      "id": 9,
+      "sub_questions": [
+        { "sub_id": "9(a)(i)", "type": "draw", "max_marks": 6, "ms_text": "An answer that includes:\n• S scale linear and at least half axis (1)\n• L straight lines through points (1) [bar chart lose L only, No L for extrapolation]\n• A axis labelled with crop production and year and correct way round (1)\n• P points accurately within one small square plotted (1)\n• U units thousand tonnes (and years) (1)\n• K labelled or key to show barley and wheat (1)", "qp_pages": [22] },
+        { "sub_id": "9(a)(ii)", "type": "text", "max_marks": 2, "ms_text": "A description that makes reference to the following:\n• wheat decreases to 2013/ eq and then increases (1)\n• barley constant and then increases to 2013 / eq (then fluctuates) (1)", "qp_pages": [23] },
+        { "sub_id": "9(a)(iii)", "type": "calculation", "max_marks": 3, "ms_text": "percentage change in wheat = (16 100 – 15 300) ÷ 15 300 × 100 = 5.23% allow 5.2%/ 5%/eq (1) [allow 105% /eq]\npercentage change in barley = (7 300 – 5 500) ÷ 5 500 × 100 = 32.73% allow 32.7/ 33% [allow 133% /eq]\nbarley greater (1)\nallow one mark for greater change in barley\nallow one mark for each correct percentage", "qp_pages": [23] },
+        { "sub_id": "9(b)", "type": "calculation", "max_marks": 2, "ms_text": "25 000 kg per 10 000 m2\n25 000 ÷ 10 000 = 2.5 kg per m2 per year\n2.5 kg = 2500 g ÷ 365 = 6.85 g [allow 6.9]\nalso allow for leap year 2500 / 365.25 so 6.84 g [allow 6.8g]\nallow full credit for correct answer no working\none mark for dividing by 365 or 365.25", "qp_pages": [23] }
+      ]
+    },
+    {
+      "id": 10,
+      "sub_questions": [
+        { "sub_id": "10(a)(i)", "type": "text", "max_marks": 3, "ms_text": "• A sensory / afferent (1)\n• B relay / association (1)\n• C motor / efferent (1)", "qp_pages": [24] },
+        { "sub_id": "10(a)(ii)", "type": "text", "max_marks": 3, "ms_text": "An explanation that makes reference to the following points:\n• neurone A / sensory / afferent (+ impulse) (from receptor) to CNS / spinal cord / relay neurone / neurone B (1) [must have impulse once to score 3 marks, allow signal message for 2 max]\n• (synapses with) neurone B / relay / association / (+ impulse) (from receptor neurone A) to motor / efferent / neurone C\n• neurone C / motor / efferent (+ impulse) to effector / muscle", "qp_pages": [24] },
+        { "sub_id": "10(b)(i)", "type": "text", "max_marks": 4, "ms_text": "An explanation that makes reference to two of the following points:\n• measure the distance (from hand to spinal cord and or brain to other hand) (1) [ignore count number of students]\n• for each student / all students in ring (1)\n• measure time taken (for student A to feel hand being squeezed / eq) (1) [allow ‘how long it took’]\n• divide distance by time (1)", "qp_pages": [25] },
+        { "sub_id": "10(b)(ii)", "type": "text", "max_marks": 2, "ms_text": "An explanation that makes reference to two of the following points:\n• may be underestimate / too slow / method adds time / delay / eq (1)\n• not a reflex so need to allow decision making / role of brain / reaction time /eq (1)\n• as delay occurs at each synapse (1)", "qp_pages": [25] }
+      ]
+    },
+    {
+      "id": 11,
+      "sub_questions": [
+        { "sub_id": "11", "type": "text", "max_marks": 6, "ms_text": "An answer that makes reference to six of the following points:\n• C shampoo with oil and without oil / shampoo with oil and no shampoo (1)\n• O hair from same person / same hair length / width / age / sex/ same hair type / dry hair same way (1)\n• R test many different hairs / repeat (1)\n• M1 add weights / masses to hairs (1)\n• M2 measure mass / g / pressure / weight / force /N that causes hair to break (1)\n• S1 same volume / concentration of shampoo / same type of shampoo with and without oil (1) [ignore amount]\n• S2 wash for same time / frequency / same temperature of water (1)", "qp_pages": [26] }
+      ]
+    }
+  ],
+  "extract_pages": []
+}

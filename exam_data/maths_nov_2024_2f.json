@@ -1,0 +1,110 @@
+{
+  "paper_id": "maths_nov_2024_2f",
+  "title": "Pearson Edexcel International GCSE Maths Paper 2F - November 2024",
+  "subject": "Maths",
+  "qp_img_dir": "/static/exams/maths_nov_2024_2f/qp/",
+  "er_text": "",
+  "questions": [
+    { "id": 1, "sub_questions": [
+      { "sub_id": "1(a)", "type": "calculation", "max_marks": 1, "ms_text": "7800", "qp_pages": [3] },
+      { "sub_id": "1(b)(i)", "type": "calculation", "max_marks": 1, "ms_text": "10 000", "qp_pages": [3] },
+      { "sub_id": "1(b)(ii)", "type": "calculation", "max_marks": 1, "ms_text": "1000", "qp_pages": [3] },
+      { "sub_id": "1(c)", "type": "list", "max_marks": 1, "ms_text": "Any four from 1, 2, 3, 6, 9, 18", "qp_pages": [3] },
+      { "sub_id": "1(d)", "type": "text", "max_marks": 1, "ms_text": "17", "qp_pages": [3] }
+    ]},
+    { "id": 2, "sub_questions": [
+      { "sub_id": "2(a)(i)", "type": "calculation", "max_marks": 1, "ms_text": "31", "qp_pages": [4] },
+      { "sub_id": "2(a)(ii)", "type": "text", "max_marks": 1, "ms_text": "+4", "qp_pages": [4] },
+      { "sub_id": "2(b)", "type": "calculation", "max_marks": 2, "ms_text": "71 and 75 identified. 146", "qp_pages": [4] },
+      { "sub_id": "2(c)", "type": "text", "max_marks": 1, "ms_text": "The sequence goes 95, 99. 98 is even.", "qp_pages": [4] }
+    ]},
+    { "id": 3, "sub_questions": [
+      { "sub_id": "3(a)", "type": "calculation", "max_marks": 1, "ms_text": "21", "qp_pages": [5] },
+      { "sub_id": "3(b)", "type": "calculation", "max_marks": 1, "ms_text": "12", "qp_pages": [5] },
+      { "sub_id": "3(c)", "type": "draw", "max_marks": 1, "ms_text": "Bar completed to show 17 thousand", "qp_pages": [5] }
+    ]},
+    { "id": 4, "sub_questions": [
+      { "sub_id": "4(a)", "type": "draw", "max_marks": 1, "ms_text": "9 squares shaded", "qp_pages": [6] },
+      { "sub_id": "4(b)", "type": "list", "max_marks": 1, "ms_text": "18/24, 12/16", "qp_pages": [6] },
+      { "sub_id": "4(c)", "type": "calculation", "max_marks": 1, "ms_text": "3 3/7", "qp_pages": [6] },
+      { "sub_id": "4(d)", "type": "calculation", "max_marks": 1, "ms_text": "90", "qp_pages": [6] },
+      { "sub_id": "4(e)", "type": "calculation", "max_marks": 3, "ms_text": "M1 method. A1 48", "qp_pages": [6] }
+    ]},
+    { "id": 5, "sub_questions": [
+      { "sub_id": "5", "type": "calculation", "max_marks": 2, "ms_text": "13th value. 21", "qp_pages": [7] }
+    ]},
+    { "id": 6, "sub_questions": [
+      { "sub_id": "6", "type": "calculation", "max_marks": 3, "ms_text": "M1 250/14. M1 17*14. A1 12", "qp_pages": [7] }
+    ]},
+    { "id": 7, "sub_questions": [
+      { "sub_id": "7", "type": "calculation", "max_marks": 4, "ms_text": "B1 conversions. M1 sum Marion. M1 diff. A1 550", "qp_pages": [8] }
+    ]},
+    { "id": 8, "sub_questions": [
+      { "sub_id": "8(a)", "type": "calculation", "max_marks": 1, "ms_text": "11g - 2h", "qp_pages": [9] },
+      { "sub_id": "8(b)", "type": "calculation", "max_marks": 1, "ms_text": "28am", "qp_pages": [9] },
+      { "sub_id": "8(c)", "type": "calculation", "max_marks": 2, "ms_text": "M1 5x=19. A1 3.8", "qp_pages": [9] },
+      { "sub_id": "8(d)", "type": "calculation", "max_marks": 2, "ms_text": "35k + 15", "qp_pages": [9] },
+      { "sub_id": "8(e)", "type": "calculation", "max_marks": 2, "ms_text": "3(3y + 4)", "qp_pages": [9] },
+      { "sub_id": "8(f)", "type": "calculation", "max_marks": 2, "ms_text": "M1 sum terms. A1 5c + 7", "qp_pages": [9] }
+    ]},
+    { "id": 9, "sub_questions": [
+      { "sub_id": "9", "type": "calculation", "max_marks": 2, "ms_text": "5 hours 50 minutes", "qp_pages": [10] }
+    ]},
+    { "id": 10, "sub_questions": [
+      { "sub_id": "10", "type": "calculation", "max_marks": 2, "ms_text": "9 * 12 * 25 = 2700", "qp_pages": [10] }
+    ]},
+    { "id": 11, "sub_questions": [
+      { "sub_id": "11", "type": "calculation", "max_marks": 2, "ms_text": "M1 method. A1 50", "qp_pages": [11] }
+    ]},
+    { "id": 12, "sub_questions": [
+      { "sub_id": "12", "type": "calculation", "max_marks": 4, "ms_text": "M1 240/8. M1 150 apples. M1 0.64*150. A1 96", "qp_pages": [11] }
+    ]},
+    { "id": 13, "sub_questions": [
+      { "sub_id": "13(a)", "type": "calculation", "max_marks": 2, "ms_text": "17.531...", "qp_pages": [12] },
+      { "sub_id": "13(b)", "type": "calculation", "max_marks": 1, "ms_text": "17.5", "qp_pages": [12] }
+    ]},
+    { "id": 14, "sub_questions": [
+      { "sub_id": "14", "type": "calculation", "max_marks": 3, "ms_text": "M1 side=7. M1 triangle sides. A1 41", "qp_pages": [13] }
+    ]},
+    { "id": 15, "sub_questions": [
+      { "sub_id": "15", "type": "text", "max_marks": 3, "ms_text": "Enlargement, SF 3, Centre (0,0)", "qp_pages": [14] }
+    ]},
+    { "id": 16, "sub_questions": [
+      { "sub_id": "16", "type": "calculation", "max_marks": 2, "ms_text": "M1 pi*9^2. A1 254", "qp_pages": [15] }
+    ]},
+    { "id": 17, "sub_questions": [
+      { "sub_id": "17", "type": "calculation", "max_marks": 3, "ms_text": "M1 improper fractions. M1 multiply. A1 conclusion", "qp_pages": [16] }
+    ]},
+    { "id": 18, "sub_questions": [
+      { "sub_id": "18(a)", "type": "calculation", "max_marks": 1, "ms_text": "1.45", "qp_pages": [17] },
+      { "sub_id": "18(b)", "type": "calculation", "max_marks": 1, "ms_text": "1.35", "qp_pages": [17] }
+    ]},
+    { "id": 19, "sub_questions": [
+      { "sub_id": "19", "type": "calculation", "max_marks": 3, "ms_text": "M1 cos 43 = x/8.6. M1 calculation. A1 6.3", "qp_pages": [18] }
+    ]},
+    { "id": 20, "sub_questions": [
+      { "sub_id": "20(a)", "type": "calculation", "max_marks": 2, "ms_text": "M1 357/0.17. A1 2100", "qp_pages": [19] },
+      { "sub_id": "20(b)", "type": "calculation", "max_marks": 3, "ms_text": "M1 diff 156. M1 156/650. A1 24", "qp_pages": [19] }
+    ]},
+    { "id": 21, "sub_questions": [
+      { "sub_id": "21", "type": "calculation", "max_marks": 4, "ms_text": "M1 sum known P. M1 P(1)=0.24. M1 0.24*400. A1 96", "qp_pages": [20] }
+    ]},
+    { "id": 22, "sub_questions": [
+      { "sub_id": "22", "type": "calculation", "max_marks": 3, "ms_text": "M1 two faces. M1 summing. A1 408", "qp_pages": [21] }
+    ]},
+    { "id": 23, "sub_questions": [
+      { "sub_id": "23(a)", "type": "draw", "max_marks": 3, "ms_text": "B3 for three lines", "qp_pages": [22] },
+      { "sub_id": "23(b)", "type": "draw", "max_marks": 1, "ms_text": "B1 correct region", "qp_pages": [22] }
+    ]},
+    { "id": 24, "sub_questions": [
+      { "sub_id": "24", "type": "calculation", "max_marks": 3, "ms_text": "M1 sum 4. M1 total for 5. A1 130", "qp_pages": [23] }
+    ]},
+    { "id": 25, "sub_questions": [
+      { "sub_id": "25", "type": "calculation", "max_marks": 3, "ms_text": "M2 method. A1 22 174", "qp_pages": [24] }
+    ]},
+    { "id": 26, "sub_questions": [
+      { "sub_id": "26", "type": "calculation", "max_marks": 5, "ms_text": "M1 year 11 eq. A1 x=21. M1 yr 11 Bio. M1 yr 10 Bio. A1 36", "qp_pages": [25] }
+    ]}
+  ],
+  "extract_pages": []
+}

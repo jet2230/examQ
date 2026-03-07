@@ -399,7 +399,11 @@ def apply_uno_move(state, action, username, params):
                 new_state['deck'] = new_state['discard']; new_state['discard'] = [top_c]
             if new_state['deck']: new_state['hands'][target].append(new_state['deck'].pop())
         
-        # If they had finished, they are now back in the game
+        # Clear UNO status if they drew cards
+        if 'unoCalls' in new_state:
+            orig_name = next((o for o in order if o.lower() == target.lower()), target)
+            if orig_name in new_state['unoCalls']: new_state['unoCalls'].remove(orig_name)
+
         new_state.pop('vulnerableWin', None); new_state.pop('lastFinisher', None)
         return new_state, None
 
@@ -467,6 +471,12 @@ def apply_uno_move(state, action, username, params):
                         top_c = new_state['discard'].pop(); random.shuffle(new_state['discard'])
                         new_state['deck'] = new_state['discard']; new_state['discard'] = [top_c]
                     if new_state['deck']: new_state['hands'][victim].append(new_state['deck'].pop())
+                
+                # Clear victim's UNO status if they drew cards
+                if 'unoCalls' in new_state:
+                    v_name = next((o for o in order if o.lower() == victim.lower()), victim)
+                    if v_name in new_state['unoCalls'] and len(new_state['hands'][victim]) > 1:
+                        new_state['unoCalls'].remove(v_name)
                 step = 2
                 
             if check_uno_game_over(new_state, order):
@@ -495,6 +505,12 @@ def apply_uno_move(state, action, username, params):
                     top_c = new_state['discard'].pop(); random.shuffle(new_state['discard'])
                     new_state['deck'] = new_state['discard']; new_state['discard'] = [top_c]
                 if new_state['deck']: new_state['hands'][victim].append(new_state['deck'].pop())
+            
+            # Clear victim's UNO status if they drew cards
+            if 'unoCalls' in new_state:
+                v_name = next((o for o in order if o.lower() == victim.lower()), victim)
+                if v_name in new_state['unoCalls'] and len(new_state['hands'][victim]) > 1:
+                    new_state['unoCalls'].remove(v_name)
             step = 2
             
         if len(new_state['hands'][username]) == 0 and not new_state.get('vulnerableWin'):
@@ -598,7 +614,28 @@ def process_ai_action(session_id):
         state = json.loads(row['state_json']) if row['state_json'] else {}
         current_turn = state.get('currentTurn')
         
-        print(f"[AI-DEBUG] Session {session_id} | Type: {game_type} | Status: {status} | Host: {host} | Turn: {current_turn}")
+        print(f\"[AI-DEBUG] Session {session_id} | Type: {game_type} | Status: {status} | Host: {host} | Turn: {current_turn}\")
+
+        # --- FINISHED GAME RESTART LOGIC ---
+        if status == 'finished':
+            # Identify who should restart. In UNO, winner becomes host. In Hangman, original host stays.
+            winner = state.get('winner')
+            should_restart = False
+            
+            if game_type == 'UNO' and winner in AI_PLAYERS:
+                should_restart = True
+                new_host = winner
+            elif game_type == 'Hangman' and host in AI_PLAYERS:
+                should_restart = True
+                new_host = host
+            
+            if should_restart:
+                print(f\"[AI-DEBUG] AI {new_host} automatically restarting finished {game_type} game...\")
+                new_state = {'restarting': True, 'updatedAt': int(datetime.now().timestamp() * 1000)}
+                cursor.execute(\"UPDATE game_sessions SET status = 'pending', host_username = ?, state_json = ?, version = version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?\", 
+                               (new_host, json.dumps(new_state), session_id))
+                log_game_action(cursor, session_id, f\"AI {new_host} automatically restarted the game\")
+                conn.commit(); conn.close(); return
 
         # --- LOBBY LOGIC (PENDING or STARTING) ---
         # AI auto-start from pending, OR manual start signal (from button)
@@ -921,10 +958,14 @@ def get_game_session(session_id):
         host = row['host_username']
         state = json.loads(row['state_json']) if row['state_json'] else None
         
-        # Proactive trigger: if it's an AI's turn OR game is currently starting
+        # Proactive trigger: if it's an AI's turn OR game is currently starting OR AI needs to restart
         needs_trigger = (status == 'active' and state and state.get('currentTurn') in AI_PLAYERS) or \
                         (status == 'active' and state and state.get('starting')) or \
-                        (status == 'pending' and host in AI_PLAYERS)
+                        (status == 'pending' and host in AI_PLAYERS) or \
+                        (status == 'finished' and (
+                            (game_type == 'UNO' and state.get('winner') in AI_PLAYERS) or
+                            (game_type == 'Hangman' and host in AI_PLAYERS)
+                        ))
         
         if needs_trigger:
             # Check if we should trigger (only if updatedAt is older than 3s to avoid double triggers)
@@ -1646,6 +1687,7 @@ def submit_official_exam():
         answers = data.get('answers')
         
         if not u or not paper_id: return jsonify({'error': 'Missing data'}), 400
+        if total is None or int(total) <= 0: return jsonify({'error': 'Invalid total marks'}), 400
         
         # Structure the quiz_data_json to match AI quiz expectations for the dashboard
         quiz_summary = {
@@ -1684,6 +1726,8 @@ def submit_quiz():
         except:
             score = 0
             total = 0
+
+        if total <= 0: return jsonify({'success': False, 'message': 'Invalid total marks'}), 400
 
         # Construct quiz_data_json to match results dashboard expectation
         quiz_data = {
@@ -1987,6 +2031,54 @@ def grade_official_question():
         cursor.execute("SELECT er_text FROM official_exams WHERE id = ?", (paper_id,))
         row = cursor.fetchone(); er_text = row['er_text'] if row and row['er_text'] else ""; conn.close()
 
+        import re
+        # Normalize unicode minus signs and whitespace for matching
+        norm_ms = mark_scheme.strip().replace('−', '-').replace('⎼', '-')
+        
+        # Extract actual answer if wrapped in tags (from calculation questions)
+        raw_ans = user_answer.strip()
+        final_ans_match = re.search(r'\[FINAL_ANSWER_START\](.*?)\[FINAL_ANSWER_END\]', raw_ans, re.S)
+        if final_ans_match:
+            norm_ans = final_ans_match.group(1).strip().replace('−', '-').replace('⎼', '-')
+        else:
+            norm_ans = raw_ans.replace('−', '-').replace('⎼', '-')
+
+        # PROGRAMMATIC NUMERICAL CHECK (Bypass AI for simple single-number answers)
+        # Handle cases like "40 B1", "-9 B1", or just "12.5"
+        ms_simple_match = re.match(r'^([-]?\d+(?:\.\d+)?)\s*(?:[A-Z]\d)?$', norm_ms)
+        if ms_simple_match:
+            correct_val_str = ms_simple_match.group(1)
+            try:
+                correct_num = float(correct_val_str)
+                user_val = None
+                
+                # 1. Direct number match (e.g. "21")
+                user_num_match = re.match(r'^([-]?\d+(?:\.\d+)?)$', norm_ans)
+                if user_num_match:
+                    user_val = float(user_num_match.group(1))
+                
+                # 2. Simple fraction match (e.g. "441 / 41")
+                elif re.match(r'^([-]?\d+(?:\.\d+)?)\s*/\s*([-]?\d+(?:\.\d+)?)$', norm_ans):
+                    m = re.match(r'^([-]?\d+(?:\.\d+)?)\s*/\s*([-]?\d+(?:\.\d+)?)$', norm_ans)
+                    div = float(m.group(2))
+                    if div != 0: user_val = float(m.group(1)) / div
+
+                if user_val is not None:
+                    if abs(correct_num - user_val) < 1e-7:
+                        return jsonify({
+                            "marks_awarded": max_marks, "max_marks": max_marks,
+                            "feedback": f"Correct! Your answer ({norm_ans}) evaluates to {user_val}, which matches the official mark scheme ({correct_val_str}) exactly.",
+                            "marking_points_met": ["Exact numerical match"]
+                        }), 200
+                    elif max_marks == 1:
+                        # For 1 mark, if we parsed a number and it's wrong, it's 0.
+                        return jsonify({
+                            "marks_awarded": 0, "max_marks": max_marks,
+                            "feedback": f"Incorrect. The official mark scheme requires {correct_val_str}, but your answer ({norm_ans}) evaluates to {user_val:.4f}. \n\nMODEL ANSWER: {mark_scheme}",
+                            "marking_points_met": []
+                        }), 200
+            except Exception: pass
+
         # INSTANT BYPASS FOR VISUAL QUESTIONS
         if q_type in ['draw', 'graph']:
             return jsonify({
@@ -2118,6 +2210,10 @@ MANDATORY RULES:
         else:
             result['feedback'] = f"{feedback.strip()}{model_answer_html}"
             
+        # Final safety check on marks
+        if 'marks_awarded' in result:
+            result['marks_awarded'] = min(float(result['marks_awarded']), float(max_marks))
+            
         return jsonify(result), 200
     except Exception as e: return jsonify({'error': str(e)}), 500
 
@@ -2153,16 +2249,39 @@ def get_result_detail():
         WHERE username = ? AND quiz_data_json LIKE ? 
         ORDER BY timestamp DESC LIMIT 1
     """, (u, f'%"{paper_id}"%'))
-    row = cursor.fetchone(); conn.close()
+    row = cursor.fetchone()
     
     if row:
+        ans = json.loads(row['answers_json'])
+        conn.close()
         return jsonify({
             'success': True,
-            'answers': json.loads(row['answers_json']),
+            'answers': ans,
             'score': row['score'],
             'total_marks': row['total_marks'],
-            'timestamp': row['timestamp']
+            'timestamp': row['timestamp'],
+            'status': 'completed'
         })
+    
+    # Fallback to in-progress work (check both tables for safety)
+    cursor.execute("SELECT * FROM official_exam_progress WHERE username = ? AND paper_id = ?", (u, paper_id))
+    row = cursor.fetchone()
+    if not row:
+        cursor.execute("SELECT * FROM exam_progress WHERE username = ? AND paper_id = ?", (u, paper_id))
+        row = cursor.fetchone()
+    
+    if row:
+        data = dict(row)
+        conn.close()
+        return jsonify({
+            'success': True,
+            'answers': json.loads(data['answers_json']),
+            'current_question_idx': data['current_question_idx'],
+            'timestamp': data['last_updated'],
+            'status': 'in-progress'
+        })
+    
+    conn.close()
     return jsonify({'success': False, 'message': 'Result not found'}), 404
 
 @app.route('/api/results/id/<int:result_id>')
@@ -2193,7 +2312,7 @@ def get_result_by_id(result_id):
 @app.route('/api/results')
 def get_results_api():
     conn = get_db(); cursor = conn.cursor()
-    cursor.execute("SELECT * FROM quiz_results ORDER BY timestamp DESC")
+    cursor.execute("SELECT * FROM quiz_results WHERE total_marks > 0 ORDER BY timestamp DESC")
     rows = cursor.fetchall(); results = []
     for row in rows:
         try:

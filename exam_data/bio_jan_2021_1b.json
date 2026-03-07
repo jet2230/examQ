@@ -1,0 +1,111 @@
+{
+  "paper_id": "bio_jan_2021_1b",
+  "title": "Pearson Edexcel International GCSE Biology Paper 1B - January 2021",
+  "subject": "Biology",
+  "qp_img_dir": "/static/exams/bio_jan_2021_1b/qp/",
+  "er_text": "",
+  "questions": [
+    {
+      "id": 1,
+      "sub_questions": [
+        { "sub_id": "1(a)", "type": "mcq", "max_marks": 1, "ms_text": "B 1", "options": ["A", "B", "C", "D"], "qp_pages": [2] },
+        { "sub_id": "1(b)", "type": "text", "max_marks": 2, "ms_text": "• energy / ATP / respiration /eq (1)\n• movement / swimming / tail movement/ eq (1)", "qp_pages": [2] },
+        { "sub_id": "1(c)", "type": "text", "max_marks": 2, "ms_text": "• digest / break down egg membrane / eq (1)\n• allow (nucleus) to enter / penetrate egg (1)\n• fertilisation / fusion (1)", "qp_pages": [2] },
+        { "sub_id": "1(d)", "type": "text", "max_marks": 2, "ms_text": "two marks for all 3 in correct order: vagina, uterus / cervix, oviduct / fallopian tube", "qp_pages": [3] }
+      ]
+    },
+    {
+      "id": 2,
+      "sub_questions": [
+        { "sub_id": "2(a)", "type": "text", "max_marks": 1, "ms_text": "small fish", "qp_pages": [4] },
+        { "sub_id": "2(b)(i)", "type": "text", "max_marks": 3, "ms_text": "• photosynthesis (1)\n• chloroplasts / chlorophyll (1)\n• absorbs / traps light /eq (energy) (1)\n• starch / glucose / carbohydrate (1)", "qp_pages": [4] },
+        { "sub_id": "2(b)(ii)", "type": "text", "max_marks": 2, "ms_text": "• respiration / heat loss (by plant) (1)\n• cannot digest / egested / not absorbed /eq (1)\n• uneaten / die / decomposition (1)\n• excretion (1)", "qp_pages": [4] },
+        { "sub_id": "2(c)", "type": "text", "max_marks": 2, "ms_text": "• increase surface area (1)\n• enzymes (1)", "qp_pages": [5] }
+      ]
+    },
+    {
+      "id": 3,
+      "sub_questions": [
+        { "sub_id": "3(a)(i)", "type": "text", "max_marks": 5, "ms_text": "least CO2: A; most glucose: G; least O2: J; least urea: F; highest pressure: B", "qp_pages": [6] },
+        { "sub_id": "3(a)(ii)", "type": "text", "max_marks": 2, "ms_text": "A / pV has thin(ner) wall, less muscle, less elastic tissue, wide(r) lumen", "qp_pages": [6] },
+        { "sub_id": "3(b)", "type": "text", "max_marks": 5, "ms_text": "• more oxygen/glucose (1)\n• more aerobic respiration (1)\n• more ATP/energy (1)\n• more muscle contraction (1)\n• less lactic acid (1)", "qp_pages": [7] }
+      ]
+    },
+    {
+      "id": 4,
+      "sub_questions": [
+        { "sub_id": "4(a)", "type": "text", "max_marks": 3, "ms_text": "algae: eutrophication; pollen: insect pollination; nitrate: active transport", "qp_pages": [8] },
+        { "sub_id": "4(b)(i)", "type": "text", "max_marks": 4, "ms_text": "• grass survives zinc (1)\n• less competition (1)\n• mutation (1)\n• reproduce and pass allele on (1)", "qp_pages": [9] },
+        { "sub_id": "4(b)(ii)", "type": "text", "max_marks": 4, "ms_text": "• tape measure (1)\n• quadrat (1)\n• repeat (1)\n• count plants / % cover (1)", "qp_pages": [9] }
+      ]
+    },
+    {
+      "id": 5,
+      "sub_questions": [
+        { "sub_id": "5(a)", "type": "text", "max_marks": 1, "ms_text": "Temperature", "qp_pages": [10] },
+        { "sub_id": "5(b)", "type": "text", "max_marks": 1, "ms_text": "prevent volume/SA affecting heat loss / fair test", "qp_pages": [10] },
+        { "sub_id": "5(c)", "type": "calculation", "max_marks": 2, "ms_text": "covered 50%, uncovered 45%, difference 5", "qp_pages": [11] },
+        { "sub_id": "5(d)", "type": "text", "max_marks": 4, "ms_text": "• less heat loss indoors (1)\n• move less (1)\n• more energy for growth (1)\n• ethical/disease/predator points (1)", "qp_pages": [11] },
+        { "sub_id": "5(e)", "type": "text", "max_marks": 2, "ms_text": "beakers of different sizes/volumes (1), keep beakers in/out of box (1)", "qp_pages": [12] }
+      ]
+    },
+    {
+      "id": 6,
+      "sub_questions": [
+        { "sub_id": "6(a)(i)", "type": "draw", "max_marks": 1, "ms_text": "Circle around axon terminals", "qp_pages": [13] },
+        { "sub_id": "6(a)(ii)", "type": "mcq", "max_marks": 1, "ms_text": "B motor", "options": ["A", "B", "C", "D"], "qp_pages": [13] },
+        { "sub_id": "6(a)(iii)", "type": "text", "max_marks": 2, "ms_text": "fast (1), no brain/thought (1), less damage (1)", "qp_pages": [13] },
+        { "sub_id": "6(b)(i)", "type": "mcq", "max_marks": 1, "ms_text": "D wider neurones have faster impulses", "options": ["A", "B", "C", "D"], "qp_pages": [14] },
+        { "sub_id": "6(b)(ii)", "type": "calculation", "max_marks": 1, "ms_text": "4.4", "qp_pages": [14] },
+        { "sub_id": "6(b)(iii)", "type": "calculation", "max_marks": 3, "ms_text": "0.9m / 4.4 = 0.20s = 2.0 x 10^-1", "qp_pages": [15] }
+      ]
+    },
+    {
+      "id": 7,
+      "sub_questions": [
+        { "sub_id": "7(a)(i)", "type": "text", "max_marks": 1, "ms_text": "radicle/root/plumule has grown", "qp_pages": [16] },
+        { "sub_id": "7(a)(ii)", "type": "text", "max_marks": 2, "ms_text": "Temperature, Volume, Humidity, Oxygen, Light, pH, CO2", "qp_pages": [16] },
+        { "sub_id": "7(b)(i)", "type": "draw", "max_marks": 5, "ms_text": "S scale, L lines, A axis, U units, P points", "qp_pages": [17] },
+        { "sub_id": "7(b)(ii)", "type": "text", "max_marks": 4, "ms_text": "• salt decreases germination (1)\n• lower water potential (1)\n• less water absorbed / exits (1)\n• by osmosis (1)\n• to activate enzymes (1)", "qp_pages": [17] },
+        { "sub_id": "7(c)(i)", "type": "text", "max_marks": 2, "ms_text": "roots grow towards gravity (1), positively gravitropic (1)", "qp_pages": [18] },
+        { "sub_id": "7(c)(ii)", "type": "text", "max_marks": 2, "ms_text": "roots grow away from light (1), negatively phototropic (1)", "qp_pages": [18] }
+      ]
+    },
+    {
+      "id": 8,
+      "sub_questions": [
+        { "sub_id": "8(a)", "type": "text", "max_marks": 1, "ms_text": "chemical that kills pests", "qp_pages": [20] },
+        { "sub_id": "8(b)", "type": "text", "max_marks": 2, "ms_text": "1320 km2, Barley", "qp_pages": [20] },
+        { "sub_id": "8(c)", "type": "text", "max_marks": 2, "ms_text": "winter cold (1), fewer pests (1), less pesticide needed (1)", "qp_pages": [21] },
+        { "sub_id": "8(d)", "type": "text", "max_marks": 4, "ms_text": "compare cereal/fruit herbicide/insecticide/fungicide use", "qp_pages": [21] },
+        { "sub_id": "8(e)", "type": "text", "max_marks": 2, "ms_text": "biological control (1), predator/nets (1)", "qp_pages": [21] }
+      ]
+    },
+    {
+      "id": 9,
+      "sub_questions": [
+        { "sub_id": "9(a)(i)", "type": "text", "max_marks": 1, "ms_text": "Sickle cells stick/trap in blood vessels", "qp_pages": [22] },
+        { "sub_id": "9(a)(ii)", "type": "text", "max_marks": 3, "ms_text": "cold reduces blood flow (1), less oxygen (1), anaerobic respiration (1), lactic acid (1), less energy (1)", "qp_pages": [22] },
+        { "sub_id": "9(b)(i)", "type": "text", "max_marks": 1, "ms_text": "only expressed when homozygous", "qp_pages": [23] },
+        { "sub_id": "9(b)(ii)", "type": "calculation", "max_marks": 2, "ms_text": "0.75 x 0.5 = 0.375", "qp_pages": [23] },
+        { "sub_id": "9(c)", "type": "mcq", "max_marks": 1, "ms_text": "D protoctist", "options": ["A", "B", "C", "D"], "qp_pages": [23] },
+        { "sub_id": "9(d)", "type": "mcq", "max_marks": 1, "ms_text": "B haemoglobin", "options": ["A", "B", "C", "D"], "qp_pages": [23] },
+        { "sub_id": "9(e)", "type": "text", "max_marks": 2, "ms_text": "smaller (1), no nucleus (1), biconcave (1)", "qp_pages": [24] }
+      ]
+    },
+    {
+      "id": 10,
+      "sub_questions": [
+        { "sub_id": "10(a)", "type": "text", "max_marks": 5, "ms_text": "temp/energy (1), concentration gradient (1), distance (1), SA:V ratio (1), mass/size (1), ATP/active transport (1)", "qp_pages": [26] },
+        { "sub_id": "10(b)", "type": "text", "max_marks": 4, "ms_text": "diffusion passive (1), diffusion high to low (1), active transport needs ATP (1), active transport needs proteins (1)", "qp_pages": [27] }
+      ]
+    },
+    {
+      "id": 11,
+      "sub_questions": [
+        { "sub_id": "11", "type": "text", "max_marks": 4, "ms_text": "C amount starch, O same yeast, R repeat, M height dough, S same flour/temp", "qp_pages": [28] }
+      ]
+    }
+  ],
+  "extract_pages": []
+}

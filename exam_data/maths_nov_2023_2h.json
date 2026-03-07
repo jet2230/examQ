@@ -1,0 +1,93 @@
+{
+  "paper_id": "maths_nov_2023_2h",
+  "title": "Pearson Edexcel International GCSE Maths Paper 2H - November 2023",
+  "subject": "Maths",
+  "qp_img_dir": "/static/exams/maths_nov_2023_2h/qp/",
+  "er_text": "",
+  "questions": [
+    { "id": 1, "sub_questions": [
+      { "sub_id": "1(a)", "type": "text", "max_marks": 1, "ms_text": "25 < m <= 30 B1", "qp_pages": [3] },
+      { "sub_id": "1(b)", "type": "calculation", "max_marks": 3, "ms_text": "M2 for products midpoints. A1 945", "qp_pages": [3] }
+    ]},
+    { "id": 2, "sub_questions": [
+      { "sub_id": "2", "type": "calculation", "max_marks": 4, "ms_text": "M1 BC=6. M1 EC=11. M1 Pythagoras. A1 17.8", "qp_pages": [4] }
+    ]},
+    { "id": 3, "sub_questions": [
+      { "sub_id": "3(a)", "type": "draw", "max_marks": 2, "ms_text": "Reflection in y=x B2", "qp_pages": [5] },
+      { "sub_id": "3(b)", "type": "text", "max_marks": 3, "ms_text": "Enlargement, sf 3, centre (7,2) B3", "qp_pages": [5] }
+    ]},
+    { "id": 4, "sub_questions": [
+      { "sub_id": "4(a)", "type": "calculation", "max_marks": 3, "ms_text": "M1 expand. M1 rearrange. A1 3.5", "qp_pages": [6] },
+      { "sub_id": "4(b)", "type": "calculation", "max_marks": 1, "ms_text": "h^12 B1", "qp_pages": [6] },
+      { "sub_id": "4(c)", "type": "calculation", "max_marks": 2, "ms_text": "16g^12 k^20 B2", "qp_pages": [6] },
+      { "sub_id": "4(d)", "type": "calculation", "max_marks": 2, "ms_text": "M1 n-2=12. A1 14", "qp_pages": [6] }
+    ]},
+    { "id": 5, "sub_questions": [
+      { "sub_id": "5", "type": "calculation", "max_marks": 3, "ms_text": "M1 butter 180. M1 flour 216. A1 216", "qp_pages": [7] }
+    ]},
+    { "id": 6, "sub_questions": [
+      { "sub_id": "6", "type": "calculation", "max_marks": 3, "ms_text": "M1 improper fractions. M1 multiply. A1 1 2/7", "qp_pages": [8] }
+    ]},
+    { "id": 7, "sub_questions": [
+      { "sub_id": "7", "type": "calculation", "max_marks": 3, "ms_text": "M1 0.92. M1 cubing. A1 20869", "qp_pages": [8] }
+    ]},
+    { "id": 8, "sub_questions": [
+      { "sub_id": "8", "type": "calculation", "max_marks": 3, "ms_text": "M1 sums 48, 70. M1 diff 22. A1 11", "qp_pages": [9] }
+    ]},
+    { "id": 9, "sub_questions": [
+      { "sub_id": "9", "type": "calculation", "max_marks": 2, "ms_text": "B2 y=1.5x-3", "qp_pages": [9] }
+    ]},
+    { "id": 10, "sub_questions": [
+      { "sub_id": "10", "type": "calculation", "max_marks": 5, "ms_text": "M2 area expressions. M1 equation. A1 6.4", "qp_pages": [10] }
+    ]},
+    { "id": 11, "sub_questions": [
+      { "sub_id": "11(a)", "type": "draw", "max_marks": 2, "ms_text": "B2 tree branches", "qp_pages": [11] },
+      { "sub_id": "11(b)", "type": "calculation", "max_marks": 3, "ms_text": "M1 product paths. A1 89/160", "qp_pages": [11] }
+    ]},
+    { "id": 12, "sub_questions": [
+      { "sub_id": "12(a)", "type": "calculation", "max_marks": 2, "ms_text": "M1 power 2. A1 8.5", "qp_pages": [12] },
+      { "sub_id": "12(b)", "type": "calculation", "max_marks": 2, "ms_text": "B2 25p^4 y^16", "qp_pages": [12] }
+    ]},
+    { "id": 13, "sub_questions": [
+      { "sub_id": "13", "type": "calculation", "max_marks": 2, "ms_text": "M1 identify quats. A1 9", "qp_pages": [12] }
+    ]},
+    { "id": 14, "sub_questions": [
+      { "sub_id": "14", "type": "draw", "max_marks": 3, "ms_text": "M1 draw y=x+2. A1 intersection", "qp_pages": [13] }
+    ]},
+    { "id": 15, "sub_questions": [
+      { "sub_id": "15(a)", "type": "calculation", "max_marks": 2, "ms_text": "M1 algebra steps. A1 41/110", "qp_pages": [14] },
+      { "sub_id": "15(b)", "type": "calculation", "max_marks": 3, "ms_text": "M1 surd simplify. A1 sqrt(135)", "qp_pages": [14] }
+    ]},
+    { "id": 16, "sub_questions": [
+      { "sub_id": "16", "type": "calculation", "max_marks": 3, "ms_text": "M1 partial expand. A1 full expand", "qp_pages": [15] }
+    ]},
+    { "id": 17, "sub_questions": [
+      { "sub_id": "17", "type": "calculation", "max_marks": 3, "ms_text": "M1 bounds. A1 167", "qp_pages": [15] }
+    ]},
+    { "id": 18, "sub_questions": [
+      { "sub_id": "18", "type": "calculation", "max_marks": 4, "ms_text": "M1 diff. M1 a=5. A1 t=1.25", "qp_pages": [16] }
+    ]},
+    { "id": 19, "sub_questions": [
+      { "sub_id": "19(a)", "type": "calculation", "max_marks": 1, "ms_text": "4.5 B1", "qp_pages": [17] },
+      { "sub_id": "19(b)", "type": "calculation", "max_marks": 2, "ms_text": "M1 g(4). A1 -18", "qp_pages": [17] },
+      { "sub_id": "19(c)", "type": "calculation", "max_marks": 4, "ms_text": "M1 complete square. M1 inverse steps. A1 result", "qp_pages": [17] }
+    ]},
+    { "id": 20, "sub_questions": [
+      { "sub_id": "20", "type": "calculation", "max_marks": 4, "ms_text": "M1 tri area. M1 radius. M1 circle area. A1 17.1", "qp_pages": [18] }
+    ]},
+    { "id": 21, "sub_questions": [
+      { "sub_id": "21", "type": "calculation", "max_marks": 5, "ms_text": "M1 sub. M1 quad. M1 solve. A1 pairs", "qp_pages": [19] }
+    ]},
+    { "id": 22, "sub_questions": [
+      { "sub_id": "22(a)", "type": "calculation", "max_marks": 2, "ms_text": "B2 vectors", "qp_pages": [20] },
+      { "sub_id": "22(b)", "type": "calculation", "max_marks": 3, "ms_text": "M1 ratio logic. A1 3:4", "qp_pages": [21] }
+    ]},
+    { "id": 23, "sub_questions": [
+      { "sub_id": "23", "type": "calculation", "max_marks": 5, "ms_text": "M1 vol large. M1 vol small. M1 ratio. A1 2.4", "qp_pages": [22, 23] }
+    ]},
+    { "id": 24, "sub_questions": [
+      { "sub_id": "24", "type": "calculation", "max_marks": 5, "ms_text": "M1 simplify terms. M1 cross mult. A1 1.75", "qp_pages": [24] }
+    ]}
+  ],
+  "extract_pages": []
+}

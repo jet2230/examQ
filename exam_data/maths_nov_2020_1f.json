@@ -1,0 +1,178 @@
+{
+  "paper_id": "maths_nov_2020_1f",
+  "title": "Pearson Edexcel International GCSE Maths Paper 1F - November 2020",
+  "subject": "Maths",
+  "qp_img_dir": "/static/exams/maths_nov_2020_1f/qp/",
+  "er_text": "",
+  "questions": [
+    {
+      "id": 1,
+      "sub_questions": [
+        { "sub_id": "1(a)", "type": "text", "max_marks": 1, "lines_provided": 1, "ms_text": "Gabon B1", "final_label": "", "final_unit": "", "qp_pages": [3] },
+        { "sub_id": "1(b)", "type": "calculation", "max_marks": 1, "lines_provided": 2, "ms_text": "11 100 B1 accept −11 100", "final_label": "", "final_unit": "barrels", "qp_pages": [3] },
+        { "sub_id": "1(c)", "type": "calculation", "max_marks": 1, "lines_provided": 1, "ms_text": "248 000 B1", "final_label": "", "final_unit": "", "qp_pages": [3] }
+      ]
+    },
+    {
+      "id": 2,
+      "sub_questions": [
+        { "sub_id": "2(a)", "type": "calculation", "max_marks": 1, "lines_provided": 1, "ms_text": "100 B1", "final_label": "", "final_unit": "", "qp_pages": [4] },
+        { "sub_id": "2(b)", "type": "draw", "max_marks": 1, "lines_provided": 0, "ms_text": "1 ¾ pictures B1", "final_label": "", "final_unit": "", "qp_pages": [4] },
+        { "sub_id": "2(c)", "type": "calculation", "max_marks": 3, "lines_provided": 4, "ms_text": "2 1/2 + 3 1/4 + 5 + 4 1/4 + '1 3/4' (= 16 3/4) oe or 50 + 65 + 100 + 85 + 35 (= 335) M1; 500 - '335' M1; 165 A1", "final_label": "", "final_unit": "", "qp_pages": [4] }
+      ]
+    },
+    {
+      "id": 3,
+      "sub_questions": [
+        { "sub_id": "3(a)", "type": "text", "max_marks": 1, "lines_provided": 1, "ms_text": "cylinder B1", "final_label": "", "final_unit": "", "qp_pages": [5] },
+        { "sub_id": "3(b)(i)", "type": "calculation", "max_marks": 1, "lines_provided": 1, "ms_text": "6 B1", "final_label": "faces", "final_unit": "", "qp_pages": [5] },
+        { "sub_id": "3(b)(ii)", "type": "calculation", "max_marks": 1, "lines_provided": 1, "ms_text": "8 B1", "final_label": "vertices", "final_unit": "", "qp_pages": [5] },
+        { "sub_id": "3(c)", "type": "calculation", "max_marks": 2, "lines_provided": 2, "ms_text": "20 x 8 x 11 M1; 1760 A1", "final_label": "", "final_unit": "cm3", "qp_pages": [5] }
+      ]
+    },
+    {
+      "id": 4,
+      "sub_questions": [
+        { "sub_id": "4(a)", "type": "text", "max_marks": 1, "lines_provided": 1, "ms_text": "pentagon B1", "final_label": "", "final_unit": "", "qp_pages": [6] },
+        { "sub_id": "4(b)", "type": "calculation", "max_marks": 1, "lines_provided": 1, "ms_text": "85 B1 for 83 – 87", "final_label": "angle", "final_unit": "°", "qp_pages": [6] },
+        { "sub_id": "4(c)", "type": "draw", "max_marks": 1, "lines_provided": 0, "ms_text": "parallel sides marked B1", "final_label": "", "final_unit": "", "qp_pages": [6] },
+        { "sub_id": "4(d)", "type": "text", "max_marks": 1, "lines_provided": 3, "ms_text": "No with reason B1", "final_label": "", "final_unit": "", "qp_pages": [7] }
+      ]
+    },
+    {
+      "id": 5,
+      "sub_questions": [
+        { "sub_id": "5", "type": "calculation", "max_marks": 3, "lines_provided": 4, "ms_text": "20 – 2.35 (=17.65) M1; '17.65' / 0.74 (= 23.8…) M1; 23 A1", "final_label": "pencils", "final_unit": "", "qp_pages": [7] }
+      ]
+    },
+    {
+      "id": 6,
+      "sub_questions": [
+        { "sub_id": "6(a)", "type": "calculation", "max_marks": 2, "lines_provided": 2, "ms_text": "24/40 = 3/5 M1; 3/5 A1", "final_label": "", "final_unit": "", "qp_pages": [8] },
+        { "sub_id": "6(b)", "type": "calculation", "max_marks": 1, "lines_provided": 1, "ms_text": "0.2 B1", "final_label": "", "final_unit": "", "qp_pages": [8] },
+        { "sub_id": "6(c)", "type": "calculation", "max_marks": 1, "lines_provided": 1, "ms_text": "3/10 B1 oe", "final_label": "fraction", "final_unit": "", "qp_pages": [8] },
+        { "sub_id": "6(d)", "type": "calculation", "max_marks": 2, "lines_provided": 4, "ms_text": "10/24 = 5/12 M1; 5/12 A1", "final_label": "", "final_unit": "", "qp_pages": [8] },
+        { "sub_id": "6(e)", "type": "calculation", "max_marks": 3, "lines_provided": 3, "ms_text": "1/2 * 280 (= 140). 2/5 * 280 (= 112). 280 - 140 - 112 = 28 M1 M1; 28 A1", "final_label": "green counters", "final_unit": "", "qp_pages": [9] }
+      ]
+    },
+    {
+      "id": 7,
+      "sub_questions": [
+        { "sub_id": "7(a)", "type": "text", "max_marks": 1, "lines_provided": 1, "ms_text": "5cd B1", "final_label": "", "final_unit": "", "qp_pages": [10] },
+        { "sub_id": "7(b)", "type": "calculation", "max_marks": 1, "lines_provided": 1, "ms_text": "7 B1", "final_label": "x", "final_unit": "", "qp_pages": [10] },
+        { "sub_id": "7(c)", "type": "calculation", "max_marks": 1, "lines_provided": 1, "ms_text": "4 B1", "final_label": "y", "final_unit": "", "qp_pages": [10] },
+        { "sub_id": "7(d)", "type": "text", "max_marks": 2, "lines_provided": 1, "ms_text": "6k + 11m B2 (B1 for 6k or 11m)", "final_label": "", "final_unit": "", "qp_pages": [10] },
+        { "sub_id": "7(e)", "type": "text", "max_marks": 1, "lines_provided": 1, "ms_text": "12g + 4 B1", "final_label": "", "final_unit": "", "qp_pages": [10] }
+      ]
+    },
+    {
+      "id": 8,
+      "sub_questions": [
+        { "sub_id": "8", "type": "calculation", "max_marks": 4, "lines_provided": 0, "ms_text": "Male: Europe 10, Africa 3, Asia 16. Female: Europe 14, Africa 6, Asia 11. B4 all correct.", "final_label": "", "final_unit": "", "qp_pages": [11] }
+      ]
+    },
+    {
+      "id": 9,
+      "sub_questions": [
+        { "sub_id": "9(a)", "type": "calculation", "max_marks": 2, "lines_provided": 2, "ms_text": "3*4 + 2*7 = 26 M1; 26 A1", "final_label": "", "final_unit": "", "qp_pages": [12] },
+        { "sub_id": "9(b)", "type": "calculation", "max_marks": 2, "lines_provided": 2, "ms_text": "2*(−6)^2 + 3*−2 = 66 M1; 66 A1", "final_label": "", "final_unit": "", "qp_pages": [12] },
+        { "sub_id": "9(c)", "type": "text", "max_marks": 3, "lines_provided": 1, "ms_text": "T = 6g + 12h B3", "final_label": "formula", "final_unit": "", "qp_pages": [12] }
+      ]
+    },
+    {
+      "id": 10,
+      "sub_questions": [
+        { "sub_id": "10(a)", "type": "calculation", "max_marks": 2, "lines_provided": 1, "ms_text": "88.96 / 7.48 = 11.88778... M1; 11.88778... A1", "final_label": "", "final_unit": "", "qp_pages": [13] },
+        { "sub_id": "10(b)", "type": "calculation", "max_marks": 1, "lines_provided": 1, "ms_text": "12 B1", "final_label": "", "final_unit": "", "qp_pages": [13] }
+      ]
+    },
+    {
+      "id": 11,
+      "sub_questions": [
+        { "sub_id": "11", "type": "calculation", "max_marks": 2, "lines_provided": 1, "ms_text": "2 * π * 18 = 113. M1; 113 A1", "final_label": "circumference", "final_unit": "cm", "qp_pages": [14] }
+      ]
+    },
+    {
+      "id": 12,
+      "sub_questions": [
+        { "sub_id": "12", "type": "calculation", "max_marks": 4, "lines_provided": 6, "ms_text": "(72/3)*1.34=17.91. 34.5-17.91=16.59. (16.59/17.91)*100=92.6% M1 M1 M1; 93 A1", "final_label": "percentage profit", "final_unit": "%", "qp_pages": [15] }
+      ]
+    },
+    {
+      "id": 13,
+      "sub_questions": [
+        { "sub_id": "13(a)", "type": "draw", "max_marks": 2, "lines_provided": 0, "ms_text": "(3,5) (5,5) (5,8) B2", "final_label": "", "final_unit": "", "qp_pages": [16] },
+        { "sub_id": "13(b)", "type": "text", "max_marks": 3, "lines_provided": 3, "ms_text": "Rotation, origin, 90 anticlockwise B3", "final_label": "transformation", "final_unit": "", "qp_pages": [17] }
+      ]
+    },
+    {
+      "id": 14,
+      "sub_questions": [
+        { "sub_id": "14(a)", "type": "list", "max_marks": 1, "lines_provided": 1, "ms_text": "2, 4, 6, 12 B1", "final_label": "", "final_unit": "", "qp_pages": [18] },
+        { "sub_id": "14(b)", "type": "list", "max_marks": 1, "lines_provided": 1, "ms_text": "5, 7, 8, 9, 10, 11, 13, 14 B1", "final_label": "", "final_unit": "", "qp_pages": [18] },
+        { "sub_id": "14(c)", "type": "calculation", "max_marks": 2, "lines_provided": 1, "ms_text": "3/14 M1; 3/14 A1", "final_label": "probability", "final_unit": "", "qp_pages": [18] }
+      ]
+    },
+    {
+      "id": 15,
+      "sub_questions": [
+        { "sub_id": "15", "type": "calculation", "max_marks": 4, "lines_provided": 4, "ms_text": "15*3600*5/12 = 22500. 22500*0.002 = 45. M1 M1 M1; 45 A1", "final_label": "faulty cars", "final_unit": "", "qp_pages": [19] }
+      ]
+    },
+    {
+      "id": 16,
+      "sub_questions": [
+        { "sub_id": "16", "type": "graph", "max_marks": 3, "lines_provided": 0, "ms_text": "Correct line between x = -2 and x = 3 B3", "final_label": "", "final_unit": "", "qp_pages": [20] }
+      ]
+    },
+    {
+      "id": 17,
+      "sub_questions": [
+        { "sub_id": "17", "type": "calculation", "max_marks": 4, "lines_provided": 6, "ms_text": "x=8, y=18.5 M1 M1 M1; A1", "final_label": "x", "final_unit": "", "qp_pages": [21] }
+      ]
+    },
+    {
+      "id": 18,
+      "sub_questions": [
+        { "sub_id": "18(a)", "type": "calculation", "max_marks": 1, "lines_provided": 1, "ms_text": "0.0057 B1", "final_label": "", "final_unit": "", "qp_pages": [22] },
+        { "sub_id": "18(b)", "type": "calculation", "max_marks": 1, "lines_provided": 1, "ms_text": "8 x 10^5 B1", "final_label": "", "final_unit": "", "qp_pages": [22] },
+        { "sub_id": "18(c)", "type": "calculation", "max_marks": 2, "lines_provided": 2, "ms_text": "273000 / 0.06 = 4550000 M1; 4550000 A1", "final_label": "", "final_unit": "", "qp_pages": [22] }
+      ]
+    },
+    {
+      "id": 19,
+      "sub_questions": [
+        { "sub_id": "19", "type": "calculation", "max_marks": 3, "lines_provided": 4, "ms_text": "100/28440 * 3600 = 12.65... M1 M1; 13 A1", "final_label": "", "final_unit": "seconds", "qp_pages": [22] }
+      ]
+    },
+    {
+      "id": 20,
+      "sub_questions": [
+        { "sub_id": "20(a)", "type": "calculation", "max_marks": 3, "lines_provided": 4, "ms_text": "20-5x=7-3x. 13=2x. x=6.5 M1 M1; 6.5 A1", "final_label": "x", "final_unit": "", "qp_pages": [23] },
+        { "sub_id": "20(b)", "type": "calculation", "max_marks": 2, "lines_provided": 2, "ms_text": "8m^2 g^3(2m + 3g^2) M1 A1", "final_label": "", "final_unit": "", "qp_pages": [23] },
+        { "sub_id": "20(c)(i)", "type": "calculation", "max_marks": 2, "lines_provided": 2, "ms_text": "(y-8)(y+6) M1 A1", "final_label": "", "final_unit": "", "qp_pages": [23] },
+        { "sub_id": "20(c)(ii)", "type": "calculation", "max_marks": 1, "lines_provided": 1, "ms_text": "8, -6 B1", "final_label": "", "final_unit": "", "qp_pages": [23] }
+      ]
+    },
+    {
+      "id": 21,
+      "sub_questions": [
+        { "sub_id": "21", "type": "calculation", "max_marks": 4, "lines_provided": 6, "ms_text": "(10-2)*180=1440. Sum=1302. 1440-1302=138. 360-138=222 M1 M1 M1; 222 A1", "final_label": "x", "final_unit": "", "qp_pages": [24] }
+      ]
+    },
+    {
+      "id": 22,
+      "sub_questions": [
+        { "sub_id": "22", "type": "calculation", "max_marks": 3, "lines_provided": 4, "ms_text": "1080/0.8 = 1350 M1 M1; 1350 A1", "final_label": "", "final_unit": "rupees", "qp_pages": [25] }
+      ]
+    },
+    {
+      "id": 23,
+      "sub_questions": [
+        { "sub_id": "23(a)", "type": "calculation", "max_marks": 1, "lines_provided": 1, "ms_text": "2 * 3^37 B1", "final_label": "", "final_unit": "", "qp_pages": [26] },
+        { "sub_id": "23(b)", "type": "calculation", "max_marks": 2, "lines_provided": 2, "ms_text": "2^5 * 3^80 M1 A1", "final_label": "", "final_unit": "", "qp_pages": [26] }
+      ]
+    }
+  ],
+  "extract_pages": []
+}

@@ -52,6 +52,7 @@
             gap: 5px;
             cursor: pointer;
             padding: 5px;
+            margin-left: 15px;
         }
         .hamburger div {
             width: 25px;
@@ -68,18 +69,22 @@
             }
             .nav-links {
                 display: none;
-                width: 100%;
+                width: auto;
                 flex-direction: column;
                 position: absolute;
                 top: 100%;
-                left: 0;
-                background: var(--main-gradient);
+                right: 0;
+                background: var(--primary-color);
                 padding: 20px;
-                box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+                box-shadow: 0 10px 20px rgba(0,0,0,0.2);
                 z-index: 1000;
+                border-radius: 0 0 0 15px;
+                border: 1px solid rgba(255,255,255,0.1);
+                border-top: none;
             }
             .nav-links.active { display: flex; }
-            .nav-links a { margin: 10px 0; font-size: 1.1em; width: 100%; text-align: center; }
+            .nav-links a { margin: 10px 0; font-size: 1.1em; width: 100%; text-align: right; }
+            .nav-links span#welcomeUser { display: none; }
         }
         
         .main-container {
@@ -455,9 +460,15 @@
                 <option value="" style="color: #333;">Jump to...</option>
             </select>
         </div>
-        <div class="nav-links">
+        <div class="nav-links" id="navLinks">
             <span id="welcomeUser" style="margin-right: 15px; font-weight: 600; color: white; font-size: 0.9em;"></span>
             <a href="/exam_questions.html">📖 Exam Library</a>
+            <a href="#" onclick="logout()">🚪 Logout</a>
+        </div>
+        <div class="hamburger" onclick="toggleMobileNav()">
+            <div></div>
+            <div></div>
+            <div></div>
         </div>
     </div>
 
@@ -699,6 +710,7 @@
             });        }
 
         let isReviewMode = false;
+        let targetStudent = "";
 
         async function init() {
             setupDraggableAndResizable();
@@ -712,7 +724,7 @@
             if (!currentUser) { window.location.href = 'login.html'; return; }
             
             isReviewMode = (mode === 'review');
-            const targetStudent = isReviewMode ? (reviewStudent || currentUser) : currentUser;
+            targetStudent = isReviewMode ? (reviewStudent || currentUser) : currentUser;
             
             if (isReviewMode) {
                 document.getElementById('playerBody').classList.add('review-mode');
@@ -748,9 +760,26 @@
             const prog = await progRes.json();
             if (prog.success) {
                 savedAnswers = prog.answers || {};
+                window.reviewStatus = prog.status || (isReviewMode ? 'completed' : 'started');
+                
+                // Normalize for backward compatibility (some older results used .value instead of .answer)
+                Object.keys(savedAnswers).forEach(id => {
+                    if (id === '_selections') return;
+                    const item = savedAnswers[id];
+                    if (item.value !== undefined && item.answer === undefined) {
+                        item.answer = item.value;
+                    }
+                    if (item.marks !== undefined && item.marks_awarded === undefined) {
+                        item.marks_awarded = item.marks;
+                    }
+                });
+
                 currentGroupIdx = prog.current_question_idx || 0;
                 selectedQuestionInGroup = savedAnswers._selections || {};
             } else {
+                if (isReviewMode) {
+                    showLineAlert("No completed result or in-progress work found for " + targetStudent, "error");
+                }
                 console.log("No previous progress found for this paper.");
             }
 
@@ -843,6 +872,32 @@
 
             // We always need to refresh the list content because toggle state changes
             list.innerHTML = ''; 
+
+            // Add Review Mode header if applicable
+            if (isReviewMode) {
+                const reviewHeader = document.createElement('div');
+                reviewHeader.className = 'sub-question-item';
+                reviewHeader.style.padding = '15px 20px';
+                reviewHeader.style.background = '#e1e7ff';
+                reviewHeader.style.border = '1px solid #c2c9ff';
+                reviewHeader.style.marginBottom = '20px';
+                reviewHeader.style.borderRadius = '12px';
+                reviewHeader.style.color = '#1e3c72';
+                reviewHeader.style.fontSize = '0.9em';
+                reviewHeader.style.fontWeight = 'bold';
+                reviewHeader.style.display = 'flex';
+                reviewHeader.style.justifyContent = 'space-between';
+                reviewHeader.style.alignItems = 'center';
+                
+                const status = window.reviewStatus || 'Completed';
+                const statusColor = status === 'in-progress' ? '#fd7e14' : '#28a745';
+                
+                reviewHeader.innerHTML = `
+                    <span>Reviewing: <span style="text-decoration:underline;">${targetStudent}</span></span>
+                    <span style="background:${statusColor}; color:white; padding:3px 10px; border-radius:12px; font-size:0.8em; text-transform:uppercase;">${status}</span>
+                `;
+                list.appendChild(reviewHeader);
+            }
             
             panel.onscroll = () => {
                 if (isManualJumping) return;
@@ -1617,9 +1672,19 @@
             }
         }
 
-        function toggleMenu() {
-            document.getElementById('navLinks').classList.toggle('active');
+        function toggleMobileNav() {
+            const nav = document.getElementById('navLinks');
+            nav.classList.toggle('active');
         }
+
+        // Close mobile nav when clicking outside
+        document.addEventListener('click', (e) => {
+            const nav = document.getElementById('navLinks');
+            const hamburger = document.querySelector('.hamburger');
+            if (nav && nav.classList.contains('active') && !nav.contains(e.target) && !hamburger.contains(e.target)) {
+                nav.classList.remove('active');
+            }
+        });
 
         function logout() {
             localStorage.removeItem('quiz_username');

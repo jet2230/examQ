@@ -519,12 +519,23 @@
                 
                 // Case-insensitive check for UNO calls
                 const called = s.unoCalls && s.unoCalls.some(name => name.toLowerCase() === u.toLowerCase());
-                const finished = s.finishers && s.finishers.some(name => name.toLowerCase() === u.toLowerCase());
+                const finisherIdx = s.finishers ? s.finishers.findIndex(name => name.toLowerCase() === u.toLowerCase()) : -1;
+                const finished = finisherIdx !== -1;
+                let finishedLabel = '';
+                if (finished) {
+                    const place = finisherIdx + 1;
+                    const j = place % 10, k = place % 100;
+                    let suffix = "th";
+                    if (j == 1 && k != 11) suffix = "st";
+                    else if (j == 2 && k != 12) suffix = "nd";
+                    else if (j == 3 && k != 13) suffix = "rd";
+                    finishedLabel = `<span style="color:#6c757d; font-weight:bold; margin-left:5px;">(FINISHED ${place}${suffix})</span>`;
+                }
 
                 turnHtml += `<div class="player-chip ${active ? 'active-turn' : (next ? 'next-turn' : '')}" title="${u}">
                     <strong>${disp}</strong> <span>(${count})</span> 
                     ${called && !finished ? '<span style="color:#28a745; font-weight:bold; margin-left:5px;">(Uno)</span>' : ''}
-                    ${finished ? '<span style="color:#6c757d; font-weight:bold; margin-left:5px;">(FINISHED)</span>' : ''}
+                    ${finishedLabel}
                 </div>`;
             }
 

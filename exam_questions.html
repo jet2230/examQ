@@ -550,9 +550,24 @@
                         btnText = 'Continue';
                     }
                 }
+
+                // Detect Tier for Maths
+                let tierHtml = '';
+                if (exam.subject.toLowerCase().includes('math')) {
+                    const p = (exam.paper || '').toUpperCase();
+                    if (p.includes('1H') || p.includes('2H') || p.includes('HIGHER')) {
+                        tierHtml = `<span style="background:#e1e7ff; color:#1e3c72; padding:2px 8px; border-radius:10px; font-size:0.7em; font-weight:800; text-transform:uppercase; margin-bottom:5px;">Higher Tier</span>`;
+                    } else if (p.includes('1F') || p.includes('2F') || p.includes('FOUNDATION')) {
+                        tierHtml = `<span style="background:#fff3cd; color:#856404; padding:2px 8px; border-radius:10px; font-size:0.7em; font-weight:800; text-transform:uppercase; margin-bottom:5px;">Foundation Tier</span>`;
+                    }
+                }
+
                 return `
                     <div class="paper-card" onclick="window.location.href='/official_exam_player.html?paper_id=${exam.id}'">
-                        <div class="paper-title">${exam.title}</div>
+                        <div style="display:flex; flex-direction:column; gap:2px;">
+                            ${tierHtml}
+                            <div class="paper-title">${exam.title}</div>
+                        </div>
                         <div class="paper-meta">
                             <div style="font-weight: 700; color: var(--primary-color); font-size: 0.95em;">${formatLongDate(exam.date)}</div>
                             <div style="display: flex; justify-content: space-between; width: 100%; align-items: center; margin-top: 5px;">

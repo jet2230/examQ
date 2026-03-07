@@ -1,0 +1,112 @@
+{
+  "paper_id": "maths_nov_2023_1f",
+  "title": "Pearson Edexcel International GCSE Maths Paper 1F - November 2023",
+  "subject": "Maths",
+  "qp_img_dir": "/static/exams/maths_nov_2023_1f/qp/",
+  "er_text": "",
+  "questions": [
+    { "id": 1, "sub_questions": [
+      { "sub_id": "1(a)(i)", "type": "text", "max_marks": 1, "ms_text": "40 B1", "qp_pages": [3] },
+      { "sub_id": "1(a)(ii)", "type": "text", "max_marks": 1, "ms_text": "27 B1", "qp_pages": [3] },
+      { "sub_id": "1(b)", "type": "text", "max_marks": 1, "ms_text": "−9 B1", "qp_pages": [3] },
+      { "sub_id": "1(c)", "type": "calculation", "max_marks": 1, "ms_text": "21 B1", "qp_pages": [3] },
+      { "sub_id": "1(d)", "type": "text", "max_marks": 1, "ms_text": "2 + odd prime number B1 eg. 2 + 3, 2 + 5 etc", "qp_pages": [3] }
+    ]},
+    { "id": 2, "sub_questions": [
+      { "sub_id": "2(a)", "type": "text", "max_marks": 1, "ms_text": "Canada B1", "qp_pages": [4] },
+      { "sub_id": "2(b)", "type": "calculation", "max_marks": 1, "ms_text": "420 B1", "qp_pages": [4] },
+      { "sub_id": "2(c)", "type": "calculation", "max_marks": 1, "ms_text": "90 B1", "qp_pages": [4] },
+      { "sub_id": "2(d)", "type": "draw", "max_marks": 1, "ms_text": "Correct bar chart B1", "qp_pages": [4] }
+    ]},
+    { "id": 3, "sub_questions": [
+      { "sub_id": "3(a)", "type": "text", "max_marks": 1, "ms_text": "reflex B1", "qp_pages": [5] },
+      { "sub_id": "3(b)", "type": "text", "max_marks": 1, "ms_text": "radius B1", "qp_pages": [5] },
+      { "sub_id": "3(c)", "type": "text", "max_marks": 1, "ms_text": "pentagon B1", "qp_pages": [5] },
+      { "sub_id": "3(d)", "type": "calculation", "max_marks": 1, "ms_text": "9 B1", "qp_pages": [5] }
+    ]},
+    { "id": 4, "sub_questions": [
+      { "sub_id": "4(a)", "type": "text", "max_marks": 1, "ms_text": "(1, 6) B1", "qp_pages": [6] },
+      { "sub_id": "4(b)", "type": "text", "max_marks": 1, "ms_text": "(-3, -1) B1", "qp_pages": [6] },
+      { "sub_id": "4(c)", "type": "draw", "max_marks": 1, "ms_text": "Cross at (1, 2) B1", "qp_pages": [6] },
+      { "sub_id": "4(d)", "type": "draw", "max_marks": 1, "ms_text": "Cross at (5, -1) B1", "qp_pages": [6] },
+      { "sub_id": "4(e)", "type": "calculation", "max_marks": 1, "ms_text": "1 B1", "qp_pages": [6] }
+    ]},
+    { "id": 5, "sub_questions": [
+      { "sub_id": "5(a)", "type": "draw", "max_marks": 1, "ms_text": "8 squares shaded B1", "qp_pages": [7] },
+      { "sub_id": "5(b)", "type": "calculation", "max_marks": 1, "ms_text": "30 B1", "qp_pages": [7] },
+      { "sub_id": "5(c)", "type": "calculation", "max_marks": 1, "ms_text": "8/25 B1", "qp_pages": [7] },
+      { "sub_id": "5(d)", "type": "calculation", "max_marks": 1, "ms_text": "6 4/7 B1", "qp_pages": [7] }
+    ]},
+    { "id": 6, "sub_questions": [
+      { "sub_id": "6", "type": "calculation", "max_marks": 4, "ms_text": "M1 for 2*145.5 or 3*110. M1 for (1000-(291+330)). M1 for 379/30. A1 for 19", "qp_pages": [8] }
+    ]},
+    { "id": 7, "sub_questions": [
+      { "sub_id": "7(a)", "type": "text", "max_marks": 1, "ms_text": "45cd B1", "qp_pages": [9] },
+      { "sub_id": "7(b)", "type": "text", "max_marks": 2, "ms_text": "-2p + 8n B2", "qp_pages": [9] },
+      { "sub_id": "7(c)", "type": "calculation", "max_marks": 2, "ms_text": "M1 for 8*9 - 6*5. A1 42", "qp_pages": [9] },
+      { "sub_id": "7(d)", "type": "calculation", "max_marks": 2, "ms_text": "M1 for 5m=23. A1 4.6", "qp_pages": [9] }
+    ]},
+    { "id": 8, "sub_questions": [
+      { "sub_id": "8", "type": "list", "max_marks": 2, "ms_text": "AE, AP, AW, EP, EW, PW B2", "qp_pages": [10] }
+    ]},
+    { "id": 9, "sub_questions": [
+      { "sub_id": "9", "type": "calculation", "max_marks": 4, "ms_text": "M1 for 360-296=64. M1 for 180-(64+42)=74. M1 for 74/2. A1 for 37", "qp_pages": [11] }
+    ]},
+    { "id": 10, "sub_questions": [
+      { "sub_id": "10(a)", "type": "text", "max_marks": 1, "ms_text": "3 B1", "qp_pages": [12] },
+      { "sub_id": "10(b)", "type": "calculation", "max_marks": 3, "ms_text": "M1 for sum fx (=114). M1 for 114/50. A1 2.28", "qp_pages": [12] },
+      { "sub_id": "10(c)", "type": "calculation", "max_marks": 2, "ms_text": "M1 for a/50. A1 23/50", "qp_pages": [12] }
+    ]},
+    { "id": 11, "sub_questions": [
+      { "sub_id": "11", "type": "calculation", "max_marks": 5, "ms_text": "M1 vans=600. M1 elec cars=160. M1 elec vans=216. M1 216-160. A1 56", "qp_pages": [13] }
+    ]},
+    { "id": 12, "sub_questions": [
+      { "sub_id": "12", "type": "graph", "max_marks": 3, "ms_text": "B3 for correct line x=-2 to x=3", "qp_pages": [14] }
+    ]},
+    { "id": 13, "sub_questions": [
+      { "sub_id": "13", "type": "calculation", "max_marks": 4, "ms_text": "M1 for conversion. M1 for circumference. M1 for div. A1 348", "qp_pages": [15] }
+    ]},
+    { "id": 14, "sub_questions": [
+      { "sub_id": "14(a)", "type": "calculation", "max_marks": 1, "ms_text": "30 B1", "qp_pages": [16] },
+      { "sub_id": "14(b)", "type": "calculation", "max_marks": 2, "ms_text": "M1 [7.8,8.2]*4.5. A1 36", "qp_pages": [16] }
+    ]},
+    { "id": 15, "sub_questions": [
+      { "sub_id": "15(a)", "type": "list", "max_marks": 1, "ms_text": "5 7 9 11 13 15 B1", "qp_pages": [17] },
+      { "sub_id": "15(b)", "type": "list", "max_marks": 1, "ms_text": "5 15 B1", "qp_pages": [17] },
+      { "sub_id": "15(c)", "type": "list", "max_marks": 1, "ms_text": "6 8 12 14 16 B1", "qp_pages": [17] }
+    ]},
+    { "id": 16, "sub_questions": [
+      { "sub_id": "16(a)", "type": "calculation", "max_marks": 2, "ms_text": "B2 6p(2q-3)", "qp_pages": [18] },
+      { "sub_id": "16(b)", "type": "calculation", "max_marks": 4, "ms_text": "M1 6y+2=56. M1 y=9. M1 zinc calc. A1 13", "qp_pages": [18] }
+    ]},
+    { "id": 17, "sub_questions": [
+      { "sub_id": "17", "type": "calculation", "max_marks": 4, "ms_text": "M1 total paid 17700. M1 diff 5200. M1 5200/12500*100. A1 41.6", "qp_pages": [19] }
+    ]},
+    { "id": 18, "sub_questions": [
+      { "sub_id": "18(a)", "type": "calculation", "max_marks": 2, "ms_text": "M1 for 1-0.58. A1 0.14", "qp_pages": [20] },
+      { "sub_id": "18(b)", "type": "calculation", "max_marks": 2, "ms_text": "M1 for 250*0.58. A1 145", "qp_pages": [20] }
+    ]},
+    { "id": 19, "sub_questions": [
+      { "sub_id": "19", "type": "calculation", "max_marks": 3, "ms_text": "M1 for pi*d oe. M1 complete method. A1 114", "qp_pages": [21] }
+    ]},
+    { "id": 20, "sub_questions": [
+      { "sub_id": "20", "type": "calculation", "max_marks": 4, "ms_text": "M1 reduction mult. M1 div for full price. M1 diff. A1 2", "qp_pages": [22] }
+    ]},
+    { "id": 21, "sub_questions": [
+      { "sub_id": "21", "type": "calculation", "max_marks": 2, "ms_text": "B2 5^3 * 7^2 * 11^4", "qp_pages": [23] }
+    ]},
+    { "id": 22, "sub_questions": [
+      { "sub_id": "22(a)", "type": "calculation", "max_marks": 2, "ms_text": "M1 for isolation. A1 x >= -1.2", "qp_pages": [24] },
+      { "sub_id": "22(b)", "type": "list", "max_marks": 3, "ms_text": "y>=2, x<=7, y<=x B3", "qp_pages": [24] }
+    ]},
+    { "id": 23, "sub_questions": [
+      { "sub_id": "23(a)", "type": "calculation", "max_marks": 1, "ms_text": "0.000587", "qp_pages": [25] },
+      { "sub_id": "23(b)", "type": "calculation", "max_marks": 1, "ms_text": "8.4 * 10^7", "qp_pages": [25] },
+      { "sub_id": "23(c)", "type": "calculation", "max_marks": 2, "ms_text": "M1 method. A1 57.8", "qp_pages": [25] }
+    ]},
+    { "id": 24, "sub_questions": [
+      { "sub_id": "24", "type": "calculation", "max_marks": 5, "ms_text": "M1 AC=12.4. M1 AD=9.5. M1 DB=12.5. M1 tan x=8/12.5. A1 32.7", "qp_pages": [26, 27] }
+    ]}
+  ],
+  "extract_pages": []
+}
