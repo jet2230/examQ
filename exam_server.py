@@ -754,7 +754,10 @@ Respond ONLY with a JSON object in this format: {"word": "YOUR CHOICE"}"""
                     prompt = f"Hangman: {word_disp}. Guessed: {','.join(guessed)}. Pick next letter. Return ONLY the letter."
                     
                     try:
+                        # print(f"[AI-OLLAMA-START] Guessing for {current_turn}...", flush=True)
+                        o_start = time.time()
                         resp = requests.post(OLLAMA_API, json={'model': 'llama3', 'prompt': prompt, 'stream': False}, timeout=30)
+                        # print(f"[AI-OLLAMA-END] Took {time.time() - o_start:.2f}s", flush=True)
                         letter = re.search(r'[A-Z]', resp.json().get('response', 'E').upper()).group(0)
                     except: letter = 'E'
                     
@@ -771,9 +774,9 @@ Respond ONLY with a JSON object in this format: {"word": "YOUR CHOICE"}"""
                         log_game_action(cursor, session_id, msg)
                         conn.commit()
                         if new_status == 'active' and new_state.get('currentTurn') in AI_PLAYERS:
-                            threading.Timer(2.0, process_ai_action, [session_id]).start()
+                            trigger_ai_if_needed(session_id, force=True)
                         elif new_status == 'finished':
-                            threading.Timer(5.0, process_ai_action, [session_id]).start()
+                            trigger_ai_if_needed(session_id, force=True)
                     else:
                         print(f"[AI-ERROR] {current_turn} Hangman move failed: {err}")
 
@@ -883,9 +886,9 @@ Respond ONLY with a JSON object in this format: {"word": "YOUR CHOICE"}"""
                         log_game_action(cursor, session_id, msg)
                         conn.commit()
                         if new_status == 'active' and new_state.get('currentTurn') in AI_PLAYERS:
-                            threading.Timer(2.0, process_ai_action, [session_id]).start()
+                            trigger_ai_if_needed(session_id, force=True)
                         elif new_status == 'finished':
-                            threading.Timer(5.0, process_ai_action, [session_id]).start()
+                            trigger_ai_if_needed(session_id, force=True)
                     else:
                         print(f"[AI-ERROR] {current_turn} move failed: {err}")
 
@@ -907,10 +910,32 @@ Respond ONLY with a JSON object in this format: {"word": "YOUR CHOICE"}"""
         print(f"AI Error in {session_id}: {e}")
         import traceback; traceback.print_exc()
 
-def trigger_ai_if_needed(session_id):
-    # Short delay to ensure the database commit from the triggering request is fully finished
-    # and the client has a moment to see the change
-    threading.Timer(2.0, process_ai_action, [session_id]).start()
+ACTIVE_AI_PROCESSING = set()
+
+def trigger_ai_if_needed(session_id, force=False):
+    # If not force, check if already in progress to avoid overlapping threads
+    if not force and session_id in ACTIVE_AI_PROCESSING:
+        return
+    
+    # Always mark as processing to prevent poll-based triggers from double-starting
+    ACTIVE_AI_PROCESSING.add(session_id)
+    
+    def wrapped_ai_action():
+        start_time = time.time()
+        try:
+            process_ai_action(session_id)
+        except Exception as e:
+            print(f"[AI-CRITICAL-ERROR] Session {session_id}: {e}", flush=True)
+        finally:
+            # Only remove from processing set after everything is truly done
+            # (including any recursive calls we might have made)
+            # Actually, we should check if another timer was scheduled? 
+            # For simplicity, we release the lock here so the next poll can re-trigger if needed.
+            ACTIVE_AI_PROCESSING.discard(session_id)
+            # print(f"[AI-THREAD-FINISHED] Session {session_id} took {time.time() - start_time:.2f}s", flush=True)
+            
+    delay = 0.5 if not force else 1.0
+    threading.Timer(delay, wrapped_ai_action).start()
 
 @app.route('/api/games/respond', methods=['POST'])
 def game_respond():
@@ -959,13 +984,33 @@ def get_game_session(session_id):
         game_type = row['game_type']
         state = json.loads(row['state_json']) if row['state_json'] else None
         
+        # Server-side timeout for Hangman
+        if status == 'active' and game_type == 'Hangman' and state and state.get('turnStartedAt'):
+            now = int(datetime.now().timestamp() * 1000)
+            # If more than 65 seconds passed (60s + 5s buffer), force a timeout
+            if now - state['turnStartedAt'] > 65000:
+                print(f"[TIMEOUT] Hangman session {session_id} | {state.get('currentTurn')} timed out.")
+                actor = state.get('currentTurn')
+                new_state, err = apply_hangman_move(state, 'GUESS', actor, {'letter': None, 'host_username': host})
+                if not err:
+                    state = new_state
+                    cursor.execute("UPDATE game_sessions SET state_json = ?, version = version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(new_state), session_id))
+                    log_game_action(cursor, session_id, f"SYSTEM: {actor} timed out")
+                    conn.commit()
+                    # version also updated in DB, we should reflect it in response if we wanted but version is read from row later
+                    # Actually, let's just refresh the row to be sure we have everything correct
+                    cursor.execute("SELECT * FROM game_sessions WHERE id = ?", (session_id,))
+                    row = cursor.fetchone()
+                    status = row['status']; state = json.loads(row['state_json'])
+
         # Proactive trigger: if it's an AI's turn OR game is currently starting OR AI needs to restart
-        needs_trigger = (status == 'active' and state and state.get('currentTurn') in AI_PLAYERS) or \
+        ai_names_lower = [a.lower() for a in AI_PLAYERS]
+        needs_trigger = (status == 'active' and state and state.get('currentTurn', '').lower() in ai_names_lower) or \
                         (status == 'active' and state and state.get('starting')) or \
-                        (status == 'pending' and host in AI_PLAYERS) or \
+                        (status == 'pending' and host.lower() in ai_names_lower) or \
                         (status == 'finished' and (
-                            (game_type == 'UNO' and state.get('winner') in AI_PLAYERS) or
-                            (game_type == 'Hangman' and host in AI_PLAYERS)
+                            (game_type == 'UNO' and state.get('winner', '').lower() in ai_names_lower) or
+                            (game_type == 'Hangman' and host.lower() in ai_names_lower)
                         ))
         
         if needs_trigger:
