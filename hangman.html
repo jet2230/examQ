@@ -296,8 +296,11 @@
                     }, 1000);
                 }
             } else document.getElementById('timerDisplay').style.display = 'none';
-            document.getElementById('clueDisplay').style.display = s.clueStack?.length ? 'block' : 'none';
-            document.getElementById('clueDisplay').innerHTML = (s.clueStack || []).map(i => i.type === 'request' ? `<div>🙋 ${i.user} requested a clue</div>` : `<div>💡 Clue: <strong>${i.text}</strong></div>`).join('');
+            
+            if (session.status !== 'finished') {
+                document.getElementById('clueDisplay').style.display = s.clueStack?.length ? 'block' : 'none';
+                document.getElementById('clueDisplay').innerHTML = (s.clueStack || []).map(i => i.type === 'request' ? `<div>🙋 ${i.user} requested a clue</div>` : `<div>💡 Clue: <strong>${i.text}</strong></div>`).join('');
+            }
             document.getElementById('requestClueBtn').style.display = isH ? 'none' : 'block';
             if (!isH) { const req = s.cluesRequestedBy?.includes(username); document.getElementById('requestClueBtn').disabled = req; document.getElementById('requestClueBtn').style.opacity = req ? '0.5' : '1'; }
             document.getElementById('hostClueBox').style.display = isH ? 'flex' : 'none';

@@ -355,7 +355,7 @@
 
         function renderLog() {
             const logEl = document.getElementById('actionLog');
-            if (!logEl || !session.logs || session.logs.length === 0) return;
+            if (!logEl || !session.logs || session.logs.length === 0 || session.status === 'finished') return;
 
             // Only update if we have new logs
             const logs = session.logs;
