@@ -200,27 +200,72 @@ def clean_ai_json(text):
 @app.route('/api/games/leave', methods=['POST'])
 def leave_game_session():
     try:
-        data = request.json
+        data = request.get_json(silent=True)
+        if not data:
+            try:
+                data = json.loads(request.data.decode('utf-8'))
+            except:
+                return jsonify({'success': False, 'error': 'Invalid payload'}), 400
+        
         session_id = data.get('session_id')
         username = data.get('username')
         
         conn = get_db(); cursor = conn.cursor()
-        cursor.execute("SELECT players_json, host_username, status FROM game_sessions WHERE id = ?", (session_id,))
+        cursor.execute("SELECT * FROM game_sessions WHERE id = ?", (session_id,))
         row = cursor.fetchone()
         if not row: return jsonify({'success': False, 'error': 'Session not found'}), 404
         
         players = json.loads(row['players_json'])
+        status = row['status']
+        host = row['host_username']
+        game_type = row['game_type']
+        
         # Filter out the leaving player
         new_players = [p for p in players if p['username'] != username]
         
-        if row['host_username'] == username:
+        if host == username:
             # If host leaves, delete the session
+            log_game_action(cursor, session_id, f"Host {fmt_name(username)} left the game. Session terminated.")
             cursor.execute("DELETE FROM game_sessions WHERE id = ?", (session_id,))
         else:
-            # If guest leaves, just update players list
-            cursor.execute("UPDATE game_sessions SET players_json = ?, version = version + 1 WHERE id = ?", (json.dumps(new_players), session_id))
+            # If guest leaves
+            log_game_action(cursor, session_id, f"{fmt_name(username)} left the game.")
+            
+            # If game is active, we might need to update state (e.g. turn order)
+            if status == 'active' and row['state_json']:
+                state = json.loads(row['state_json'])
+                if 'playersOrder' in state:
+                    # Remove from order
+                    old_order = state['playersOrder']
+                    new_order = [p for p in old_order if p.lower() != username.lower()]
+                    state['playersOrder'] = new_order
+                    
+                    # If it was their turn, move to next
+                    if state.get('currentTurn', '').lower() == username.lower():
+                        if new_order:
+                            idx = [o.lower() for o in old_order].index(username.lower())
+                            next_idx = idx % len(new_order)
+                            state['currentTurn'] = new_order[next_idx]
+                    
+                    # Remove their hand
+                    if 'hands' in state and username in state['hands']:
+                        del state['hands'][username]
+                    
+                    # Check if game is now over
+                    if game_type == 'UNO':
+                        check_uno_game_over(state, new_order)
+                    elif game_type == 'Hangman':
+                        if len(new_order) < 1: state['status'] = 'finished'
+                
+                cursor.execute("UPDATE game_sessions SET players_json = ?, state_json = ?, version = version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?", 
+                               (json.dumps(new_players), json.dumps(state), session_id))
+            else:
+                cursor.execute("UPDATE game_sessions SET players_json = ?, version = version + 1 WHERE id = ?", 
+                               (json.dumps(new_players), session_id))
             
         conn.commit(); conn.close()
+        # Trigger AI if needed (e.g. it's now AI's turn)
+        if host != username: trigger_ai_if_needed(session_id)
         return jsonify({'success': True}), 200
     except Exception as e: return jsonify({'error': str(e)}), 500
 

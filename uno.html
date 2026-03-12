@@ -598,17 +598,21 @@
             }
 
             let turnHtml = '';
-            for(let i=0; i<order.length; i++) {
+            for (let i = 0; i < order.length; i++) {
                 const u = order[i];
                 const active = i === curIdx;
-                const next = i === nextIdx;
-                const count = s.hands[u]?.length || 0;
-                const disp = trunc(u);
-                
-                // Case-insensitive check for UNO calls
-                const called = s.unoCalls && s.unoCalls.some(name => name.toLowerCase() === u.toLowerCase());
+
+                // Case-insensitive check for finishers
                 const finisherIdx = s.finishers ? s.finishers.findIndex(name => name.toLowerCase() === u.toLowerCase()) : -1;
                 const finished = finisherIdx !== -1;
+
+                const next = !finished && i === nextIdx;
+                const count = s.hands[u]?.length || 0;
+                const disp = trunc(u);
+
+                // Case-insensitive check for UNO calls
+                const called = s.unoCalls && s.unoCalls.some(name => name.toLowerCase() === u.toLowerCase());
+
                 let finishedLabel = '';
                 if (finished) {
                     const place = finisherIdx + 1;
@@ -620,12 +624,18 @@
                     finishedLabel = `<span style="color:#6c757d; font-weight:bold; margin-left:5px;">(FINISHED ${place}${suffix})</span>`;
                 }
 
-                turnHtml += `<div class="player-chip ${active ? 'active-turn' : (next ? 'next-turn' : '')}" title="${u}">
+                let chipClass = 'player-chip';
+                if (finished) chipClass += ' finished-player';
+                else if (active) chipClass += ' active-turn';
+                else if (next) chipClass += ' next-turn';
+
+                turnHtml += `<div class="${chipClass}" title="${u}">
                     <strong>${disp}</strong> <span>(${count})</span> 
                     ${called && !finished ? '<span style="color:#28a745; font-weight:bold; margin-left:5px;">(Uno)</span>' : ''}
                     ${finishedLabel}
                 </div>`;
             }
+
 
             const directionText = s.direction === 1 ? "Turn Order is Clockwise ↻" : "Turn Order is Counter-Clockwise ↺";
             document.getElementById('playerIndicators').innerHTML = `
@@ -805,6 +815,11 @@
         function toggleInviteSelection(el, u) { if (inviteSelected.has(u)) { inviteSelected.delete(u); el.classList.remove('selected'); } else { inviteSelected.add(u); el.classList.add('selected'); } }
         async function sendLobbyInvites() { if (!inviteSelected.size) return; await fetch('/api/games/invite', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ host: username, game_type: 'UNO', invitees: Array.from(inviteSelected), session_id: sessionId }) }); alert("Sent!"); inviteSelected.clear(); document.getElementById('inviteUserList').removeAttribute('data-loaded'); loadInvites(); }
         async function leaveGame() { if (confirm("Leave?")) { await fetch('/api/games/leave', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ session_id: sessionId, username }) }); location.href = 'games.html'; } }
+
+        window.addEventListener('beforeunload', () => {
+            const data = JSON.stringify({ session_id: sessionId, username });
+            navigator.sendBeacon('/api/games/leave', data);
+        });
         async function removePlayer(targetUser) {
             if (!confirm(`Remove ${targetUser} from the game?`)) return;
             try {
