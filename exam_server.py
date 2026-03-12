@@ -1157,7 +1157,12 @@ def game_action():
                         
                         # Add finish notification if applicable
                         if len(new_state['hands'].get(username, [])) == 0 and ('unoCalls' in new_state and username in new_state['unoCalls']):
-                            msg = f"🎉 {fmt_name(username)} played their last card and HAS FINISHED!, next is {fmt_name(next_p)}"
+                            rank = len(new_state.get('finishers', []))
+                            suffix = "th"
+                            if rank % 10 == 1 and rank % 100 != 11: suffix = "st"
+                            elif rank % 10 == 2 and rank % 100 != 12: suffix = "nd"
+                            elif rank % 10 == 3 and rank % 100 != 13: suffix = "rd"
+                            msg = f"🎉 {fmt_name(username)} played their last card and FINISHED {rank}{suffix}!, next is {fmt_name(next_p)}"
                     else:
                         msg = f"{fmt_name(username)} played a card, next is {fmt_name(next_p)}"
                 elif action == 'DRAW_CARD':
