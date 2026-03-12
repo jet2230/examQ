@@ -480,6 +480,20 @@ def apply_uno_move(state, action, username, params):
                     if v_name in new_state['unoCalls'] and len(new_state['hands'][victim]) > 1:
                         new_state['unoCalls'].remove(v_name)
                 step = 2
+            elif card['value'] == 'WildDraw4':
+                victim = get_next_uno_turn(order, curr_idx, new_state['direction'], new_state['finishers'])
+                for _ in range(4):
+                    if not new_state['deck'] and len(new_state['discard']) > 1:
+                        top_c = new_state['discard'].pop(); random.shuffle(new_state['discard'])
+                        new_state['deck'] = new_state['discard']; new_state['discard'] = [top_c]
+                    if new_state['deck']: new_state['hands'][victim].append(new_state['deck'].pop())
+                
+                # Clear victim's UNO status if they drew cards
+                if 'unoCalls' in new_state:
+                    v_name = next((o for o in order if o.lower() == victim.lower()), victim)
+                    if v_name in new_state['unoCalls'] and len(new_state['hands'][victim]) > 1:
+                        new_state['unoCalls'].remove(v_name)
+                step = 2
                 
             if check_uno_game_over(new_state, order):
                 return new_state, None
