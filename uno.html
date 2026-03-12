@@ -97,35 +97,78 @@
         }
         .turn-order-container { display: flex; align-items: center; justify-content: center; gap: 5px; flex-wrap: wrap; margin-bottom: 20px; padding: 10px; background: #f8f9fa; border-radius: 50px; }
         .action-log {
-            width: 250px;
-            height: 150px;
-            background: #f8f9fa;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-            padding: 10px;
-            overflow-y: auto;
+            width: 280px;
+            height: 220px;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 12px;
+            padding: 12px;
+            overflow-y: hidden;
             text-align: left;
-            font-size: 0.8em;
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            gap: 8px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        .action-log:hover {
+            background: #f8f9fa;
+            border-color: #ddd;
+            overflow-y: auto;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
         }
         .log-entry {
-            padding: 4px 8px;
+            padding: 8px 12px;
             background: white;
-            border-radius: 4px;
-            border-left: 3px solid var(--primary-color);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            transition: opacity 0.3s;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary-color);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+            transition: all 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            margin-bottom: 2px;
+            font-size: 0.95em;
+            line-height: 1.4;
+            overflow: hidden;
+            max-height: 500px; /* Increased to prevent clipping */
+            flex-shrink: 0; /* Prevent squashing */
         }
         .log-entry.previous {
-            opacity: 0.5;
-            filter: grayscale(1);
+            opacity: 0.6;
+            filter: grayscale(0.5);
             border-left-color: #ccc;
+            background: #fafafa;
+            transform: scale(0.98);
+            transform-origin: left;
+            padding: 6px 10px;
+            font-size: 0.9em;
+            font-weight: normal;
         }
         .log-entry.latest {
             border-left-color: #28a745;
-            font-weight: 600;
+            font-weight: 700;
+            font-size: 1.15em;
+            background: #fff3cd; 
+            padding: 15px 18px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            z-index: 10;
+            animation: stack-push 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @keyframes stack-push {
+            0% { 
+                transform: translateY(-50px) scale(0.8); 
+                opacity: 0; 
+                max-height: 0; 
+                margin-bottom: 0; 
+                padding-top: 0; 
+                padding-bottom: 0;
+            }
+            100% { 
+                transform: translateY(0) scale(1); 
+                opacity: 1; 
+                max-height: 500px; 
+                padding-top: 15px; 
+                padding-bottom: 15px;
+            }
         }
 
         .color-picker-overlay {
@@ -250,7 +293,7 @@
 
     <script>
         const urlParams = new URLSearchParams(window.location.search), sessionId = urlParams.get('id'), username = (localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username') || '').trim();
-        let session = null, pollInterval = null, isUpdating = false, overlayTimeout = null;
+        let session = null, pollInterval = null, isUpdating = false, overlayTimeout = null, lastLogCount = 0;
         let confettiShown = false;
         function trunc(s) { if(!s) return ""; return s.length > 10 ? s.substring(0, 10) + '...' : s; }
 
@@ -273,29 +316,78 @@
                     if (force || sc || vc || pc) {
                         const oldStatus = session ? session.status : null;
                         const oldVersion = session ? session.version : -1;
+                        const oldLogs = (session && session.logs) ? session.logs.length : 0;
                         session = data.session;
+                        const newLogs = session.logs ? session.logs.length : 0;
                         
                         // Detect status change
                         if (session.status === 'active' && oldStatus === 'pending') {
-                            hasAnimatedDeal = false; // reset for new game
+                            hasAnimatedDeal = false; 
                             isDealing = false;
                             lastHandSize = 0;
                         }
 
-                        // Detect incremental draws before UI update
-                        const currentHand = (session.state?.hands && session.state.hands[username]) || [];
-                        const drawCount = (session.status === 'active' && hasAnimatedDeal && !isDealing && currentHand.length > lastHandSize && oldVersion !== -1 && session.version > oldVersion) ? (currentHand.length - lastHandSize) : 0;
+                        // Always render log immediately so players see the move description
+                        renderLog();
 
-                        updateUI(drawCount);
-
-                        if (drawCount > 0) {
-                            animateDraw(drawCount);
+                        // Check if we should delay the REST of the UI update
+                        if (newLogs > oldLogs && oldLogs > 0) {
+                            setTimeout(() => {
+                                if (session === data.session) { 
+                                    updateAfterLog();
+                                }
+                            }, 2000);
+                        } else {
+                            updateAfterLog();
                         }
-                        
-                        lastHandSize = currentHand.length;
+
+                        function updateAfterLog() {
+                            const currentHand = (session.state?.hands && session.state.hands[username]) || [];
+                            const drawCount = (session.status === 'active' && hasAnimatedDeal && !isDealing && currentHand.length > lastHandSize && oldVersion !== -1 && session.version > oldVersion) ? (currentHand.length - lastHandSize) : 0;
+                            updateUI(drawCount);
+                            if (drawCount > 0) animateDraw(drawCount);
+                            lastHandSize = currentHand.length;
+                        }
                     }
                 }
             } catch (e) { console.error(e); }
+        }
+
+        function renderLog() {
+            const logEl = document.getElementById('actionLog');
+            if (!logEl || !session.logs || session.logs.length === 0) return;
+
+            // Only update if we have new logs
+            const logs = session.logs;
+            const currentEntries = logEl.querySelectorAll('.log-entry');
+            
+            // Initial load or full refresh
+            if (currentEntries.length === 0) {
+                logEl.innerHTML = logs.map((l, idx) => {
+                    const cls = idx === 0 ? 'latest' : 'previous';
+                    return `<div class="log-entry ${cls}">${l.msg}</div>`;
+                }).join('');
+                return;
+            }
+
+            const newLatestText = logs[0].msg;
+            const currentLatestText = currentEntries[0].textContent;
+
+            if (newLatestText !== currentLatestText) {
+                // 1. Transition the old 'latest' to 'previous'
+                currentEntries[0].classList.replace('latest', 'previous');
+
+                // 2. Create and Prepend new 'latest'
+                const newEl = document.createElement('div');
+                newEl.className = 'log-entry latest';
+                newEl.innerHTML = newLatestText;
+                logEl.insertBefore(newEl, logEl.firstChild);
+
+                // 3. Cleanup old entries if log gets too long
+                if (logEl.children.length > 30) {
+                    logEl.removeChild(logEl.lastChild);
+                }
+            }
         }
 
         function createAnimCard(startRect, endRect, content, colorClass = 'card-black') {
@@ -478,11 +570,7 @@
                 disputeBtn.style.animation = 'none';
             }
 
-            const logEl = document.getElementById('actionLog');
-            if (logEl && session.logs) {
-                logEl.innerHTML = session.logs.map((l, idx) => `<div class="log-entry ${idx === 0 ? 'latest' : 'previous'}">${l.msg}</div>`).join('');
-            }
-
+            const myHandEl = document.getElementById('myHand');
             const top = s.discard[s.discard.length - 1];
             document.getElementById('topCard').innerHTML = createCardHtml(top);
 
@@ -630,8 +718,14 @@
             finally { clearTimeout(overlayTimeout); document.getElementById('processingOverlay').style.display = 'none'; setTimeout(() => isUpdating = false, 500); }
         }
         async function startGame() { document.getElementById('loadingOverlay').style.display = 'flex'; isUpdating = true; try { await fetch('/api/games/update', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ session_id: sessionId, state: { starting: true, updatedAt: Date.now() }, status: 'active' }) }); await fetchSession(true); } finally { isUpdating = false; } }
-        async function resetGame() { document.getElementById('loadingOverlay').style.display = 'flex'; isUpdating = true; try { await fetch('/api/games/update', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ session_id: sessionId, state: { restarting: true, updatedAt: Date.now() }, status: 'pending', new_host: username }) }); await fetchSession(true); } finally { isUpdating = false; } }
+        async function resetGame() { 
+            if (aiCountdownTimer) clearInterval(aiCountdownTimer);
+            document.getElementById('loadingOverlay').style.display = 'flex'; 
+ isUpdating = true; try { await fetch('/api/games/update', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ session_id: sessionId, state: { restarting: true, updatedAt: Date.now() }, status: 'pending', new_host: username }) }); await fetchSession(true); } finally { isUpdating = false; } }
         function showGameOver() {
+            const logEl = document.getElementById('actionLog');
+            if (logEl) logEl.innerHTML = ''; // Clear log when game ends
+            
             const o = document.getElementById('gameOverlay'); o.style.display = 'flex';
             const winner = session.winner || session.state?.winner || "Unknown";
             const loser = session.loser || session.state?.loser || "Unknown";
@@ -654,15 +748,36 @@
             }
             
             let messageHtml = `Winner: <strong>${trunc(winner)}</strong><br>Loser: <strong>${trunc(loser)}</strong>`;
-            if (!win && !lose && !isH) {
-                messageHtml += `<br><br><span style="color:#1e3c72; font-weight:bold;">Please wait for the new host (${trunc(winner)}) to restart the game...</span>`;
-            } else if (isH) {
+            
+            const aiPlayers = ['Bob', 'Tim'];
+            const isAiHost = aiPlayers.map(a => a.toLowerCase()).includes(winner.toLowerCase());
+
+            if (isH) {
                 messageHtml += `<br><br><span style="color:#28a745; font-weight:bold;">The other players are waiting for you to start a new game!</span><br>`;
                 messageHtml += `<button class="btn-action" style="background:#28a745; margin-top:15px;" onclick="resetGame()">🎮 Play Again</button>`;
+            } else if (isAiHost) {
+                messageHtml += `<br><br><div id="aiRestartCountdown" style="color:#1e3c72; font-weight:bold; font-size:1.2em; background:#e1e7ff; padding:10px; border-radius:8px;">🔄 New game starting by ${trunc(winner)} in <span id="cdSeconds">10</span>s...</div>`;
+                startAiRestartCountdown();
+            } else {
+                messageHtml += `<br><br><span style="color:#1e3c72; font-weight:bold;">Please wait for the new host (${trunc(winner)}) to restart the game...</span>`;
             }
             
             msg.innerHTML = messageHtml;
             document.getElementById('playAgainBtn').style.display = 'none';
+        }
+
+        let aiCountdownTimer = null;
+        function startAiRestartCountdown() {
+            if (aiCountdownTimer) clearInterval(aiCountdownTimer);
+            let count = 10;
+            aiCountdownTimer = setInterval(() => {
+                count--;
+                const el = document.getElementById('cdSeconds');
+                if (el) el.textContent = count;
+                if (count <= 0) {
+                    clearInterval(aiCountdownTimer);
+                }
+            }, 1000);
         }
         let cachedUsers = null;
         async function loadInvites() {

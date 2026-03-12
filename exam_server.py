@@ -634,6 +634,11 @@ def process_ai_action(session_id):
 
         # --- FINISHED GAME RESTART LOGIC ---
         if status == 'finished':
+            last_upd = state.get('updatedAt', 0)
+            if int(datetime.now().timestamp() * 1000) - last_upd < 12000:
+                # Still in countdown
+                conn.close(); return
+
             # Identify who should restart. In UNO, winner becomes host. In Hangman, original host stays.
             winner = state.get('winner')
             should_restart = False
@@ -817,7 +822,7 @@ Respond ONLY with a JSON object in this format: {"word": "YOUR CHOICE"}"""
                                 conn.commit()
                                 # After dispute, the turn order might have changed or we might still be at the same turn
                                 # Let's re-trigger AI logic to handle the actual turn
-                                threading.Timer(2.0, process_ai_action, [session_id]).start()
+                                trigger_ai_if_needed(session_id, force=True)
                                 conn.close(); return
 
                     my_hand = state['hands'].get(current_turn, [])
@@ -913,13 +918,14 @@ Respond ONLY with a JSON object in this format: {"word": "YOUR CHOICE"}"""
         # --- FINISHED / RESTART LOGIC ---
         if status == 'finished' and (state.get('winner') in AI_PLAYERS or host in AI_PLAYERS):
             last_upd = state.get('updatedAt', 0)
-            if int(datetime.now().timestamp() * 1000) - last_upd > 5000:
-                print(f"[AI-DEBUG] AI host/winner restarting game {session_id}...")
+            # Wait 12 seconds to allow the visual 10s countdown to complete
+            if int(datetime.now().timestamp() * 1000) - last_upd > 12000:
+                print(f"[AI-DEBUG] AI host/winner auto-restarting game {session_id} after countdown...")
                 new_state = {'restarting': True, 'updatedAt': int(datetime.now().timestamp() * 1000)}
                 new_host = state.get('winner') if state.get('winner') in AI_PLAYERS else host
                 cursor.execute("UPDATE game_sessions SET state_json = ?, status = 'pending', host_username = ?, version = version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(new_state), new_host, session_id))
                 conn.commit()
-                threading.Timer(2.0, process_ai_action, [session_id]).start()
+                trigger_ai_if_needed(session_id, force=True)
         
         conn.close()
     except Exception as e:
@@ -950,7 +956,8 @@ def trigger_ai_if_needed(session_id, force=False):
             ACTIVE_AI_PROCESSING.discard(session_id)
             # print(f"[AI-THREAD-FINISHED] Session {session_id} took {time.time() - start_time:.2f}s", flush=True)
             
-    delay = 0.5 if not force else 1.0
+    # Minimum 2s delay for AI responses to feel more natural
+    delay = 2.0 if not force else 2.5
     threading.Timer(delay, wrapped_ai_action).start()
 
 @app.route('/api/games/respond', methods=['POST'])
@@ -1147,6 +1154,10 @@ def game_action():
                             msg = f"{fmt_name(username)} played a Wild{color_str}, next is {fmt_name(next_p)}"
                         else:
                             msg = f"{fmt_name(username)} played {pre_card_details['color']} {val}, next is {fmt_name(next_p)}"
+                        
+                        # Add finish notification if applicable
+                        if len(new_state['hands'].get(username, [])) == 0 and ('unoCalls' in new_state and username in new_state['unoCalls']):
+                            msg = f"🎉 {fmt_name(username)} played their last card and HAS FINISHED!, next is {fmt_name(next_p)}"
                     else:
                         msg = f"{fmt_name(username)} played a card, next is {fmt_name(next_p)}"
                 elif action == 'DRAW_CARD':

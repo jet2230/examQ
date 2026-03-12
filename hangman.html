@@ -240,17 +240,12 @@
             // Show Change Word button for host during active game
             document.getElementById('restartBtn').style.display = (isH && session.status === 'active') ? 'block' : 'none';
             
-            // Hide overlay by default unless finished
-            if (session.status !== 'finished') {
-                document.getElementById('gameOverlay').style.display = 'none';
+            if (session.status === 'finished') {
+                showGameOver();
             } else {
-                // Update overlay player list dynamically while showing
-                const listEl = document.getElementById('overlayPlayerList');
-                if (listEl) {
-                    listEl.innerHTML = `<div style="font-weight:bold; margin-bottom:10px; color:var(--primary-color);">Players waiting (${acc.length}):</div>` + 
-                        acc.map(p => `<span>${p.username}${p.username.toLowerCase() === session.host.toLowerCase() ? ' (Host)' : ''}</span>`).join(', ');
-                }
+                document.getElementById('gameOverlay').style.display = 'none';
             }
+
             if (session.status === 'pending') {
                 confettiShown = false; // Reset ONLY when back in lobby
                 document.getElementById('lobbyView').style.display = 'block'; document.getElementById('gameView').style.display = 'none';
@@ -357,6 +352,7 @@
         }
         async function updateState(s, st = null) { isUpdating = true; try { await fetch('/api/games/update', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ session_id: sessionId, state: s, status: st || session.status }) }); await fetchSession(true); } finally { isUpdating = false; } }
         async function resetGame() { 
+            if (aiCountdownTimer) clearInterval(aiCountdownTimer);
             isUpdating = true; 
             try { 
                 await fetch('/api/games/update', { 
@@ -386,8 +382,16 @@
             } catch (e) { console.error(e); }
         }
         function showGameOver() {
+            if (!session || !session.state) return;
+            
+            const clueEl = document.getElementById('clueDisplay');
+            if (clueEl) clueEl.innerHTML = ''; // Clear clues/messages
+            
             const s = session.state, isW = s.word.split('').every(c => c === ' ' || s.guessedLetters.some(l => l.toUpperCase() === c.toUpperCase())), isH = session.host?.toLowerCase() === username.toLowerCase();
-            const o = document.getElementById('gameOverlay'); o.style.display = 'flex';
+            
+            const o = document.getElementById('gameOverlay'); 
+            o.style.display = 'flex';
+            
             const title = document.getElementById('overlayTitle');
             const msg = document.getElementById('overlayMessage');
             const isMeWinner = s.winner && username && s.winner.toLowerCase() === username.toLowerCase();
@@ -419,16 +423,39 @@
             
             let messageHtml = `The word was <strong>${s.word}</strong>.`;
             if (isW) messageHtml += `<br>Winner: <strong>${s.winner}</strong>`;
-            
+
+            const nextHost = isW ? s.winner : session.host;
+            const aiPlayers = ['Bob', 'Tim'];
+            const isAiHost = aiPlayers.map(a => a.toLowerCase()).includes(nextHost?.toLowerCase());
+
             if (!canRestart) {
-                const nextHost = isW ? s.winner : session.host;
-                messageHtml += `<br><br><span style="color:#1e3c72; font-weight:bold;">Please wait for the new host (${nextHost}) to restart the game...</span>`;
+                if (isAiHost) {
+                    messageHtml += `<br><br><div id="aiRestartCountdown" style="color:#1e3c72; font-weight:bold; font-size:1.2em; background:#e1e7ff; padding:10px; border-radius:8px;">🔄 New game starting by ${nextHost} in <span id="cdSeconds">10</span>s...</div>`;
+                    startAiRestartCountdown();
+                } else {
+                    messageHtml += `<br><br><span style="color:#1e3c72; font-weight:bold;">Please wait for the new host (${nextHost}) to restart the game...</span>`;
+                }
             } else {
                 messageHtml += `<br><br><span style="color:#28a745; font-weight:bold;">The other players are waiting for you to start a new game!</span><br>`;
                 messageHtml += `<button class="btn-action" style="background:#28a745; margin-top:15px;" onclick="resetGame()">🎮 Play Again</button>`;
             }
-            
             msg.innerHTML = messageHtml;
+            }
+
+            let aiCountdownTimer = null;
+            function startAiRestartCountdown() {
+            if (aiCountdownTimer) clearInterval(aiCountdownTimer);
+            let count = 10;
+            aiCountdownTimer = setInterval(() => {
+                count--;
+                const el = document.getElementById('cdSeconds');
+                if (el) el.textContent = count;
+                if (count <= 0) {
+                    clearInterval(aiCountdownTimer);
+                }
+            }, 1000);
+            }
+
             document.getElementById('playAgainBtn').style.display = 'none'; // Use the inline one
         }
         let isPeeking = false, turnTimer = null, lastTurnAt = 0;
