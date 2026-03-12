@@ -9,6 +9,7 @@ from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import json
 import os
+import copy
 import sqlite3
 import random
 from datetime import datetime
@@ -16,6 +17,7 @@ import PyPDF2
 from pdf2image import convert_from_path
 import pytesseract
 import threading
+import time
 import uuid
 import re
 import shutil
