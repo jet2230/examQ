@@ -476,6 +476,7 @@ def apply_uno_move(state, action, username, params):
             new_state['justDrewPlayable'] = True
 
         check_uno_game_over(new_state, order)
+        return new_state, None
 
     elif action == 'PLAY_CARD':
         card_idx = params.get('card_idx')
@@ -588,9 +589,6 @@ def apply_uno_move(state, action, username, params):
             nxt = get_next_uno_turn(order, target_idx, new_state['direction'], new_state['finishers'])
             target_idx = order_lower.index(nxt.lower())
         new_state['currentTurn'] = nxt
-
-    new_state['updatedAt'] = int(datetime.now().timestamp() * 1000)
-    return new_state, None
 
     new_state['updatedAt'] = int(datetime.now().timestamp() * 1000)
     return new_state, None

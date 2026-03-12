@@ -332,11 +332,23 @@
 
                         // Check if we should delay the REST of the UI update
                         if (newLogs > oldLogs && oldLogs > 0) {
-                            setTimeout(() => {
-                                if (session === data.session) { 
-                                    updateAfterLog();
-                                }
-                            }, 2000);
+                            const latestMsg = session.logs[0].msg;
+                            // Check if the move was by ME (case insensitive, ignoring HTML tags)
+                            const meClean = username.toLowerCase();
+                            const msgClean = latestMsg.toLowerCase().replace(/<[^>]*>/g, '');
+                            const isMyMove = msgClean.includes(meClean) && !msgClean.includes("next is " + meClean);
+
+                            if (isMyMove) {
+                                // Update immediately if I was the one who moved
+                                updateAfterLog();
+                            } else {
+                                // Delay 2s for other players' moves so user can read the log
+                                setTimeout(() => {
+                                    if (session === data.session) { 
+                                        updateAfterLog();
+                                    }
+                                }, 2000);
+                            }
                         } else {
                             updateAfterLog();
                         }
