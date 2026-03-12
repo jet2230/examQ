@@ -558,6 +558,18 @@ def apply_uno_move(state, action, username, params):
         new_state.pop('pendingColorSelection', None)
         if 'finishers' not in new_state: new_state['finishers'] = []
         
+        # Check if they finished by selecting color
+        is_f = len(new_state['hands'][username]) == 0
+        has_c = 'unoCalls' in new_state and username in new_state['unoCalls']
+        if is_f:
+            if has_c:
+                if username not in new_state['finishers']:
+                    new_state['finishers'].append(username)
+                    if not new_state.get('winner'):
+                        new_state['winner'] = username
+            else:
+                new_state['vulnerableWin'] = True; new_state['lastFinisher'] = username
+
         top = new_state['discard'][-1]
         step = 1
         if top['value'] == 'WildDraw4':
@@ -1199,15 +1211,20 @@ def game_action():
                             msg = f"{fmt_name(username)} played {pre_card_details['color']} {val}, next is {fmt_name(next_p)}"
                         
                         # Add finish notification if applicable
-                        if len(new_state['hands'].get(username, [])) == 0 and ('unoCalls' in new_state and username in new_state['unoCalls']):
-                            rank = len(new_state.get('finishers', []))
-                            suffix = "th"
-                            if rank % 10 == 1 and rank % 100 != 11: suffix = "st"
-                            elif rank % 10 == 2 and rank % 100 != 12: suffix = "nd"
-                            elif rank % 10 == 3 and rank % 100 != 13: suffix = "rd"
-                            msg = f"🎉 {fmt_name(username)} played their last card and FINISHED {rank}{suffix}!, next is {fmt_name(next_p)}"
+                        if len(new_state['hands'].get(username, [])) == 0:
+                            if 'unoCalls' in new_state and username in new_state['unoCalls']:
+                                rank = len(new_state.get('finishers', []))
+                                suffix = "th"
+                                if rank % 10 == 1 and rank % 100 != 11: suffix = "st"
+                                elif rank % 10 == 2 and rank % 100 != 12: suffix = "nd"
+                                elif rank % 10 == 3 and rank % 100 != 13: suffix = "rd"
+                                msg = f"🎉 {fmt_name(username)} played their last card and FINISHED {rank}{suffix}!, next is {fmt_name(next_p)}"
+                            else:
+                                msg = f"⚠️ {fmt_name(username)} played their last card BUT FORGOT TO CALL UNO!, they are vulnerable to dispute!"
                     else:
                         msg = f"{fmt_name(username)} played a card, next is {fmt_name(next_p)}"
+                        if len(new_state['hands'].get(username, [])) == 0 and not ('unoCalls' in new_state and username in new_state['unoCalls']):
+                             msg = f"⚠️ {fmt_name(username)} played their last card BUT FORGOT TO CALL UNO!, they are vulnerable to dispute!"
                 elif action == 'DRAW_CARD':
                     if new_state.get('justDrewPlayable'):
                         msg = f"{fmt_name(username)} drew a playable card and can still move"
