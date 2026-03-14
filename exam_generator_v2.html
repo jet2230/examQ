@@ -193,7 +193,7 @@
             </div>
 
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px;">
-                <h2 style="color: #1e3c72;">Explore AI Quizzes</h2>
+                <h2 id="quizExplorerTitle" style="color: #1e3c72;">Explore AI Quizzes</h2>
                 <div style="position: relative; width: 300px;">
                     <input type="text" id="quizSearchInput" placeholder="🔍 Search by topic or creator..." 
                         style="width: 100%; padding: 8px 15px 8px 35px; border-radius: 20px; border: 1px solid #ddd; outline: none;"
@@ -301,6 +301,11 @@
         }
 
         function renderQuizzes() {
+            const titleEl = document.getElementById('quizExplorerTitle');
+            if (titleEl) {
+                titleEl.textContent = `Explore AI Quizzes (total: ${allQuizzes.length})`;
+            }
+
             const query = document.getElementById('quizSearchInput').value.toLowerCase();
             const filtered = allQuizzes.filter(q => 
                 (q.topic && q.topic.toLowerCase().includes(query)) || 
