@@ -661,7 +661,7 @@ def apply_hangman_move(state, action, username, params):
             return new_state, None
             
         # Change turn if incorrect or timeout
-        if not is_correct:
+        if not is_correct or letter is None:
             players = new_state.get('playersOrder', [])
             if players:
                 players_lower = [p.lower() for p in players]
@@ -677,8 +677,9 @@ def apply_hangman_move(state, action, username, params):
                     next_idx = (next_idx + 1) % len(players)
                 
                 new_state['currentTurn'] = players[next_idx]
+                # Reset timer for next player
+                new_state['turnStartedAt'] = int(datetime.now().timestamp() * 1000)
                 
-        new_state['turnStartedAt'] = int(datetime.now().timestamp() * 1000)
         new_state['updatedAt'] = int(datetime.now().timestamp() * 1000)
         return new_state, None
     
