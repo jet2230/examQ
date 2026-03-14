@@ -116,6 +116,12 @@
         });
     }
 
+    function formatDateTime(isoStr) {
+        if (!isoStr) return '';
+        const date = new Date(isoStr.replace(' ', 'T') + (isoStr.includes('Z') ? '' : 'Z'));
+        return date.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+
     async function fetchMessages() {
         if (!activeChatUser) return;
         const currentUsername = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
@@ -131,18 +137,18 @@
             if (data.success) {
                 const container = document.getElementById('chatMessages');
                 const msgCount = data.messages.length;
-                if (currentUsername.includes('the22one') && activeChatUser.includes('huda')) {
-                    console.log(`[CHAT-DEBUG] Abdullah/Huda chat count: ${msgCount}`);
-                    if (msgCount > 0) console.log(`[CHAT-DEBUG] First msg user: ${data.messages[0].sender}`);
-                }
                 
                 // Use a data attribute to check if we actually need to re-render
                 if (container.getAttribute('data-msg-count') !== msgCount.toString()) {
                     const html = data.messages.map(m => {
                         const isMe = m.sender === currentUsername;
+                        const timeStr = formatDateTime(m.timestamp);
                         return `
-                            <div style="align-self: ${isMe ? 'flex-end' : 'flex-start'}; background: ${isMe ? '#1e3c72' : '#e9e9e9'}; color: ${isMe ? 'white' : 'black'}; padding: 8px 12px; border-radius: 12px; max-width: 80%; font-size: 0.9em; box-shadow: 0 2px 5px rgba(0,0,0,0.05); overflow-wrap: anywhere; word-break: break-word;">
-                                ${linkify(m.message)}
+                            <div style="align-self: ${isMe ? 'flex-end' : 'flex-start'}; max-width: 85%; display: flex; flex-direction: column; align-items: ${isMe ? 'flex-end' : 'flex-start'}; gap: 2px;">
+                                <div style="background: ${isMe ? '#1e3c72' : '#e9e9e9'}; color: ${isMe ? 'white' : 'black'}; padding: 8px 12px; border-radius: 12px; font-size: 0.9em; box-shadow: 0 2px 5px rgba(0,0,0,0.05); overflow-wrap: anywhere; word-break: break-word;">
+                                    ${linkify(m.message)}
+                                </div>
+                                <span style="font-size: 0.65em; color: #999; margin: 0 5px;">${timeStr}</span>
                             </div>
                         `;
                     }).join('');

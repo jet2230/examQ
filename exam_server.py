@@ -32,6 +32,20 @@ RESOURCES_BASE = '/home/obo/playground/examQ/resources/igcse_edxcel_exampapers'
 OLLAMA_API = "http://localhost:11434/api/generate"
 AI_PLAYERS = ['Bob', 'Tim']
 
+# Legacy username mapping to handle long names that were changed
+USERNAME_MAPPING = {
+    'the22one98and7only68the78smartest6abdullah': 'abdullah'
+}
+
+def normalize_username(username):
+    if not username: return username
+    # Check for exact match or case-insensitive match in mapping
+    u_lower = username.lower()
+    for legacy, current in USERNAME_MAPPING.items():
+        if u_lower == legacy.lower():
+            return current
+    return username
+
 # Global state for background import jobs
 import_jobs = {}
 
@@ -208,7 +222,7 @@ def leave_game_session():
                 return jsonify({'success': False, 'error': 'Invalid payload'}), 400
         
         session_id = data.get('session_id')
-        username = data.get('username')
+        username = normalize_username(data.get('username'))
         
         conn = get_db(); cursor = conn.cursor()
         cursor.execute("SELECT * FROM game_sessions WHERE id = ?", (session_id,))
@@ -807,7 +821,7 @@ Respond ONLY with a JSON object in this format: {"word": "YOUR CHOICE"}"""
                     except: hint = "Keep going!"
                     
                     new_state = state.copy()
-                    new_state['clueStack'].append({'type': 'clue', 'text': hint})
+                    new_state['clueStack'].append({'type': 'clue', 'text': hint, 'time': int(datetime.now().timestamp())})
                     new_state['updatedAt'] = int(datetime.now().timestamp() * 1000)
                     cursor.execute("UPDATE game_sessions SET state_json = ?, version = version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(new_state), session_id))
                     conn.commit(); conn.close(); return
@@ -819,7 +833,7 @@ Respond ONLY with a JSON object in this format: {"word": "YOUR CHOICE"}"""
                     # 20% clue request
                     if random.random() < 0.2 and current_turn not in state.get('cluesRequestedBy', []):
                         state['cluesRequestedBy'] = state.get('cluesRequestedBy', []) + [current_turn]
-                        state['clueStack'] = state.get('clueStack', []) + [{'type': 'request', 'user': current_turn}]
+                        state['clueStack'] = state.get('clueStack', []) + [{'type': 'request', 'user': current_turn, 'time': int(datetime.now().timestamp())}]
                         state['updatedAt'] = int(datetime.now().timestamp() * 1000)
                         cursor.execute("UPDATE game_sessions SET state_json = ?, version = version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(state), session_id))
                         conn.commit()
@@ -1122,7 +1136,7 @@ def game_action():
         data = request.json
         print(f"[ACTION-DEBUG] Incoming action: {data}")
         session_id = data.get('session_id')
-        username = data.get('username')
+        username = normalize_username(data.get('username'))
         action = data.get('action')
         params = data.get('params', {})
         client_version = data.get('version')
@@ -1367,7 +1381,7 @@ def delete_game_session():
 def login():
     data = request.json
     users = load_users()
-    u, p = data.get('username'), data.get('password')
+    u, p = normalize_username(data.get('username')), data.get('password')
     if u in users and users[u]['password'] == p:
         conn = get_db(); cursor = conn.cursor(); cursor.execute("UPDATE users SET last_online = CURRENT_TIMESTAMP WHERE username = ?", (u,))
         conn.commit(); conn.close()
@@ -1377,7 +1391,7 @@ def login():
 @app.route('/api/user/heartbeat', methods=['POST'])
 def user_heartbeat():
     try:
-        data = request.json; u = data.get('username')
+        data = request.json; u = normalize_username(data.get('username'))
         if not u: return jsonify({'error': 'Missing username'}), 400
         conn = get_db(); cursor = conn.cursor()
         cursor.execute("UPDATE users SET last_online = CURRENT_TIMESTAMP WHERE username = ?", (u,))
@@ -1435,7 +1449,7 @@ Return ONLY the response text."""
 @app.route('/api/messages/send', methods=['POST'])
 def send_message():
     try:
-        data = request.json; s, r, m = data.get('sender'), data.get('recipient'), data.get('message')
+        data = request.json; s, r, m = normalize_username(data.get('sender')), normalize_username(data.get('recipient')), data.get('message')
         if not s or not r or not m: return jsonify({'error': 'Missing fields'}), 400
         
         # Prevent self-messaging
@@ -1460,7 +1474,7 @@ def send_message():
 @app.route('/api/messages/get')
 def get_messages():
     try:
-        u, other = request.args.get('username'), request.args.get('other')
+        u, other = normalize_username(request.args.get('username')), normalize_username(request.args.get('other'))
         if not u: return jsonify({'error': 'Missing username'}), 400
         
         # print(f"  [CHAT] Fetching. user='{u}', other='{other}'", flush=True)

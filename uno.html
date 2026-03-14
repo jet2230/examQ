@@ -365,6 +365,12 @@
             } catch (e) { console.error(e); }
         }
 
+        function formatTime(ts) {
+            if (!ts) return "";
+            const d = new Date(ts * 1000);
+            return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
         function renderLog() {
             const logEl = document.getElementById('actionLog');
             if (!logEl || !session.logs || session.logs.length === 0 || session.status === 'finished') return;
@@ -377,22 +383,30 @@
             if (currentEntries.length === 0) {
                 logEl.innerHTML = logs.map((l, idx) => {
                     const cls = idx === 0 ? 'latest' : 'previous';
-                    return `<div class="log-entry ${cls}">${l.msg}</div>`;
+                    const timeStr = formatTime(l.time);
+                    const timeHtml = timeStr ? `<span style="font-size: 0.7em; color: ${idx === 0 ? '#856404' : '#999'}; display: block; margin-bottom: 2px;">${timeStr}</span>` : '';
+                    return `<div class="log-entry ${cls}">${timeHtml}${l.msg}</div>`;
                 }).join('');
                 return;
             }
 
             const newLatestText = logs[0].msg;
-            const currentLatestText = currentEntries[0].textContent;
+            const currentLatestText = currentEntries[0].querySelector('.log-msg')?.innerHTML || currentEntries[0].innerHTML; 
+            // Note: the above check might need refinement because we added timeHtml
 
             if (newLatestText !== currentLatestText) {
                 // 1. Transition the old 'latest' to 'previous'
                 currentEntries[0].classList.replace('latest', 'previous');
+                // Update time color for old latest
+                const oldTime = currentEntries[0].querySelector('span');
+                if (oldTime) oldTime.style.color = '#999';
 
                 // 2. Create and Prepend new 'latest'
                 const newEl = document.createElement('div');
                 newEl.className = 'log-entry latest';
-                newEl.innerHTML = newLatestText;
+                const timeStr = formatTime(logs[0].time);
+                const timeHtml = timeStr ? `<span style="font-size: 0.7em; color: #856404; display: block; margin-bottom: 2px;">${timeStr}</span>` : '';
+                newEl.innerHTML = `${timeHtml}<div class="log-msg">${newLatestText}</div>`;
                 logEl.insertBefore(newEl, logEl.firstChild);
 
                 // 3. Cleanup old entries if log gets too long

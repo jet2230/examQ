@@ -220,6 +220,10 @@
         async function init() {
             if (!sessionId || !username) { location.href = 'games.html'; return; }
             init3D(); await fetch('/api/games/respond', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ session_id: sessionId, username, action: 'accept' }) });
+            
+            const clueInput = document.getElementById('clueInput');
+            if (clueInput) clueInput.onkeydown = (e) => { if (e.key === 'Enter') sendClue(); };
+
             await fetchSession(true); pollInterval = setInterval(() => fetchSession(false), 2000);
         }
         async function fetchSession(force = false) {
@@ -276,6 +280,12 @@
                 }
             } else { document.getElementById('lobbyView').style.display = 'none'; document.getElementById('gameView').style.display = 'block'; renderActive(); if (session.status === 'finished') showGameOver(); else document.getElementById('gameOverlay').style.display = 'none'; }
         }
+        function formatTime(ts) {
+            if (!ts) return "";
+            const d = new Date(ts * 1000);
+            return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
         function renderActive() {
             const s = session.state; if (!s) return; const isMyT = s.currentTurn?.toLowerCase() === username.toLowerCase(), isH = session.host?.toLowerCase() === username.toLowerCase();
             document.getElementById('gameStatus').textContent = isMyT ? "YOUR TURN!" : `Waiting for ${s.currentTurn}...`;
@@ -299,7 +309,10 @@
             
             if (session.status !== 'finished') {
                 document.getElementById('clueDisplay').style.display = s.clueStack?.length ? 'block' : 'none';
-                document.getElementById('clueDisplay').innerHTML = (s.clueStack || []).map(i => i.type === 'request' ? `<div>🙋 ${i.user} requested a clue</div>` : `<div>💡 Clue: <strong>${i.text}</strong></div>`).join('');
+                document.getElementById('clueDisplay').innerHTML = (s.clueStack || []).map(i => {
+                    const timeStr = i.time ? `<span style="font-size:0.75em; color:#999; margin-right:8px;">${formatTime(i.time)}</span>` : '';
+                    return i.type === 'request' ? `<div>${timeStr}🙋 ${i.user} requested a clue</div>` : `<div>${timeStr}💡 Clue: <strong>${i.text}</strong></div>`;
+                }).join('');
             }
             document.getElementById('requestClueBtn').style.display = isH ? 'none' : 'block';
             if (!isH) { const req = s.cluesRequestedBy?.includes(username); document.getElementById('requestClueBtn').disabled = req; document.getElementById('requestClueBtn').style.opacity = req ? '0.5' : '1'; }
@@ -333,7 +346,6 @@
 
             const acc = session.players.filter(p => p.status === 'accepted'), 
                   g = acc.filter(p => p.username.toLowerCase() !== session.host.toLowerCase()); 
-            
             await updateState({ 
                 word: w, 
                 guessedLetters: [], 
@@ -342,12 +354,14 @@
                 playersOrder: acc.map(p => p.username), 
                 allowNumbers: n, 
                 turnStartedAt: Date.now(), 
-                updatedAt: Date.now() 
+                updatedAt: Date.now(),
+                clueStack: [],
+                cluesRequestedBy: []
             }, 'active'); 
         }
         async function makeGuess(l) { if (isUpdating || (l !== null && session.state.currentTurn.toLowerCase() !== username.toLowerCase())) return; isUpdating = true; await perform('GUESS', { letter: l }); }
-        async function requestClue() { if (isUpdating || session.state.cluesRequestedBy?.includes(username)) return; const s = JSON.parse(JSON.stringify(session.state)); if (!s.cluesRequestedBy) s.cluesRequestedBy = []; s.cluesRequestedBy.push(username); if (!s.clueStack) s.clueStack = []; s.clueStack.push({ type: 'request', user: username }); await updateState(s); }
-        async function sendClue() { const i = document.getElementById('clueInput'), c = i.value.trim(); if (!c || isUpdating) return; const s = JSON.parse(JSON.stringify(session.state)); if (!s.clueStack) s.clueStack = []; s.clueStack.push({ type: 'clue', text: c }); i.value = ''; await updateState(s); }
+        async function requestClue() { if (isUpdating || session.state.cluesRequestedBy?.includes(username)) return; const s = JSON.parse(JSON.stringify(session.state)); if (!s.cluesRequestedBy) s.cluesRequestedBy = []; s.cluesRequestedBy.push(username); if (!s.clueStack) s.clueStack = []; s.clueStack.push({ type: 'request', user: username, time: Math.floor(Date.now()/1000) }); await updateState(s); }
+        async function sendClue() { const i = document.getElementById('clueInput'), c = i.value.trim(); if (!c || isUpdating) return; const s = JSON.parse(JSON.stringify(session.state)); if (!s.clueStack) s.clueStack = []; s.clueStack.push({ type: 'clue', text: c, time: Math.floor(Date.now()/1000) }); i.value = ''; await updateState(s); }
         async function perform(a, p) { 
             overlayTimeout = setTimeout(() => { document.getElementById('processingOverlay').style.display = 'flex'; }, 200);
             try { await fetch('/api/games/action', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ session_id: sessionId, username, action: a, params: p, version: session.version }) }); await fetchSession(true); }
@@ -448,10 +462,11 @@
                 messageHtml += `<button class="btn-action" style="background:#28a745; margin-top:15px;" onclick="resetGame()">🎮 Play Again</button>`;
             }
             msg.innerHTML = messageHtml;
-            }
+            document.getElementById('playAgainBtn').style.display = 'none'; // Use the inline one
+        }
 
-            let aiCountdownTimer = null;
-            function startAiRestartCountdown() {
+        let aiCountdownTimer = null;
+        function startAiRestartCountdown() {
             if (aiCountdownTimer) clearInterval(aiCountdownTimer);
             let count = 10;
             aiCountdownTimer = setInterval(() => {
@@ -462,10 +477,8 @@
                     clearInterval(aiCountdownTimer);
                 }
             }, 1000);
-            }
-
-            document.getElementById('playAgainBtn').style.display = 'none'; // Use the inline one
         }
+
         let isPeeking = false, turnTimer = null, lastTurnAt = 0;
         function showPeek() { isPeeking = true; renderActive(); } function hidePeek() { isPeeking = false; renderActive(); }
         let cachedUsers = null;
