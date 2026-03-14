@@ -1438,6 +1438,10 @@ def send_message():
         data = request.json; s, r, m = data.get('sender'), data.get('recipient'), data.get('message')
         if not s or not r or not m: return jsonify({'error': 'Missing fields'}), 400
         
+        # Prevent self-messaging
+        if s.lower() == r.lower():
+            return jsonify({'success': True, 'msg': 'Self-message ignored'}), 200
+
         # Prevent massive messages that freeze browsers
         if len(m) > 10000:
             return jsonify({'error': 'Message too long (max 10,000 chars)'}), 400
