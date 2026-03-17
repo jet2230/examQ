@@ -234,10 +234,10 @@ def leave_game_session():
         host = row['host_username']
         game_type = row['game_type']
         
-        # Filter out the leaving player
-        new_players = [p for p in players if p['username'] != username]
+        # Filter out the leaving player (case-insensitive)
+        new_players = [p for p in players if p['username'].lower() != username.lower()]
         
-        if host == username:
+        if host.lower() == username.lower():
             # If host leaves, delete the session
             log_game_action(cursor, session_id, f"Host {fmt_name(username)} left the game. Session terminated.")
             cursor.execute("DELETE FROM game_sessions WHERE id = ?", (session_id,))
@@ -315,7 +315,7 @@ def game_create():
 def game_invite():
     try:
         data = request.json
-        host = data.get('host')
+        host = normalize_username(data.get('host'))
         game_type = data.get('game_type')
         invitees = data.get('invitees', []) # List of usernames
         session_id = data.get('session_id') # Optional: invite to existing session
@@ -1045,8 +1045,10 @@ def game_respond():
         
         players = json.loads(row['players_json'])
         found = False
+        was_previously_accepted = False
         for p in players:
-            if p['username'] == username:
+            if p['username'].lower() == username.lower():
+                was_previously_accepted = (p.get('status') == 'accepted')
                 p['status'] = 'accepted' if action == 'accept' else 'declined'
                 found = True; break
         
@@ -1057,6 +1059,10 @@ def game_respond():
         
         if not found: return jsonify({'error': 'User not in invite list'}), 403
         
+        # Log the join if it's a fresh accept (or re-join after leaving)
+        if action == 'accept' and not was_previously_accepted:
+            log_game_action(cursor, session_id, f"{fmt_name(username)} joined the game.")
+
         cursor.execute("UPDATE game_sessions SET players_json = ?, version = version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (json.dumps(players), session_id))
         conn.commit(); conn.close()
         return jsonify({'success': True}), 200

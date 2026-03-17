@@ -842,10 +842,6 @@
         async function sendLobbyInvites() { if (!inviteSelected.size) return; await fetch('/api/games/invite', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ host: username, game_type: 'UNO', invitees: Array.from(inviteSelected), session_id: sessionId }) }); alert("Sent!"); inviteSelected.clear(); document.getElementById('inviteUserList').removeAttribute('data-loaded'); loadInvites(); }
         async function leaveGame() { if (confirm("Leave?")) { await fetch('/api/games/leave', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ session_id: sessionId, username }) }); location.href = 'games.html'; } }
 
-        window.addEventListener('beforeunload', () => {
-            const data = JSON.stringify({ session_id: sessionId, username });
-            navigator.sendBeacon('/api/games/leave', data);
-        });
         async function removePlayer(targetUser) {
             if (!confirm(`Remove ${targetUser} from the game?`)) return;
             try {

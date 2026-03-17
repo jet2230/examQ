@@ -1,4 +1,12 @@
 (function() {
+    // --- USERNAME SELF-CORRECTION ---
+    const legacyLongName = 'the22one98and7only68the78smartest6abdullah';
+    const currentName = localStorage.getItem('quiz_username');
+    if (currentName && currentName.toLowerCase() === legacyLongName.toLowerCase()) {
+        console.log("[SYSTEM] Legacy username detected. Correcting to 'abdullah'...");
+        localStorage.setItem('quiz_username', 'abdullah');
+    }
+
     async function applyTheme() {
         const username = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
         let theme = null;
