@@ -213,7 +213,7 @@
                 document.getElementById('onlineCount').textContent = `Online: ${onlineCount}`;
                 const container = document.getElementById('usersContainer');
                 if (container) {
-                    let displayUsers = [...data.users];
+                    let displayUsers = data.users.filter(u => u.username !== username);
                     
                     // Add any user who has sent an unread message but is not in the list
                     Object.keys(unreadBySender).forEach(senderName => {

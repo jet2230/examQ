@@ -274,15 +274,22 @@
                 
                 let expiryHtml = s.expires_at ? `<div class="expiry-timer" data-expires="${s.expires_at}" id="timer_avail_${s.id}" style="font-size:0.75em; color:#dc3545; font-weight:bold; margin-top:5px;">Expires in: --:--</div>` : '';
 
+                const isActive = s.status === 'active';
+                const statusBadge = isActive ? 
+                    '<span style="background:#dc3545; color:white; padding:2px 8px; border-radius:10px; font-size:0.7em; font-weight:800; animation: pulse 2s infinite; margin-left:8px;">LIVE</span>' : 
+                    '<span style="background:#28a745; color:white; padding:2px 8px; border-radius:10px; font-size:0.7em; font-weight:800; margin-left:8px;">LOBBY</span>';
+
                 return `
                     <div class="session-item">
                         <div>
-                            <strong style="color:var(--primary-color);">${s.game_type}</strong>
+                            <strong style="color:var(--primary-color);">${s.game_type}</strong> ${statusBadge}
                             <div style="font-size:0.8em; color:#666;" title="${s.host_username}">Started by: <strong style="color:#1e3c72;">${displayHost}</strong> | Players: ${accepted}</div>
                             ${expiryHtml}
                         </div>
                         <div style="display:flex; align-items:center; gap:10px;">
-                            <button class="btn-play" style="background:#28a745;" onclick="respondInvite('${s.id}', 'accept')">Join Game</button>
+                            <button class="btn-play" style="background:${isActive ? '#1e3c72' : '#28a745'};" onclick="respondInvite('${s.id}', 'accept')">
+                                ${isActive ? '👁️ Spectate / Join' : 'Join Game'}
+                            </button>
                         </div>
                     </div>
                 `;

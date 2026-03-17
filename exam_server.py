@@ -304,9 +304,10 @@ def game_create():
         players = [{'username': host, 'status': 'accepted'}]
             
         cursor.execute(
-            "INSERT INTO game_sessions (id, game_type, host_username, players_json, status, expires_at, logs_json) VALUES (?, ?, ?, ?, ?, datetime('now', '+10 minutes'), '[]')",
+            "INSERT INTO game_sessions (id, game_type, host_username, players_json, status, expires_at, logs_json) VALUES (?, ?, ?, ?, ?, datetime('now', '+30 minutes'), '[]')",
             (session_id, game_type, host, json.dumps(players), 'pending')
         )
+        log_game_action(cursor, session_id, f"{fmt_name(host)} joined the game.")
         conn.commit(); conn.close()
         return jsonify({'success': True, 'session_id': session_id}), 201
     except Exception as e: return jsonify({'error': str(e)}), 500
@@ -330,9 +331,10 @@ def game_invite():
             for u in invitees:
                 players.append({'username': u, 'status': 'invited'})
             cursor.execute(
-                "INSERT INTO game_sessions (id, game_type, host_username, players_json, status, expires_at, logs_json) VALUES (?, ?, ?, ?, ?, datetime('now', '+10 minutes'), '[]')",
+                "INSERT INTO game_sessions (id, game_type, host_username, players_json, status, expires_at, logs_json) VALUES (?, ?, ?, ?, ?, datetime('now', '+30 minutes'), '[]')",
                 (session_id, game_type, host, json.dumps(players), 'pending')
             )
+            log_game_action(cursor, session_id, f"{fmt_name(host)} joined the game.")
         else:
             # Adding invitees to existing session
             cursor.execute("SELECT players_json FROM game_sessions WHERE id = ?", (session_id,))
@@ -1333,11 +1335,11 @@ def update_game_state():
 def get_available_games():
     try:
         conn = get_db(); cursor = conn.cursor()
-        # Cleanup: Delete pending sessions that have expired
-        cursor.execute("DELETE FROM game_sessions WHERE status = 'pending' AND expires_at < datetime('now')")
+        # Cleanup: Delete ALL sessions that have expired
+        cursor.execute("DELETE FROM game_sessions WHERE expires_at < datetime('now')")
         conn.commit()
-        # Find all pending sessions
-        cursor.execute("SELECT * FROM game_sessions WHERE status = 'pending'")
+        # Find all non-finished sessions
+        cursor.execute("SELECT * FROM game_sessions WHERE status != 'finished'")
         rows = cursor.fetchall(); conn.close()
         return jsonify({'success': True, 'sessions': [dict(r) for r in rows]}), 200
     except Exception as e: return jsonify({'error': str(e)}), 500
@@ -1347,8 +1349,8 @@ def get_my_active_games():
     try:
         u = request.args.get('username')
         conn = get_db(); cursor = conn.cursor()
-        # Cleanup: Delete pending sessions that have expired
-        cursor.execute("DELETE FROM game_sessions WHERE status = 'pending' AND expires_at < datetime('now')")
+        # Cleanup: Delete ALL sessions that have expired
+        cursor.execute("DELETE FROM game_sessions WHERE expires_at < datetime('now')")
         conn.commit()
         # Find sessions where user is a player and session is not finished
         cursor.execute("SELECT * FROM game_sessions WHERE status != 'finished' AND players_json LIKE ?", (f'%"{u}"%',))
