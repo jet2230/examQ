@@ -807,7 +807,9 @@
                 if (isEnglish && q.id >= 9) {
                     sectionCQuestions.push(q);
                 } else {
-                    const firstPage = q.sub_questions[0].qp_pages[0];
+                    const firstSub = q.sub_questions && q.sub_questions[0];
+                    const firstPage = (firstSub && firstSub.qp_pages && firstSub.qp_pages[0]) || 1;
+                    
                     if (!groupsByPage[firstPage]) {
                         groupsByPage[firstPage] = {
                             page: firstPage,
@@ -827,8 +829,10 @@
             
             // Add Section C as a single group if it exists (English only)
             if (isEnglish && sectionCQuestions.length > 0) {
+                const cSub = sectionCQuestions[0].sub_questions && sectionCQuestions[0].sub_questions[0];
+                const cPage = (cSub && cSub.qp_pages && cSub.qp_pages[0]) || 1;
                 pageGroups.push({
-                    page: sectionCQuestions[0].sub_questions[0].qp_pages[0],
+                    page: cPage,
                     questions: sectionCQuestions,
                     isSectionC: true
                 });

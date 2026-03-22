@@ -2398,7 +2398,8 @@ def get_exam_progress():
         cursor.execute("SELECT * FROM exam_progress WHERE username = ? AND paper_id = ?", (request.args.get('username'), request.args.get('paper_id')))
         row = cursor.fetchone(); conn.close()
         if row: return jsonify({'success': True, 'current_question_idx': row['current_question_idx'], 'answers': json.loads(row['answers_json']), 'status': row['status']}), 200
-        return jsonify({'success': False}), 404
+        # Return 200 with success: False so the console doesn't show a red error
+        return jsonify({'success': False, 'message': 'No progress found'}), 200
     except Exception as e: return jsonify({'error': str(e)}), 500
 
 @app.route('/api/results/detail')
