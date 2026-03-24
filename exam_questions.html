@@ -513,6 +513,8 @@
             let y = parseInt(parts.find(p => p.match(/^\d{4}$/)));
             let m = parts.find(p => months[p] !== undefined);
             let day = parseInt(parts.find(p => p.match(/^\d{1,2}$/))) || 1;
+            // Handle month-year only format (e.g., "June 2019")
+            if (y && m && !day) day = 1;
             return (y && m) ? new Date(y, months[m], day) : new Date(0);
         }
 

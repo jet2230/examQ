@@ -12,5 +12,4 @@ users.json
 resources/
 # static/
 # exam_data/
-quizzes.db
-quizzes.db
+# quizzes.db - database is now tracked
