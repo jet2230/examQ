@@ -2281,7 +2281,12 @@ def check_exam_exists(paper_id):
 def get_official_exam(paper_id):
     path = f'exam_data/{paper_id}.json'
     if not os.path.exists(path): return jsonify({'error': 'Not found'}), 404
-    with open(path, 'r') as f: return jsonify(json.load(f))
+    with open(path, 'r') as f:
+        response = jsonify(json.load(f))
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+        return response
 
 @app.route('/api/official-exams/<paper_id>/page-count')
 def get_exam_page_count(paper_id):

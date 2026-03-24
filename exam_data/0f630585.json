@@ -38,6 +38,22 @@
       "max_marks": 1
     },
     {
+      "id": 3,
+      "max_marks": 1,
+      "sub_questions": [
+        {
+          "sub_id": "3",
+          "type": "text",
+          "qp_pages": [
+            2
+          ],
+          "ms_text": "Explain how the writer presents climate change in the passage.",
+          "question_text": "Explain how the writer presents climate change in the passage.",
+          "max_marks": 1
+        }
+      ]
+    },
+    {
       "id": 4,
       "sub_questions": [
         {
@@ -131,5 +147,6 @@
     12,
     13,
     14
-  ]
+  ],
+  "qp_img_dir": "/static/exams/0f630585/qp/"
 }

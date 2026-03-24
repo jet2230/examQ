@@ -739,12 +739,12 @@
             if (isReviewMode) {
                 // In review mode, we fetch from the results table, not progress
                 [examRes, progRes] = await Promise.all([
-                    fetch(`/api/official-exams/${paperId}`),
+                    fetch(`/api/official-exams/${paperId}?t=${Date.now()}`),
                     fetch(`/api/results/detail?username=${targetStudent}&paper_id=${paperId}`)
                 ]);
             } else {
                 [examRes, progRes] = await Promise.all([
-                    fetch(`/api/official-exams/${paperId}`),
+                    fetch(`/api/official-exams/${paperId}?t=${Date.now()}`),
                     fetch(`/api/student/exam-progress/get?username=${currentUser}&paper_id=${paperId}`)
                 ]);
             }
