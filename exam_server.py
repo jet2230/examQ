@@ -755,7 +755,7 @@ If you choose a phrase, INCLUDE THE SPACES between words.
 Respond ONLY with a JSON object in this format: {"word": "YOUR CHOICE"}"""
                 
                 try:
-                    response = requests.post(OLLAMA_API, json={'model': 'llama3', 'prompt': prompt, 'stream': False, 'format': 'json', 'options': {'temperature': 0.9}}, timeout=30)
+                    response = requests.post(OLLAMA_API, json={'model': 'llama3:latest', 'prompt': prompt, 'stream': False, 'format': 'json', 'options': {'temperature': 0.9}}, timeout=30)
                     ai_data = json.loads(response.json().get('response', '{}'))
                     word = ai_data.get('word', '').strip().upper()
                     word = re.sub(r'[^A-Z ]', '', word).strip()
@@ -819,7 +819,7 @@ Respond ONLY with a JSON object in this format: {"word": "YOUR CHOICE"}"""
                     p = f"You are the host in Hangman. Word is '{state.get('word')}'. Give a short, helpful hint. Return ONLY text."
                     
                     try:
-                        resp = requests.post(OLLAMA_API, json={'model': 'llama3', 'prompt': p, 'stream': False}, timeout=30)
+                        resp = requests.post(OLLAMA_API, json={'model': 'llama3:latest', 'prompt': p, 'stream': False}, timeout=30)
                         hint = resp.json().get('response', 'Good luck!').strip().replace('"', '')
                     except: hint = "Keep going!"
                     
@@ -849,7 +849,7 @@ Respond ONLY with a JSON object in this format: {"word": "YOUR CHOICE"}"""
                     try:
                         # print(f"[AI-OLLAMA-START] Guessing for {current_turn}...", flush=True)
                         o_start = time.time()
-                        resp = requests.post(OLLAMA_API, json={'model': 'llama3', 'prompt': prompt, 'stream': False}, timeout=30)
+                        resp = requests.post(OLLAMA_API, json={'model': 'llama3:latest', 'prompt': prompt, 'stream': False}, timeout=30)
                         # print(f"[AI-OLLAMA-END] Took {time.time() - o_start:.2f}s", flush=True)
                         letter = re.search(r'[A-Z]', resp.json().get('response', 'E').upper()).group(0)
                     except: letter = 'E'
@@ -1441,7 +1441,7 @@ Keep the tone appropriate for a school setting.
 Return ONLY the response text."""
 
         response = requests.post(OLLAMA_API, json={
-            'model': 'llama3',
+            'model': 'llama3:latest',
             'prompt': prompt,
             'stream': False
         }, timeout=30)
@@ -1694,7 +1694,7 @@ Return ONLY a JSON list of objects:
 
         # Call Ollama
         response = requests.post(OLLAMA_API, json={
-            'model': 'llama3',
+            'model': 'llama3:latest',
             'prompt': prompt,
             'stream': False,
             'format': 'json'
@@ -1971,10 +1971,23 @@ TEXT:
 
 Return a JSON list of strings only.
 Example: ["1(a)", "1(b)", "2", "3(a)(i)"]"""
-            
-            try:
-                resp = requests.post('http://localhost:11434/api/generate', json={'model': 'llama3', 'prompt': id_prompt, 'stream': False, 'format': 'json', 'temperature': 0}, timeout=45)
-                found_data = clean_ai_json(resp.json().get('response', '[]'))
+
+            # Page-level timeout to prevent hanging on single pages
+            page_timeout = 30  # 30 seconds per page for ID detection
+            page_started = time.time()
+            while time.time() - page_started < page_timeout:
+                try:
+                    resp = requests.post('http://localhost:11434/api/generate', json={'model': 'llama3:latest', 'prompt': id_prompt, 'stream': False, 'format': 'json', 'temperature': 0}, timeout=5)
+                    found_data = clean_ai_json(resp.json().get('response', '[]'))
+                    break  # Success, exit loop
+                except requests.exceptions.Timeout:
+                    print(f"  ⚠️  Page {page_num} ID detection timeout, skipping...", flush=True)
+                    found_data = []  # Empty = skip this page
+                except Exception as e:
+                    if "time" in str(e).lower():
+                        print(f"  ⚠️  Page {page_num} AI error (timeout/slow): {e}, skipping...", flush=True)
+                        found_data = []
+                    break
                 
                 # FALLBACK: Aggressive Regex for Question Markers
                 regex_found = []
@@ -2000,68 +2013,194 @@ Example: ["1(a)", "1(b)", "2", "3(a)(i)"]"""
                 if not found_data: continue
 
                 for sub_id in sorted(found_data):
-                    m = re.search(r'(\d+)', str(sub_id))
-                    if not m: continue
-                    main_id = int(m.group(1))
+                    try:
+                        m = re.search(r'(\d+)', str(sub_id))
+                        if not m: continue
+                        main_id = int(m.group(1))
 
-                    q_prompt = f"""Extract FULL marking details for sub-question {sub_id} from the mark scheme AND determine the correct input format based on the question paper text.
-                    MATCHING QUESTION ID: {sub_id}
-                    
-                    QUESTION PAPER TEXT (Page Context):
-                    {page_content}
+                        q_prompt = f"""Extract FULL marking details for sub-question {sub_id} from the mark scheme AND determine the correct input format based on the question paper text.
+                        MATCHING QUESTION ID: {sub_id}
 
-                    MARK SCHEME TEXT:
-                    {ms_text[:45000]}
+                        QUESTION PAPER TEXT (Page Context):
+                        {page_content}
 
-                    Return ONLY a JSON object:
-                    {{
-                    "sub_id": "{sub_id}",
-                    "type": "text/mcq/calculation/draw/list",
-                    "max_marks": 1,
-                    "lines_provided": 2, 
-                    "ms_text": "Detailed marking criteria... MUST NOT BE TRUNCATED. Include all bullet points and marks.",
-                    "options": ["A", "B", "C", "D"], // ONLY if type is mcq
-                    "final_label": "", 
-                    "final_unit": "" 
-                    }}
+                        MARK SCHEME TEXT:
+                        {ms_text[:45000]}
 
-                    MANDATORY RULES:
-                    1. ms_text MUST be the complete, verbatim marking criteria for THIS SPECIFIC sub-question. Do not use "(rest of...)" or placeholders.
-                    2. TYPE SELECTION:
-                       - 'mcq': if there are options A, B, C, D to choose from.
-                       - 'calculation': if it's a math/numerical problem with a specific answer line.
-                       - 'draw'/'graph': if it requires a visual response.
-                       - 'text': for descriptions/explanations.
-                    3. Determine 'max_marks' by looking for brackets like (1) or (2) in the question paper or mark scheme.
-                    """                    
-                    q_resp = requests.post('http://localhost:11434/api/generate', json={'model': 'llama3', 'prompt': q_prompt, 'stream': False, 'format': 'json', 'temperature': 0}, timeout=90)
-                    sq = clean_ai_json(q_resp.json().get('response', '{}'))
-                    
-                    # Basic validation of extracted content
-                    if sq and sq.get('ms_text') and ('rest of' in sq['ms_text'].lower() or 'placeholder' in sq['ms_text'].lower() or len(sq['ms_text']) < 10):
-                        print(f"    [IMPORT] Retrying sub-id {sub_id} due to low quality ms_text", flush=True)
-                        q_resp = requests.post('http://localhost:11434/api/generate', json={'model': 'llama3', 'prompt': q_prompt + "\nIMPORTANT: PREVIOUS ATTEMPT WAS TRUNCATED. PROVIDE FULL TEXT.", 'stream': False, 'format': 'json', 'temperature': 0}, timeout=90)
-                        sq = clean_ai_json(q_resp.json().get('response', '{}'))
+                        Return ONLY a JSON object:
+                        {{
+                        "sub_id": "{sub_id}",
+                        "type": "text/mcq/calculation/draw/list",
+                        "max_marks": 1,
+                        "lines_provided": 2,
+                        "ms_text": "Detailed marking criteria... MUST NOT BE TRUNCATED. Include all bullet points and marks.",
+                        "options": ["A", "B", "C", "D"], // ONLY if type is mcq
+                        "final_label": "",
+                        "final_unit": ""
+                        }}
 
-                    print(f"    [IMPORT] Sub-ID {sub_id} detail AI raw: {q_resp.json().get('response', '')[:100]}...", flush=True)
-                    if not sq or not sq.get('sub_id'): continue
-                    
-                    if main_id not in all_questions_map: all_questions_map[main_id] = {"id": main_id, "sub_questions": []}
-                    existing = next((s for s in all_questions_map[main_id]['sub_questions'] if s['sub_id'] == sq['sub_id']), None)
-                    if not existing:
-                        sq['qp_pages'] = [page_num]
-                        all_questions_map[main_id]['sub_questions'].append(sq)
-                    else:
-                        if page_num not in existing.get('qp_pages', []): existing.setdefault('qp_pages', []).append(page_num)
-                        if len(str(sq.get('ms_text', ''))) > len(str(existing.get('ms_text', ''))): existing['ms_text'] = sq['ms_text']
-            except: pass
+                        MANDATORY RULES:
+                        1. ms_text MUST be the complete, verbatim marking criteria for THIS SPECIFIC sub-question. Do not use "(rest of...)" or placeholders.
+                        2. TYPE SELECTION:
+                           - 'mcq': if there are options A, B, C, D to choose from.
+                           - 'calculation': if it's a math/numerical problem with a specific answer line.
+                           - 'draw'/'graph': if it requires a visual response.
+                           - 'text': for descriptions/explanations.
+                        3. Determine 'max_marks' by looking for brackets like (1) or (2) in the question paper or mark scheme.
+                        """
+                        # Question-level timeout with retry
+                        q_timeout = 120  # 120 seconds per question
+                        q_started = time.time()
+                        q_success = False
+                        while time.time() - q_started < q_timeout and not q_success:
+                            try:
+                                q_resp = requests.post('http://localhost:11434/api/generate', json={'model': 'llama3:latest', 'prompt': q_prompt, 'stream': False, 'format': 'json', 'temperature': 0}, timeout=60)
+                                sq = clean_ai_json(q_resp.json().get('response', '{}'))
+                                q_success = True
+                            except requests.exceptions.Timeout:
+                                print(f"      ⚠️  Question {sub_id} AI timeout, skipping this question...", flush=True)
+                                continue
+                            except Exception as e:
+                                if "time" in str(e).lower():
+                                    print(f"      ⚠️  Question {sub_id} AI error: {e}, skipping...", flush=True)
+                                break
+                        if not q_success or not sq or not sq.get('sub_id'):
+                            continue
+
+                        # Basic validation of extracted content
+                        if sq and sq.get('ms_text') and ('rest of' in sq['ms_text'].lower() or 'placeholder' in sq['ms_text'].lower() or len(sq['ms_text']) < 10):
+                            print(f"      [IMPORT] Retrying sub-id {sub_id} due to low quality ms_text", flush=True)
+                            # Simple retry - no timeout loop
+                            try:
+                                q_resp = requests.post('http://localhost:11434/api/generate', json={'model': 'llama3:latest', 'prompt': q_prompt + "\nIMPORTANT: PREVIOUS ATTEMPT WAS TRUNCATED. PROVIDE FULL TEXT.", 'stream': False, 'format': 'json', 'temperature': 0}, timeout=30)
+                                sq = clean_ai_json(q_resp.json().get('response', '{}'))
+                            except:
+                                pass  # If retry fails, keep the previous result
+
+                        print(f"      [IMPORT] Sub-ID {sub_id} detail AI raw: {q_resp.json().get('response', '')[:100]}...", flush=True)
+                        if not sq or not sq.get('sub_id'): continue
+
+                        if main_id not in all_questions_map: all_questions_map[main_id] = {"id": main_id, "sub_questions": []}
+                        existing = next((s for s in all_questions_map[main_id]['sub_questions'] if s['sub_id'] == sq['sub_id']), None)
+                        if not existing:
+                            sq['qp_pages'] = [page_num]
+                            all_questions_map[main_id]['sub_questions'].append(sq)
+                        else:
+                            if page_num not in existing.get('qp_pages', []): existing.setdefault('qp_pages', []).append(page_num)
+                            if len(str(sq.get('ms_text', ''))) > len(str(existing.get('ms_text', ''))): existing['ms_text'] = sq['ms_text']
+                    except Exception as e:
+                        print(f"      ⚠️  Question {sub_id} processing error: {e}", flush=True)
+                        continue
+                    except Exception as e:
+                        print(f"  ⚠️  Page {page_num} processing error: {e}", flush=True)
+                        continue
 
         import_jobs[job_id]['status'] = 'images'
         qp_img_dir = f"static/exams/{metadata['id']}/qp"; os.makedirs(qp_img_dir, exist_ok=True)
         images = convert_from_path(qp_path, dpi=150)
         for i, img in enumerate(images): img.save(os.path.join(qp_img_dir, f"page_{i+1:02d}.png"), 'PNG')
         
-        final_data = {"paper_id": metadata['id'], "title": metadata['title'], "subject": metadata['subject'], "qp_img_dir": f"/{qp_img_dir}/", "er_text": er_text, "questions": sorted(all_questions_map.values(), key=lambda q: q['id']), "extract_pages": []}
+        # Detect reading booklet for English papers
+        extract_pages = []
+        if 'english' in metadata.get('subject', '').lower() and qp_path:
+            try:
+                # Extract pages from PDF
+                res = subprocess.run(['pdftotext', '-layout', qp_path, '-'], capture_output=True, text=True, check=True)
+                pages = res.stdout.split('\f')
+
+                # Strategy 1: Look for "Do not return this booklet" - unique to source booklet header
+                # This indicates the INFO page, so we start from the NEXT page
+                for i, page in enumerate(pages):
+                    page_lower = page.lower()
+                    if 'do not return this booklet' in page_lower:
+                        if i + 1 < len(pages):
+                            next_page = pages[i + 1].lower()
+                            if 'text one' in next_page or 'text two' in next_page:
+                                # Start from i+2 (skip the info page)
+                                extract_pages = list(range(i + 2, len(pages) + 1))
+                                break
+
+                # Strategy 2: Look for "Paper reference" + "English Language B" + "Source Booklet"
+                # This indicates the INFO page, so we start from the NEXT page
+                if not extract_pages:
+                    for i, page in enumerate(pages):
+                        page_lower = page.lower()
+                        if 'paper reference' in page_lower and 'english language b' in page_lower and 'source booklet' in page_lower:
+                            if i + 1 < len(pages):
+                                next_page = pages[i + 1].lower()
+                                if 'text one' in next_page or 'text two' in next_page:
+                                    # Start from i+2 (skip the info page), end at last non-blank page
+                                    end = i + 2
+                                    for k in range(i + 2, len(pages)):
+                                        if pages[k].strip():
+                                            end = k + 1
+                                        else:
+                                            break
+                                    extract_pages = list(range(i + 2, end))
+                                    break
+
+                # Strategy 3: Look for "Source Booklet" header with blank lines + "Turn over"
+                # This indicates the INFO page, so we start from the NEXT page
+                if not extract_pages:
+                    for i, page in enumerate(pages):
+                        page_lower = page.lower()
+                        lines = page.split('\n')
+                        source_idx = -1
+                        for j, line in enumerate(lines):
+                            if 'source booklet' in line.lower():
+                                source_idx = j
+                                break
+                        if source_idx >= 0:
+                            for j in range(source_idx + 1, len(lines)):
+                                if lines[j].strip() == '' and j + 1 < len(lines) and 'turn over' in lines[j + 1].lower():
+                                    if i + 1 < len(pages):
+                                        next_page = pages[i + 1].lower()
+                                        if 'text one' in next_page or 'text two' in next_page:
+                                            # Start from i+2 (skip the info page), end at last non-blank page
+                                            end = i + 2
+                                            for k in range(i + 2, len(pages)):
+                                                if pages[k].strip():
+                                                    end = k + 1
+                                                else:
+                                                    break
+                                            extract_pages = list(range(i + 2, end))
+                                    break
+                            if extract_pages: break
+
+                # Strategy 4: Fallback - look for "Text One" at start of page (after blank lines)
+                if not extract_pages:
+                    for i, page in enumerate(pages):
+                        lines = page.split('\n')
+                        for j, line in enumerate(lines):
+                            stripped = line.strip()
+                            if stripped.lower().startswith('text one') or stripped.lower().startswith('text two'):
+                                if j >= 2:
+                                    prev_blank = all(lines[k].strip() == '' for k in range(j-1, max(0, j-3), -1))
+                                    if prev_blank:
+                                        start = i + 1
+                                        end = start
+                                        for k in range(start, len(pages)):
+                                            if pages[k].strip():
+                                                end = k + 1
+                                            else:
+                                                break
+                                        extract_pages = list(range(start, end))
+                                        break
+                                elif j < 10:
+                                    start = i + 1
+                                    end = start
+                                    for k in range(start, len(pages)):
+                                        if pages[k].strip():
+                                            end = k + 1
+                                        else:
+                                            break
+                                    extract_pages = list(range(start, end))
+                                    break
+                        if extract_pages: break
+            except Exception as e:
+                print(f"Could not detect reading booklet: {e}")
+
+        final_data = {"paper_id": metadata['id'], "title": metadata['title'], "subject": metadata['subject'], "qp_img_dir": f"/{qp_img_dir}/", "er_text": er_text, "questions": sorted(all_questions_map.values(), key=lambda q: q['id']), "extract_pages": extract_pages}
         json_path = f"exam_data/{metadata['id']}.json"
         with open(json_path, 'w') as f: json.dump(final_data, f, indent=2)
         conn = sqlite3.connect(DATABASE); cursor = conn.cursor()
@@ -2077,10 +2216,12 @@ def process_official_exam():
         qp_snippet = extract_pdf_text(qp_path)[:3000]
         meta_prompt = f"Return JSON metadata (title, subject, paper, date) for: {qp_snippet}"
         try:
-            resp = requests.post('http://localhost:11434/api/generate', json={'model': 'llama3', 'prompt': meta_prompt, 'stream': False, 'format': 'json'}, timeout=40)
+            resp = requests.post('http://localhost:11434/api/generate', json={'model': 'llama3:latest', 'prompt': meta_prompt, 'stream': False, 'format': 'json'}, timeout=40)
             metadata = clean_ai_json(resp.json().get('response', '{}'))
+            # Ensure metadata is a dict
+            if not isinstance(metadata, dict): metadata = {}
         except: metadata = {}
-        
+
         # Regex Fallback for Date
         if not metadata.get('date') or metadata['date'] == 'Unknown':
             date_match = re.search(r'(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4}', qp_snippet, re.I)
@@ -2291,8 +2432,8 @@ MAX MARKS: {max_marks}
 OFFICIAL MARK SCHEME:
 {mark_scheme}
 
-EXAMINER REPORT:
-{er_text[:3000]}
+EXAMINER REPORT (First 2000 chars only):
+{er_text[:2000] if er_text else ""}
 
 STUDENT'S ANSWER:
 {user_answer}
@@ -2328,21 +2469,23 @@ MANDATORY RULES:
         print(f"  [GRADING] Q {sub_id} Student Answer: {user_answer[:100]}...", flush=True)
         
         payload = {
-            'model': 'llama3', 
-            'prompt': prompt, 
-            'stream': False, 
+            'model': 'llama3:latest',
+            'prompt': prompt,
+            'stream': False,
             'format': 'json',
             'options': {
                 'temperature': 0,
                 'seed': 42,
-                'num_predict': 500
+                'num_predict': 256,
+                'min_p': 0.1,  # Nucleus sampling for better quality
+                'top_p': 0.9
             }
         }
         
         result = None
         for attempt in range(2): # Try up to 2 times
             try:
-                resp = requests.post('http://localhost:11434/api/generate', json=payload, timeout=90)
+                resp = requests.post('http://localhost:11434/api/generate', json=payload, timeout=180)
                 raw = resp.json().get('response', '{}')
                 print(f"  [GRADING] Q {sub_id} RAW AI (Attempt {attempt+1}): {raw.strip()}", flush=True)
                 
