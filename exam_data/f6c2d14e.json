@@ -5,7 +5,13 @@
   "date": "May 2024",
   "paper": "1R",
   "qp_img_dir": "/static/exams/f6c2d14e/qp/",
-  "extract_pages": [10, 11, 12, 13],
+  "extract_pages": [
+    10,
+    11,
+    12,
+    13,
+    14
+  ],
   "questions": [
     {
       "id": 1,
@@ -16,7 +22,9 @@
           "max_marks": 1,
           "lines_provided": 2,
           "ms_text": "One mark for any one of the following: climb/splash/diving into the water trough, beating his wings, grooming himself, dried himself in the sun, pecking his feathers, combing his feathers (smooth), lingered (near the studio door), squawked (in recognition), working his beak, sniffing, lowering his head/lengthening his neck, was possessive.",
-          "qp_pages": [2]
+          "qp_pages": [
+            2
+          ]
         }
       ]
     },
@@ -29,7 +37,9 @@
           "max_marks": 1,
           "lines_provided": 2,
           "ms_text": "One mark for any one of the following: behaves differently (when there are others around), fusses, gets nervy, becomes loud, becomes silly, becomes hostile, may play the fool (like children do).",
-          "qp_pages": [2]
+          "qp_pages": [
+            2
+          ]
         }
       ]
     },
@@ -42,7 +52,9 @@
           "max_marks": 10,
           "lines_provided": 30,
           "ms_text": "How does the writer present his experiences of looking after Willy, the goose? Reward responses that demonstrate understanding of: initial sentence suggests how caring the writer was ('warm cage', 'plenty to eat'), verb 'snuggled' suggests Willy feels safe, description of developement ('doubled in size'), references to time ('10 days', 'within a month') show quick development, description of feathers ('pillow of warmth') helps reader imagine, 'squawk of recognition' shows attachment, listing of sounds ('caw', 'shriek', 'squawk', 'hiss', 'trumpeting') creates vivid impression, tricolon for cleaning ritual ('preening, cleaning and ordering'), reliance shown in 'a fixture' or 'a certainty', simile 'as true as a compass point' emphasises loyalty, metaphor 'a graceful ornament' shows beauty, evocative description of geese at night ('motionless, luminous shapes').",
-          "qp_pages": [3]
+          "qp_pages": [
+            3
+          ]
         }
       ]
     },
@@ -55,7 +67,9 @@
           "max_marks": 1,
           "lines_provided": 2,
           "ms_text": "One mark for any one of the following: it doesn't matter where they are, use whatever transportation necessary/vehicle/aircraft/helicopter, rescue teams are equipped with milk, rescue teams have stretchers, rescue teams have vital medicines (including drips), they offer immediate aid/help.",
-          "qp_pages": [4]
+          "qp_pages": [
+            4
+          ]
         }
       ]
     },
@@ -67,7 +81,9 @@
           "type": "list",
           "max_marks": 2,
           "ms_text": "One mark each for any two of the following: at three years old they move to a Reintegration Unit, Units are in protected conservation areas, Units are protected by Anti-Poaching teams, Units are in areas with wild elephants, they have the space and environment the orphans need, the orphans are gradually weaned, they learn to live as wild elephants, they walk with the Keepers (in the bush), they interact with wild herds /learn about elephant society and accepted behaviour, they return to the units at night for protection.",
-          "qp_pages": [4]
+          "qp_pages": [
+            4
+          ]
         }
       ]
     },
@@ -80,7 +96,9 @@
           "max_marks": 10,
           "lines_provided": 30,
           "ms_text": "How does the writer present the experiences of looking after orphaned elephants? Reward responses that demonstrate understanding of: dramatic opening sentence ('aircraft or helicopter'), use of adverbs ('profoundly', 'physically', 'psychologically') shows depth of effect, tricolon 'starvation, dehydration or injuries' emphasises problems, pronoun 'our' suggests collective endeavour, listing of equipment (milk, stretchers, medicines), use of sub-headings shows development, phrase 'round-the-clock, day-in-and-day-out commitment' shows dedication, contrast of 'secure base' with 'difficult period', tricolon 'unconditional love, emotional support and learning experiences', detail about milk formula shows expertise, reference to Daphne Sheldrick adds veracity, anthropomorphism ('toys and stimulation', 'waiting over them', 'hug'), orphans called 'babies' emphasises vulnerability, verb 'graduate' suggests progression, reference to Anti-Poaching Teams/Kenya Wildlife Service shows care.",
-          "qp_pages": [5]
+          "qp_pages": [
+            5
+          ]
         }
       ]
     },
@@ -93,7 +111,9 @@
           "max_marks": 15,
           "lines_provided": 45,
           "ms_text": "Compare how the writers present their ideas and experiences of looking after orphaned animals and birds. Reward responses that demonstrate understanding of: Text One is about an individual (Willy), uses first-person, talks about personal benefits; Text Two is from a group perspective ('we'), identifies negative effects of being orphaned, identifies benefits for the elephants; both texts use description, show how caring humans can be, and show benefits of looking after orphaned creatures. Points of comparison: personal relationship vs charity perspective, entertaining vs advisory/informative, goose vs elephants, etc.",
-          "qp_pages": [6]
+          "qp_pages": [
+            6
+          ]
         }
       ]
     },
@@ -106,7 +126,9 @@
           "max_marks": 30,
           "lines_provided": 60,
           "ms_text": "A talk to your peers about how orphaned animals and birds can be helped and the benefits of doing this. Reward understanding of: How they can be helped (warmth, food, medical care, companionship, play, exercise, rehabilitation); Benefits for animals (safety, security, character development); Rewards for carers (affection, pleasure, sense of peace, watching positive development). register for a talk to peers should be adopted (AO4/AO5).",
-          "qp_pages": [7]
+          "qp_pages": [
+            7
+          ]
         }
       ]
     },
@@ -119,7 +141,9 @@
           "max_marks": 30,
           "lines_provided": 80,
           "ms_text": "'People spend too much time and money looking after animals.' To what extent do you agree with this statement? (Writing Section C). Reward arguments for/against: individuals decide their own time/money, animals are helpless and need care, animals provide enjoyment, humans need is great so time/money should help people first, need for perspective and balance.",
-          "qp_pages": [8]
+          "qp_pages": [
+            8
+          ]
         }
       ]
     },
@@ -132,7 +156,9 @@
           "max_marks": 30,
           "lines_provided": 80,
           "ms_text": "Write a story (true or imaginary) entitled 'Freedom'. (Writing Section C). Reward sense of drama, vivid description, excitement or suspense.",
-          "qp_pages": [8]
+          "qp_pages": [
+            8
+          ]
         }
       ]
     },
@@ -145,7 +171,9 @@
           "max_marks": 30,
           "lines_provided": 80,
           "ms_text": "Describe a person who is kind to others. (Writing Section C). Reward descriptions of the person, how they have been kind, the effect on others, and powers to evoke a sense of character.",
-          "qp_pages": [8]
+          "qp_pages": [
+            8
+          ]
         }
       ]
     }
