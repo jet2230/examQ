@@ -1,0 +1,12 @@
+2026-06-14 16:06:38 [0;36m========== GEMMA-4 12B IT QAT STARTING ON REMOTE ==========[0m
+2026-06-14 16:06:38 [0;36mModel: /home/bob/llama.cpp/models/gemma-4-12B-it-qat-UD-Q4_K_XL.gguf[0m
+2026-06-14 16:06:38 [0;36mConnecting to bob@192.168.0.76...[0m
+2026-06-14 16:06:38 [0;32mStarting remote server in background...[0m
+2026-06-14 16:06:41 [0;32mServer started successfully! PID: 4686[0m
+
+================================
+  Server is ready!
+================================
+  Access at: http://192.168.0.76:8080/
+================================
+

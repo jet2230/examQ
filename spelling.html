@@ -1,0 +1,1381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ExamQ - Spelling Tests</title>
+    <script src="/static/theme_manager.js"></script>
+    <script src="/static/online_status.js"></script>
+    <style>
+        :root {
+            --primary-color: #1e3c72;
+            --secondary-color: #2a5298;
+            --main-gradient: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--main-gradient);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            overflow: hidden;
+        }
+        .header {
+            background: var(--main-gradient);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        .navbar {
+            padding: 15px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+            background: white;
+        }
+        .nav-brand { font-weight: 800; color: var(--primary-color); font-size: 1.2em; }
+        .nav-links a { text-decoration: none; color: var(--primary-color); font-weight: 600; margin-left: 20px; }
+
+        .content { padding: 40px; }
+
+        .tests-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        .test-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid #eee;
+            transition: transform 0.2s;
+        }
+        .test-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .test-title { font-size: 1.3em; font-weight: 700; color: var(--primary-color); margin-bottom: 8px; }
+        .test-meta { color: #666; font-size: 0.85em; margin-bottom: 15px; }
+        .test-desc { color: #555; font-size: 0.9em; margin-bottom: 15px; line-height: 1.4; }
+
+        .btn {
+            background: var(--main-gradient);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 0.9em;
+        }
+        .btn:hover { opacity: 0.9; }
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        }
+        .btn-small { padding: 6px 12px; font-size: 0.8em; }
+
+        .filter-tabs {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #eee;
+        }
+        .filter-tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+        .filter-tab.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+
+        /* Share Panel */
+        .share-panel {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translateY(-50%);
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            padding: 16px;
+            min-width: 250px;
+            max-width: 320px;
+            z-index: 1000;
+        }
+        .share-panel-header {
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        .share-user-btn {
+            text-align: left;
+            padding: 8px 12px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            background: #f9f9f9;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            width: 100%;
+            margin-bottom: 6px;
+        }
+        .share-user-btn:hover {
+            background: #e3f2fd !important;
+            border-color: #1e3c72 !important;
+            color: #1e3c72 !important;
+        }
+        .test-card { position: relative; }
+
+        /* Create Test View */
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; font-weight: 600; margin-bottom: 8px; color: #333; }
+        .form-input, .form-textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.2s;
+        }
+        .form-input:focus, .form-textarea:focus { border-color: var(--primary-color); outline: none; }
+        .form-textarea { min-height: 80px; resize: vertical; }
+
+        .words-list { margin-top: 20px; }
+        .word-item {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        .word-number {
+            background: var(--primary-color);
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .word-input { flex: 1; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; }
+        .definition-input { flex: 2; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; }
+        .audio-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2em;
+        }
+
+        /* Take Test View */
+        .test-view { text-align: center; max-width: 600px; margin: 0 auto; }
+        .progress-indicator {
+            font-size: 1.1em;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        .audio-play-btn {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: var(--main-gradient);
+            color: white;
+            border: none;
+            font-size: 3em;
+            cursor: pointer;
+            margin: 20px 0;
+            transition: transform 0.2s;
+        }
+        .audio-play-btn:hover { transform: scale(1.1); }
+        .audio-play-btn:active { transform: scale(0.95); }
+        .spelling-input {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.5em;
+            text-align: center;
+            border: 3px solid #e0e0e0;
+            border-radius: 12px;
+            margin: 20px 0;
+            text-transform: lowercase;
+        }
+        .spelling-input:focus { border-color: var(--primary-color); outline: none; }
+
+        /* Results View */
+        .results-summary {
+            text-align: center;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+        .score-display {
+            font-size: 3em;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+        .answers-list { max-width: 600px; margin: 0 auto; }
+        .answer-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: white;
+            border: 2px solid #eee;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+        .answer-correct { border-left-color: #28a745; border-left-width: 5px; }
+        .answer-wrong { border-left-color: #dc3545; border-left-width: 5px; }
+        .answer-word { font-weight: 600; font-size: 1.1em; }
+        .answer-user { color: #666; }
+        .answer-correct-answer { color: #28a745; font-weight: 600; }
+        .answer-status { font-size: 1.5em; }
+
+        /* Utility */
+        .hidden { display: none !important; }
+        .text-center { text-align: center; }
+        .mb-20 { margin-bottom: 20px; }
+        .mb-30 { margin-bottom: 30px; }
+
+        /* Test Results Modal */
+        .results-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        .results-modal.active {
+            display: flex;
+        }
+        .results-modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 700px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        .results-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eee;
+        }
+        .results-modal-header h2 {
+            color: var(--primary-color);
+            margin: 0;
+            font-size: 1.5em;
+        }
+        .results-modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #999;
+            padding: 5px;
+        }
+        .results-modal-close:hover {
+            color: #333;
+        }
+        .test-history-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid #eee;
+        }
+        .test-history-item:last-child {
+            margin-bottom: 0;
+        }
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .history-username {
+            font-weight: 700;
+            color: var(--primary-color);
+            font-size: 1.1em;
+        }
+        .history-date {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .history-score {
+            font-size: 1.3em;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        .history-score.pass {
+            color: #28a745;
+        }
+        .history-score.fail {
+            color: #dc3545;
+        }
+        .history-percentage {
+            font-size: 0.9em;
+            color: #666;
+        }
+        .no-results {
+            text-align: center;
+            color: #999;
+            padding: 30px;
+            font-size: 1.1em;
+        }
+
+        /* Mobile */
+        .hamburger { display: none; cursor: pointer; }
+        .hamburger div { width: 25px; height: 3px; background: var(--primary-color); margin: 5px 0; }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+                flex-direction: column;
+                position: absolute;
+                top: 60px;
+                right: 20px;
+                background: white;
+                padding: 20px;
+                border-radius: 10px;
+                box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            }
+            .nav-links.active { display: flex; }
+            .nav-links a { margin: 10px 0; }
+            .hamburger { display: block; }
+            .word-item { flex-direction: column; align-items: stretch; }
+            .word-number { align-self: flex-start; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="navbar">
+            <div class="nav-brand">🔤 ExamQ Spelling</div>
+            <div class="hamburger" onclick="toggleMenu()">
+                <div></div><div></div><div></div>
+            </div>
+            <div class="nav-links" id="navLinks">
+                <a href="/">🏠 Generator</a>
+                <a href="/exam_questions.html">📖 Library</a>
+                <a href="/results">📊 Results</a>
+                <a href="/games.html">🎮 Games</a>
+                <a href="/spelling.html">🔤 Spelling</a>
+                <a href="/settings.html">⚙️ Settings</a>
+                <a href="#" onclick="logout()">🚪 Logout</a>
+            </div>
+        </div>
+
+        <div class="header">
+            <h1>Spelling Tests</h1>
+            <p>Listen, spell, and improve your vocabulary</p>
+        </div>
+
+        <div class="content">
+            <!-- Tests List View -->
+            <div id="testsListView">
+                <div class="filter-tabs">
+                    <div class="filter-tab active" onclick="filterTests('all')">All Tests</div>
+                    <div class="filter-tab" onclick="filterTests('mine')">My Tests</div>
+                </div>
+
+                <div class="text-center mb-20">
+                    <button class="btn" onclick="showCreateTestView()">+ Create New Test</button>
+                </div>
+
+                <div class="tests-grid" id="testsGrid"></div>
+            </div>
+
+            <!-- Create/Edit Test View -->
+            <div id="createTestView" class="hidden">
+                <button class="btn btn-outline btn-small mb-20" onclick="showTestsListView()">← Back to Tests</button>
+
+                <h2 class="mb-20">Create Spelling Test</h2>
+
+                <div class="form-group">
+                    <label class="form-label">Test Title</label>
+                    <input type="text" class="form-input" id="testTitle" placeholder="e.g., Grade 5 Week 1">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Description (optional)</label>
+                    <textarea class="form-textarea" id="testDescription" placeholder="Brief description of this test..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="testPublic"> Make this test visible to all students
+                    </label>
+                </div>
+
+                <div class="words-list" id="wordsList">
+                    <!-- Words will be added here -->
+                </div>
+
+                <button class="btn mb-20" onclick="addWordRow()">+ Add Word</button>
+
+                <div class="text-center">
+                    <button class="btn" onclick="saveTest()">Save Test</button>
+                </div>
+            </div>
+
+            <!-- Take Test View -->
+            <div id="takeTestView" class="hidden">
+                <button class="btn btn-outline btn-small mb-20" onclick="showTestsListView()">← Back to Tests</button>
+                <button class="btn btn-outline btn-small mb-20" id="shareTestBtn" onclick="toggleShare(event, currentTest?.id)" style="margin-left: 10px;">📤 Share Test</button>
+
+                <div class="test-view">
+                    <h2 id="takeTestTitle">Test Title</h2>
+                    <p id="takeTestDesc" class="mb-20">Description</p>
+
+                    <div class="progress-indicator">
+                        Word <span id="currentWordNum">1</span> of <span id="totalWords">10</span>
+                    </div>
+
+                    <button class="audio-play-btn" onclick="playCurrentWord()" title="Play word">
+                        🔊
+                    </button>
+
+                    <p id="speechStatus" class="mb-20" style="color: #666; min-height: 20px;">Click the speaker to hear the word</p>
+
+                    <!-- Visual Word Reveal Fallback -->
+                    <div id="wordReveal" class="hidden mb-20" style="text-align: center;">
+                        <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;">Audio not available? Reveal the word letter by letter:</p>
+                        <div id="revealedWord" style="font-size: 2em; letter-spacing: 5px; font-weight: 700; color: var(--primary-color);"></div>
+                        <button class="btn btn-outline btn-small" onclick="revealNextLetter()" style="margin-top: 10px;">👁️ Reveal Next Letter</button>
+                        <button class="btn btn-outline btn-small" onclick="revealFullWord()" style="margin-top: 10px; margin-left: 10px;">Show Word</button>
+                    </div>
+
+                    <input type="text" class="spelling-input" id="spellingInput" placeholder="Type spelling here..." autocomplete="off">
+
+                    <button class="btn mb-30" onclick="submitWord()">Submit</button>
+
+                    <div id="testProgress" class="progress-indicator"></div>
+                </div>
+            </div>
+
+            <!-- Share Panel for Take Test View -->
+            <div id="share_panel_current" class="share-panel" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                <div class="share-panel-header">
+                    Share with:
+                    <span onclick="document.getElementById('share_panel_current').style.display='none'" style="float:right; cursor:pointer; font-size:1.2em; color:#999;">&times;</span>
+                </div>
+                <div id="share_user_list_current" style="max-height: 200px; overflow-y: auto;"></div>
+            </div>
+
+            <!-- Results View -->
+            <div id="resultsView" class="hidden">
+                <div class="results-summary">
+                    <h2>Test Complete!</h2>
+                    <div class="score-display">
+                        <span id="scoreText">8/10</span>
+                    </div>
+                    <p id="percentageText">80%</p>
+                </div>
+
+                <div class="answers-list" id="answersList">
+                    <!-- Answers will be listed here -->
+                </div>
+
+                <div class="text-center mb-30">
+                    <button class="btn" id="retryWrongBtn" onclick="retryWrongWords()">Retry Wrong Words</button>
+                    <button class="btn btn-outline" onclick="showTestsListView()">Back to Tests</button>
+                </div>
+            </div>
+
+            <!-- Test Results Modal -->
+            <div id="testResultsModal" class="results-modal">
+                <div class="results-modal-content">
+                    <div class="results-modal-header">
+                        <h2 id="testResultsTitle">Test Results</h2>
+                        <button class="results-modal-close" onclick="hideResultsModal()">&times;</button>
+                    </div>
+                    <div id="testResultsContent">
+                        <!-- Results will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const username = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
+        const role = localStorage.getItem('quiz_admin_username') ? 'admin' : 'student';
+
+        if (!username) {
+            window.location.href = '/login.html';
+        }
+
+        let currentTests = [];
+        let currentFilter = 'all';
+        let currentTest = null;
+        let currentWordIndex = 0;
+        let userAnswers = [];
+        let wordPositionCounter = 0;
+        let testResultsMap = {}; // test_id -> array of results
+
+        // Show test results modal
+        function showTestResults(testId) {
+            const test = currentTests.find(t => t.id === testId);
+            if (!test) return;
+
+            const modal = document.getElementById('testResultsModal');
+            const title = document.getElementById('testResultsTitle');
+            const content = document.getElementById('testResultsContent');
+
+            title.textContent = `${test.title} - Results History`;
+            content.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">Loading results...</p>';
+            modal.classList.add('active');
+
+            const results = testResultsMap[testId] || [];
+
+            content.innerHTML = '';
+
+            if (results.length === 0) {
+                content.innerHTML = '<div class="no-results">No results found for this test.</div>';
+                return;
+            }
+
+            // Sort results by date (most recent first)
+            results.sort((a, b) => new Date(b.completed_at) - new Date(a.completed_at));
+
+            results.forEach(result => {
+                const item = document.createElement('div');
+                item.className = 'test-history-item';
+
+                const percentage = Math.round((result.score / result.total) * 100);
+                const isPass = percentage >= 70;
+
+                const date = new Date(result.completed_at);
+                const formattedDate = date.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+                const formattedTime = date.toLocaleTimeString('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                item.innerHTML = `
+                    <div class="history-header">
+                        <span class="history-username">${result.username}</span>
+                        <span class="history-date">${formattedDate} at ${formattedTime}</span>
+                    </div>
+                    <div class="history-score ${isPass ? 'pass' : 'fail'}">${result.score}/${result.total}</div>
+                    <div class="history-percentage">${percentage}%</div>
+                `;
+
+                content.appendChild(item);
+            });
+        }
+
+        // Hide test results modal
+        function hideResultsModal() {
+            const modal = document.getElementById('testResultsModal');
+            modal.classList.remove('active');
+        }
+
+        // Close modal when clicking outside
+        document.addEventListener('click', function(event) {
+            const modal = document.getElementById('testResultsModal');
+            if (event.target === modal) {
+                hideResultsModal();
+            }
+        });
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                hideResultsModal();
+            }
+        });
+
+        // Initialize nav links
+        function updateNavLinks() {
+            const navLinks = document.getElementById('navLinks');
+            if (role === 'admin') {
+                const adminLink = document.createElement('a');
+                adminLink.href = '/admin_users.html';
+                adminLink.textContent = '⚙️ Users';
+                navLinks.insertBefore(adminLink, navLinks.children[5]);
+
+                const adminExamsLink = document.createElement('a');
+                adminExamsLink.href = '/admin_exams.html';
+                adminExamsLink.textContent = '⚙️ Exams';
+                navLinks.insertBefore(adminExamsLink, navLinks.children[6]);
+            }
+        }
+
+        // Welcome message
+        function initNav() {
+            updateNavLinks();
+            const welcome = document.createElement('span');
+            welcome.textContent = `Welcome, ${username.length > 10 ? username.substring(0, 10) + '...' : username}`;
+            welcome.style.color = '#666';
+            welcome.style.marginRight = '15px';
+
+            const navLinks = document.getElementById('navLinks');
+            if (navLinks) {
+                navLinks.insertBefore(welcome, navLinks.firstChild);
+            }
+        }
+
+        function toggleMenu() {
+            document.getElementById('navLinks').classList.toggle('active');
+        }
+
+        function logout() {
+            localStorage.removeItem('quiz_username');
+            localStorage.removeItem('quiz_admin_username');
+            window.location.href = '/login.html';
+        }
+
+        function showTestsListView() {
+            hideAllViews();
+            document.getElementById('testsListView').classList.remove('hidden');
+            loadTests();
+        }
+
+        function showCreateTestView() {
+            hideAllViews();
+            document.getElementById('createTestView').classList.remove('hidden');
+            document.getElementById('wordsList').innerHTML = '';
+            wordPositionCounter = 0;
+            addWordRow();
+        }
+
+        function showTakeTestView(test) {
+            hideAllViews();
+            document.getElementById('takeTestView').classList.remove('hidden');
+
+            currentTest = test;
+            currentWordIndex = 0;
+            userAnswers = [];
+
+            document.getElementById('takeTestTitle').textContent = test.title;
+            document.getElementById('takeTestDesc').textContent = test.description || '';
+            document.getElementById('totalWords').textContent = test.words.length;
+
+            loadCurrentWord();
+        }
+
+        function showResultsView(result) {
+            hideAllViews();
+            document.getElementById('resultsView').classList.remove('hidden');
+
+            document.getElementById('scoreText').textContent = `${result.score}/${result.total}`;
+            document.getElementById('percentageText').textContent = `${Math.round((result.score / result.total) * 100)}%`;
+
+            const answersList = document.getElementById('answersList');
+            answersList.innerHTML = '';
+
+            let hasWrongAnswers = false;
+            result.answers.forEach(answer => {
+                const div = document.createElement('div');
+                div.className = `answer-item ${answer.is_correct ? 'answer-correct' : 'answer-wrong'}`;
+
+                div.innerHTML = `
+                    <div>
+                        <div class="answer-word">${answer.word}</div>
+                        <div class="answer-user">Your answer: ${answer.user_spelling || '(empty)'}</div>
+                        ${!answer.is_correct ? `<div class="answer-correct-answer">Correct: ${answer.word}</div>` : ''}
+                    </div>
+                    <div class="answer-status">${answer.is_correct ? '✓' : '✗'}</div>
+                `;
+
+                answersList.appendChild(div);
+
+                if (!answer.is_correct) hasWrongAnswers = true;
+            });
+
+            document.getElementById('retryWrongBtn').classList.toggle('hidden', !hasWrongAnswers);
+            document.getElementById('retryWrongBtn').dataset.resultId = result.id;
+        }
+
+        function hideAllViews() {
+            document.getElementById('testsListView').classList.add('hidden');
+            document.getElementById('createTestView').classList.add('hidden');
+            document.getElementById('takeTestView').classList.add('hidden');
+            document.getElementById('resultsView').classList.add('hidden');
+        }
+
+        async function loadTests() {
+            try {
+                const response = await fetch(`/api/spelling/tests?username=${encodeURIComponent(username)}`);
+                const data = await response.json();
+
+                if (data.tests) {
+                    currentTests = data.tests;
+                    await loadAllResults();
+                    renderTests();
+                }
+            } catch (error) {
+                console.error('Error loading tests:', error);
+            }
+        }
+
+        async function loadAllResults() {
+            try {
+                const response = await fetch(`/api/spelling/results/${encodeURIComponent(username)}`);
+                const data = await response.json();
+
+                testResultsMap = {};
+                if (data.results) {
+                    data.results.forEach(result => {
+                        if (!testResultsMap[result.test_id]) {
+                            testResultsMap[result.test_id] = [];
+                        }
+                        testResultsMap[result.test_id].push(result);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading results:', error);
+                testResultsMap = {};
+            }
+        }
+
+        function filterTests(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            renderTests();
+        }
+
+        function renderTests() {
+            const grid = document.getElementById('testsGrid');
+            grid.innerHTML = '';
+
+            const filteredTests = currentTests.filter(test => {
+                if (currentFilter === 'mine') return test.created_by === username;
+                return true;
+            });
+
+            if (filteredTests.length === 0) {
+                grid.innerHTML = '<p class="text-center" style="grid-column: 1/-1; color: #999;">No spelling tests found. Create one to get started!</p>';
+                return;
+            }
+
+            filteredTests.forEach(test => {
+                const card = document.createElement('div');
+                card.className = 'test-card';
+                const hasResults = testResultsMap[test.id] && testResultsMap[test.id].length > 0;
+                card.innerHTML = `
+                    <div class="test-title">${test.title}</div>
+                    <div class="test-meta">${test.word_count || 0} words • By ${test.created_by}</div>
+                    <div class="test-desc">${test.description || 'No description'}</div>
+                    <div>
+                        <button class="btn" onclick="startTest(${test.id})">Start Test</button>
+                        <button class="btn btn-outline btn-small" onclick="toggleShare(event, ${test.id})">📤 Share</button>
+                        ${test.created_by === username || role === 'admin' ? `
+                            <button class="btn btn-danger btn-small" onclick="deleteTest(${test.id})" style="margin-left: 10px;">Delete</button>
+                        ` : ''}
+                        ${hasResults ? `
+                            <button class="btn btn-outline btn-small" onclick="showTestResults(${test.id})" style="margin-left: 10px; margin-top: 5px;">📊 View Results</button>
+                        ` : ''}
+                    </div>
+                    <div id="share_panel_${test.id}" class="share-panel">
+                        <div class="share-panel-header">
+                            Share with:
+                            <span onclick="document.getElementById('share_panel_${test.id}').style.display='none'" style="float:right; cursor:pointer; font-size:1.2em; color:#999;">&times;</span>
+                        </div>
+                        <div id="share_user_list_${test.id}" style="max-height: 200px; overflow-y: auto;"></div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // Word Management
+        function addWordRow() {
+            const wordsList = document.getElementById('wordsList');
+            wordPositionCounter++;
+
+            const wordDiv = document.createElement('div');
+            wordDiv.className = 'word-item';
+            wordDiv.innerHTML = `
+                <div class="word-number">${wordPositionCounter}</div>
+                <input type="text" class="word-input" placeholder="Enter word" onchange="fetchAudioForWord(this)">
+                <input type="text" class="definition-input" placeholder="Definition (optional)">
+                <input type="hidden" class="audio-url-input">
+                <button class="audio-btn" onclick="previewWord(this)" title="Preview pronunciation">🔊</button>
+                <div class="audio-status" style="font-size: 0.7em; color: #999; width: 60px; text-align: center;"></div>
+                <button class="btn btn-danger btn-small" onclick="this.parentElement.remove(); renumberWords();">✕</button>
+            `;
+
+            wordsList.appendChild(wordDiv);
+        }
+
+        async function fetchAudioForWord(input) {
+            const word = input.value.trim().toLowerCase();
+            if (!word) return;
+
+            const wordDiv = input.parentElement;
+            const audioStatus = wordDiv.querySelector('.audio-status');
+            const audioInput = wordDiv.querySelector('.audio-url-input');
+
+            audioStatus.textContent = 'Loading...';
+
+            try {
+                const response = await fetch('/api/spelling/fetch-audio', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ word })
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.audio_url) {
+                    audioInput.value = data.audio_url;
+                    audioStatus.textContent = '✅';
+                    audioStatus.style.color = '#28a745';
+                } else {
+                    audioStatus.textContent = '⚠️';
+                    audioStatus.style.color = '#ffc107';
+                }
+            } catch (error) {
+                console.error('Error fetching audio:', error);
+                audioStatus.textContent = '⚠️';
+                audioStatus.style.color = '#ffc107';
+            }
+        }
+
+        function renumberWords() {
+            const wordNumbers = document.querySelectorAll('.word-number');
+            wordNumbers.forEach((num, index) => {
+                num.textContent = index + 1;
+            });
+            wordPositionCounter = wordNumbers.length;
+        }
+
+        function previewWord(button) {
+            const word = button.parentElement.querySelector('.word-input').value;
+            const audioUrl = button.parentElement.querySelector('.audio-url-input').value;
+
+            if (audioUrl) {
+                const audio = new Audio(audioUrl);
+                audio.play().catch(e => {
+                    console.error('Audio play failed:', e);
+                    alert('Could not play audio. Using fallback.');
+                    speakWord(word);
+                });
+            } else if (word) {
+                speakWord(word);
+            } else {
+                alert('Please enter a word first');
+            }
+        }
+
+        // Text-to-Speech
+        let speechReady = false;
+
+        function initSpeech() {
+            if ('speechSynthesis' in window && !speechReady) {
+                window.speechSynthesis.getVoices();
+                speechReady = true;
+            }
+        }
+
+        function speakWord(word, retryCount = 0) {
+            const statusEl = document.getElementById('speechStatus');
+
+            if ('speechSynthesis' in window) {
+                if (statusEl) statusEl.textContent = 'Playing word...';
+                window.speechSynthesis.cancel();
+
+                const voices = window.speechSynthesis.getVoices();
+                let voice = null;
+
+                for (let v of voices) {
+                    if (v.lang.startsWith('en-') && v.name.includes('Google')) {
+                        voice = v;
+                        break;
+                    }
+                }
+                if (!voice) {
+                    for (let v of voices) {
+                        if (v.lang.startsWith('en-')) {
+                            voice = v;
+                            break;
+                        }
+                    }
+                }
+
+                const utterance = new SpeechSynthesisUtterance(word);
+                utterance.rate = 0.75;
+                utterance.pitch = 1.0;
+                utterance.volume = 1.0;
+
+                if (voice) {
+                    utterance.voice = voice;
+                    utterance.lang = voice.lang;
+                } else {
+                    utterance.lang = 'en-US';
+                }
+
+                utterance.onstart = () => {
+                    if (statusEl) statusEl.textContent = '🔊 Playing...';
+                };
+                utterance.onend = () => {
+                    if (statusEl) statusEl.textContent = 'Click the speaker to hear the word again';
+                };
+                utterance.onerror = (e) => {
+                    if (retryCount === 0) {
+                        setTimeout(() => speakWord(word, 1), 100);
+                        return;
+                    }
+                    showWordReveal();
+                    if (statusEl) statusEl.innerHTML = `❌ Audio not working. Use the letter reveal below!`;
+                };
+
+                setTimeout(() => {
+                    window.speechSynthesis.speak(utterance);
+                }, 50);
+            } else {
+                if (statusEl) statusEl.innerHTML = `❌ Text-to-speech not supported. Word: <strong>${word}</strong>`;
+            }
+        }
+
+        async function saveTest() {
+            const title = document.getElementById('testTitle').value.trim();
+            const description = document.getElementById('testDescription').value.trim();
+            const isPublic = document.getElementById('testPublic').checked ? 1 : 0;
+
+            if (!title) {
+                alert('Please enter a test title');
+                return;
+            }
+
+            const wordItems = document.querySelectorAll('.word-item');
+            if (wordItems.length === 0) {
+                alert('Please add at least one word');
+                return;
+            }
+
+            for (let item of wordItems) {
+                const word = item.querySelector('.word-input').value.trim();
+                if (!word) {
+                    alert('Please fill in all word fields');
+                    return;
+                }
+            }
+
+            try {
+                const response = await fetch('/api/spelling/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title,
+                        description,
+                        username,
+                        is_public: isPublic
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    const testId = data.test_id;
+
+                    for (let i = 0; i < wordItems.length; i++) {
+                        const item = wordItems[i];
+                        const word = item.querySelector('.word-input').value.trim();
+                        const definition = item.querySelector('.definition-input').value.trim();
+                        const audioUrl = item.querySelector('.audio-url-input')?.value?.trim() || '';
+
+                        await fetch('/api/spelling/word/add', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                test_id: testId,
+                                word,
+                                definition,
+                                audio_url: audioUrl
+                            })
+                        });
+                    }
+
+                    alert('Test created successfully!');
+                    showTestsListView();
+                }
+            } catch (error) {
+                console.error('Error saving test:', error);
+                alert('Error saving test');
+            }
+        }
+
+        async function startTest(testId) {
+            try {
+                const response = await fetch(`/api/spelling/test/${testId}`);
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || `Server error: ${response.status}`);
+                }
+                const data = await response.json();
+
+                if (data.words && data.words.length > 0) {
+                    showTakeTestView(data);
+                    setTimeout(() => playCurrentWord(), 500);
+                } else {
+                    alert('This test has no words yet');
+                }
+            } catch (error) {
+                console.error('Error loading test:', error);
+                alert('Error loading test: ' + error.message);
+            }
+        }
+
+        function loadCurrentWord() {
+            document.getElementById('currentWordNum').textContent = currentWordIndex + 1;
+            document.getElementById('spellingInput').value = '';
+            document.getElementById('spellingInput').focus();
+            document.getElementById('wordReveal').classList.add('hidden');
+        }
+
+        function playCurrentWord() {
+            if (currentTest && currentTest.words[currentWordIndex]) {
+                const currentWord = currentTest.words[currentWordIndex];
+                const statusEl = document.getElementById('speechStatus');
+
+                if (currentWord.audio_url) {
+                    if (statusEl) statusEl.textContent = '🔊 Playing audio...';
+
+                    const audio = new Audio(currentWord.audio_url);
+                    audio.onended = () => {
+                        if (statusEl) statusEl.textContent = 'Click the speaker to hear the word again';
+                    };
+                    audio.onerror = (e) => {
+                        console.error('Audio file failed:', e);
+                        if (statusEl) statusEl.textContent = 'Audio file failed, trying speech...';
+                        speakWord(currentWord.word);
+                    };
+                    audio.play().catch(e => {
+                        console.error('Audio play error:', e);
+                        speakWord(currentWord.word);
+                    });
+                } else {
+                    speakWord(currentWord.word);
+                }
+            } else {
+                console.error('Cannot play word - test or word not loaded');
+            }
+        }
+
+        let revealedLetters = 0;
+
+        function showWordReveal() {
+            const revealDiv = document.getElementById('wordReveal');
+            revealDiv.classList.remove('hidden');
+            revealedLetters = 0;
+            document.getElementById('revealedWord').textContent = '_ '.repeat(currentTest.words[currentWordIndex].word.length);
+        }
+
+        function revealNextLetter() {
+            const word = currentTest.words[currentWordIndex].word;
+            if (revealedLetters < word.length) {
+                revealedLetters++;
+                const revealed = word.substring(0, revealedLetters) + '_ '.repeat(word.length - revealedLetters);
+                document.getElementById('revealedWord').textContent = revealed.split('').join(' ');
+            }
+        }
+
+        function revealFullWord() {
+            const word = currentTest.words[currentWordIndex].word;
+            document.getElementById('revealedWord').textContent = word.split('').join(' ');
+            revealedLetters = word.length;
+        }
+
+        function submitWord() {
+            const spelling = document.getElementById('spellingInput').value.trim();
+            const currentWord = currentTest.words[currentWordIndex];
+
+            userAnswers.push({
+                word_id: currentWord.id,
+                spelling: spelling
+            });
+
+            currentWordIndex++;
+
+            if (currentWordIndex < currentTest.words.length) {
+                loadCurrentWord();
+                setTimeout(() => playCurrentWord(), 300);
+            } else {
+                submitTest();
+            }
+        }
+
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && document.getElementById('takeTestView').classList.contains('hidden') === false) {
+                const input = document.getElementById('spellingInput');
+                if (document.activeElement === input) {
+                    submitWord();
+                }
+            }
+        });
+
+        async function submitTest() {
+            try {
+                const response = await fetch('/api/spelling/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        test_id: currentTest.id,
+                        username,
+                        answers: userAnswers
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showResultsView(data);
+                }
+            } catch (error) {
+                console.error('Error submitting test:', error);
+                alert('Error submitting test');
+            }
+        }
+
+        async function deleteTest(testId) {
+            if (!confirm('Are you sure you want to delete this test?')) return;
+
+            try {
+                const response = await fetch(`/api/spelling/test/${testId}?username=${encodeURIComponent(username)}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('Test deleted successfully');
+                    loadTests();
+                }
+            } catch (error) {
+                console.error('Error deleting test:', error);
+                alert('Error deleting test');
+            }
+        }
+
+        async function retryWrongWords() {
+            const resultId = document.getElementById('retryWrongBtn').dataset.resultId;
+
+            try {
+                const response = await fetch(`/api/spelling/retry-wrong/${resultId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    startTest(data.test_id);
+                }
+            } catch (error) {
+                console.error('Error creating retry test:', error);
+                alert('Error creating retry test');
+            }
+        }
+
+        function shareTest(testId, testTitle) {
+            const shareUrl = `${window.location.origin}/spelling.html?test=${testId}`;
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(shareUrl).then(() => {
+                    alert(`Share link copied to clipboard!\n\n${shareUrl}`);
+                }).catch(() => {
+                    prompt('Copy this link to share the test:', shareUrl);
+                });
+            } else {
+                prompt('Copy this link to share the test:', shareUrl);
+            }
+        }
+
+        function shareCurrentTest() {
+            if (currentTest && currentTest.id) {
+                shareTest(currentTest.id, currentTest.title);
+            }
+        }
+
+        async function toggleShare(event, testId) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+
+            if (!testId && currentTest) {
+                testId = currentTest.id;
+            }
+
+            if (!testId) return;
+
+            const panelId = (document.getElementById('share_panel_current') && document.getElementById('takeTestView').classList.contains('hidden') === false)
+                ? 'share_panel_current'
+                : `share_panel_${testId}`;
+
+            const panel = document.getElementById(panelId);
+            const listContainer = document.getElementById(panelId === 'share_panel_current' ? 'share_user_list_current' : `share_user_list_${testId}`);
+            const isOpening = panel.style.display !== 'block';
+
+            document.querySelectorAll('.share-panel').forEach(p => p.style.display = 'none');
+
+            if (isOpening) {
+                panel.style.display = 'block';
+
+                const rect = panel.getBoundingClientRect();
+                const viewportHeight = window.innerHeight;
+                if (rect.bottom > viewportHeight) {
+                    panel.style.top = 'auto';
+                    panel.style.bottom = '0';
+                    panel.style.transform = 'none';
+                } else if (rect.top < 0) {
+                    panel.style.top = '0';
+                    panel.style.transform = 'none';
+                } else {
+                    panel.style.top = '50%';
+                    panel.style.transform = 'translateY(-50%)';
+                }
+
+                try {
+                    const res = await fetch('/api/users/all');
+                    const data = await res.json();
+                    if (data.success) {
+                        const currentUser = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
+                        const users = data.users
+                            .filter(u => u.username !== currentUser)
+                            .sort((a, b) => {
+                                if (a.is_online === b.is_online) return a.username.localeCompare(b.username);
+                                return a.is_online ? -1 : 1;
+                            });
+
+                        if (users.length === 0) {
+                            listContainer.innerHTML = '<div style="font-size:0.8em; color:#888; text-align:center; padding:10px;">No other users found.</div>';
+                        } else {
+                            listContainer.innerHTML = users.map(u => {
+                                const display = u.username.length > 10 ? u.username.substring(0, 10) + '...' : u.username;
+                                const statusDot = u.is_online ?
+                                    '<div style="width:8px; height:8px; background:#28a745; border-radius:50%; box-shadow:0 0 4px #28a745; margin-right:8px;"></div>' :
+                                    '<div style="width:8px; height:8px; background:#ccc; border-radius:50%; margin-right:8px;"></div>';
+
+                                return `
+                                    <button onclick="shareSpellingTest(${testId}, '${u.username}')" class="share-user-btn">
+                                        ${statusDot}
+                                        <span title="${u.username}" style="font-weight:600; color:${u.is_online ? '#28a745' : '#333'}; flex:1;">${display}</span>
+                                        ${u.role === 'admin' ? '<span style="font-size:0.6em; background:#d63384; color:white; padding:1px 4px; border-radius:3px; margin-left:5px;">ADMIN</span>' : ''}
+                                    </button>
+                                `;
+                            }).join('');
+                        }
+                    }
+                } catch (e) { console.error("Failed to load users for sharing", e); }
+            } else {
+                panel.style.display = 'none';
+            }
+        }
+
+        async function shareSpellingTest(testId, recipient) {
+            const sender = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
+
+            if (!recipient) return;
+
+            try {
+                const res = await fetch(`/api/spelling/test/${testId}`);
+                const test = await res.json();
+                const testTitle = test.title || 'Spelling Test';
+                const testUrl = `${window.location.origin}/spelling.html?test=${testId}`;
+                const message = `Check out this spelling test I shared with you: ${testTitle}\nLink: ${testUrl}`;
+
+                try {
+                    const msgRes = await fetch('/api/messages/send', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ sender, recipient, message })
+                    });
+                    const msgData = await msgRes.json();
+                    if (msgData.success) {
+                        alert(`Test shared with ${recipient}!`);
+                        const currentPanel = document.getElementById('share_panel_current');
+                        if (currentPanel && currentPanel.style.display === 'block') {
+                            currentPanel.style.display = 'none';
+                        } else {
+                            document.getElementById(`share_panel_${testId}`).style.display = 'none';
+                        }
+                    } else {
+                        alert("Failed to share test.");
+                    }
+                } catch (e) {
+                    console.error("Share error:", e);
+                    alert("Error sharing test.");
+                }
+            } catch (e) {
+                console.error("Error getting test details:", e);
+                alert("Error sharing test.");
+            }
+        }
+
+        function checkUrlForTest() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const testId = urlParams.get('test');
+
+            if (testId) {
+                startTest(parseInt(testId));
+                window.history.replaceState({}, document.title, '/spelling.html');
+            }
+        }
+
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.share-panel') && !e.target.closest('[onclick^="toggleShare"]')) {
+                document.querySelectorAll('.share-panel').forEach(p => p.style.display = 'none');
+            }
+        });
+
+        initNav();
+        initSpeech();
+        checkUrlForTest();
+        showTestsListView();
+    </script>
+</body>
+</html>

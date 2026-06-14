@@ -50,7 +50,7 @@ def normalize_username(username):
 import_jobs = {}
 
 def get_db():
-    conn = sqlite3.connect(DATABASE)
+    conn = sqlite3.connect(DATABASE, timeout=10.0)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -190,12 +190,26 @@ def load_users():
     users = {row['username']: {'password': row['password'], 'role': row['role']} for row in cursor.fetchall()}
     conn.close(); return users
 
+def extract_ms_context(ms_text, q_id):
+    """Find a target question ID in mark scheme and extract surrounding context"""
+    q_str = str(q_id)
+    # Common English MS patterns: "Question 1", "Question Number 1", "1 Indicative content"
+    patterns = [
+        f"Question\\s+Number\\s+{q_str}",
+        f"Question\\s+{q_str}",
+        f"\\n{q_str}\\s+Indicative\\s+content"
+    ]
+    for p in patterns:
+        match = re.search(p, ms_text, re.IGNORECASE)
+        if match:
+            start = max(0, match.start() - 200)
+            end = min(len(ms_text), match.end() + 5000) 
+            return ms_text[start:end]
+    return ms_text[:45000] # Fallback
+
 def clean_ai_json(text):
     """Robustly extract JSON from AI response"""
     try:
-        # 1. Try to find any JSON list
-        match = re.search(r'\[\s*\{.*\}\s*\]', text, re.DOTALL)
-        if match: return json.loads(match.group(0))
 
         # 2. Try to find any JSON object
         match = re.search(r'\{\s*".*"\s*:.*\}', text, re.DOTALL)
@@ -1384,6 +1398,510 @@ def delete_game_session():
         return jsonify({'success': True}), 200
     except Exception as e: return jsonify({'error': str(e)}), 500
 
+# --- SPELLING API ROUTES ---
+
+@app.route('/api/spelling/tests', methods=['GET'])
+def get_spelling_tests():
+    try:
+        username = request.args.get('username')
+        if not username: return jsonify({'error': 'Missing username'}), 400
+
+        conn = get_db(); cursor = conn.cursor()
+
+        # Check if user is admin
+        users = load_users()
+        u = normalize_username(username)
+        is_admin = u in users and users[u].get('role') == 'admin'
+
+        # Admins see all tests, others see public + their own + all admin-created tests
+        if is_admin:
+            cursor.execute("""
+                SELECT st.*, COUNT(sw.id) as word_count
+                FROM spelling_tests st
+                LEFT JOIN spelling_words sw ON st.id = sw.test_id
+                GROUP BY st.id
+                ORDER BY st.created_at DESC
+            """)
+        else:
+            cursor.execute("""
+                SELECT st.*, COUNT(sw.id) as word_count
+                FROM spelling_tests st
+                LEFT JOIN spelling_words sw ON st.id = sw.test_id
+                WHERE st.is_public = 1 OR st.created_by = ? OR st.created_by IN (SELECT username FROM users WHERE role = 'admin')
+                GROUP BY st.id
+                ORDER BY st.created_at DESC
+            """, (u,))
+
+        tests = []
+        for row in cursor.fetchall():
+            tests.append({
+                'id': row['id'],
+                'title': row['title'],
+                'description': row['description'],
+                'created_by': row['created_by'],
+                'created_at': row['created_at'],
+                'is_public': bool(row['is_public']),
+                'word_count': row['word_count']
+            })
+
+        conn.close()
+        return jsonify({'tests': tests}), 200
+    except Exception as e: return jsonify({'error': str(e)}), 500
+
+@app.route('/api/spelling/create', methods=['POST'])
+def create_spelling_test():
+    try:
+        data = request.json
+        title = data.get('title', '').strip()
+        description = data.get('description', '').strip()
+        username = data.get('username', '').strip()
+        is_public = data.get('is_public', 0)
+
+        if not title or not username:
+            return jsonify({'error': 'Missing title or username'}), 400
+
+        u = normalize_username(username)
+
+        conn = get_db(); cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO spelling_tests (title, description, created_by, is_public)
+            VALUES (?, ?, ?, ?)
+        """, (title, description, u, is_public))
+        test_id = cursor.lastrowid
+        conn.commit(); conn.close()
+
+        return jsonify({'success': True, 'test_id': test_id}), 201
+    except Exception as e: return jsonify({'error': str(e)}), 500
+
+@app.route('/api/spelling/test/<int:test_id>', methods=['GET'])
+def get_spelling_test(test_id):
+    try:
+        conn = get_db(); cursor = conn.cursor()
+
+        cursor.execute("SELECT * FROM spelling_tests WHERE id = ?", (test_id,))
+        test = cursor.fetchone()
+
+        if not test:
+            conn.close(); return jsonify({'error': 'Test not found'}), 404
+
+        cursor.execute("SELECT * FROM spelling_words WHERE test_id = ? ORDER BY position", (test_id,))
+        words = []
+        for row in cursor.fetchall():
+            words.append({
+                'id': row['id'],
+                'word': row['word'],
+                'definition': row['definition'],
+                'position': row['position'],
+                'audio_url': row['audio_url']
+            })
+
+        conn.close()
+
+        return jsonify({
+            'id': test['id'],
+            'title': test['title'],
+            'description': test['description'],
+            'created_by': test['created_by'],
+            'created_at': test['created_at'],
+            'is_public': bool(test['is_public']),
+            'words': words
+        }), 200
+    except Exception as e: return jsonify({'error': str(e)}), 500
+
+@app.route('/api/spelling/test/<int:test_id>', methods=['DELETE'])
+def delete_spelling_test(test_id):
+    try:
+        username = request.args.get('username')
+        if not username: return jsonify({'error': 'Missing username'}), 400
+
+        users = load_users()
+        u = normalize_username(username)
+        is_admin = u in users and users[u].get('role') == 'admin'
+
+        conn = get_db(); cursor = conn.cursor()
+
+        # Check permissions
+        cursor.execute("SELECT created_by FROM spelling_tests WHERE id = ?", (test_id,))
+        test = cursor.fetchone()
+
+        if not test:
+            conn.close(); return jsonify({'error': 'Test not found'}), 404
+
+        if not is_admin and test['created_by'] != u:
+            conn.close(); return jsonify({'error': 'Unauthorized'}), 403
+
+        cursor.execute("DELETE FROM spelling_words WHERE test_id = ?", (test_id,))
+        cursor.execute("DELETE FROM spelling_results WHERE test_id = ?", (test_id,))
+        cursor.execute("DELETE FROM spelling_tests WHERE id = ?", (test_id,))
+        conn.commit(); conn.close()
+
+        return jsonify({'success': True}), 200
+    except Exception as e: return jsonify({'error': str(e)}), 500
+
+@app.route('/api/spelling/test/<int:test_id>', methods=['PUT'])
+def update_spelling_test(test_id):
+    try:
+        data = request.json
+        username = data.get('username', '').strip()
+        title = data.get('title', '').strip()
+        description = data.get('description', '').strip()
+        is_public = data.get('is_public')
+
+        if not username: return jsonify({'error': 'Missing username'}), 400
+
+        users = load_users()
+        u = normalize_username(username)
+        is_admin = u in users and users[u].get('role') == 'admin'
+
+        conn = get_db(); cursor = conn.cursor()
+
+        cursor.execute("SELECT created_by FROM spelling_tests WHERE id = ?", (test_id,))
+        test = cursor.fetchone()
+
+        if not test:
+            conn.close(); return jsonify({'error': 'Test not found'}), 404
+
+        if not is_admin and test['created_by'] != u:
+            conn.close(); return jsonify({'error': 'Unauthorized'}), 403
+
+        updates = []
+        params = []
+        if title: updates.append("title = ?"); params.append(title)
+        if description is not None: updates.append("description = ?"); params.append(description)
+        if is_public is not None: updates.append("is_public = ?"); params.append(is_public)
+
+        if updates:
+            params.append(test_id)
+            cursor.execute(f"UPDATE spelling_tests SET {', '.join(updates)} WHERE id = ?", params)
+            conn.commit()
+
+        conn.close()
+        return jsonify({'success': True}), 200
+    except Exception as e: return jsonify({'error': str(e)}), 500
+
+@app.route('/api/spelling/word/add', methods=['POST'])
+def add_spelling_word():
+    try:
+        data = request.json
+        test_id = data.get('test_id')
+        word = data.get('word', '').strip()
+        definition = data.get('definition', '').strip()
+        audio_url = data.get('audio_url', '').strip()
+
+        if not test_id or not word:
+            return jsonify({'error': 'Missing test_id or word'}), 400
+
+        conn = get_db(); cursor = conn.cursor()
+
+        # Get next position
+        cursor.execute("SELECT COALESCE(MAX(position), 0) + 1 as next_pos FROM spelling_words WHERE test_id = ?", (test_id,))
+        next_pos = cursor.fetchone()['next_pos']
+
+        cursor.execute("""
+            INSERT INTO spelling_words (test_id, word, definition, position, audio_url)
+            VALUES (?, ?, ?, ?, ?)
+        """, (test_id, word, definition, next_pos, audio_url or None))
+
+        word_id = cursor.lastrowid
+        conn.commit(); conn.close()
+
+        return jsonify({'success': True, 'word_id': word_id, 'position': next_pos, 'audio_url': audio_url}), 201
+    except Exception as e: return jsonify({'error': str(e)}), 500
+
+@app.route('/api/spelling/word/<int:word_id>', methods=['DELETE'])
+def delete_spelling_word(word_id):
+    try:
+        username = request.args.get('username')
+        if not username: return jsonify({'error': 'Missing username'}), 400
+
+        users = load_users()
+        u = normalize_username(username)
+        is_admin = u in users and users[u].get('role') == 'admin'
+
+        conn = get_db(); cursor = conn.cursor()
+
+        # Get test_id to check permissions
+        cursor.execute("SELECT test_id, created_by FROM spelling_words sw JOIN spelling_tests st ON sw.test_id = st.id WHERE sw.id = ?", (word_id,))
+        word_info = cursor.fetchone()
+
+        if not word_info:
+            conn.close(); return jsonify({'error': 'Word not found'}), 404
+
+        # Check if user owns the test
+        cursor.execute("SELECT created_by FROM spelling_tests WHERE id = ?", (word_info['test_id'],))
+        test = cursor.fetchone()
+
+        if not is_admin and test['created_by'] != u:
+            conn.close(); return jsonify({'error': 'Unauthorized'}), 403
+
+        cursor.execute("DELETE FROM spelling_words WHERE id = ?", (word_id,))
+        conn.commit(); conn.close()
+
+        return jsonify({'success': True}), 200
+    except Exception as e: return jsonify({'error': str(e)}), 500
+
+@app.route('/api/spelling/submit', methods=['POST'])
+def submit_spelling_test():
+    try:
+        data = request.json
+        test_id = data.get('test_id')
+        username = data.get('username', '').strip()
+        answers = data.get('answers', [])  # [{'word_id': X, 'spelling': 'text'}]
+
+        if not test_id or not username or not answers:
+            return jsonify({'error': 'Missing required fields'}), 400
+
+        u = normalize_username(username)
+
+        conn = get_db(); cursor = conn.cursor()
+
+        # Get test words
+        cursor.execute("SELECT id, word FROM spelling_words WHERE test_id = ? ORDER BY position", (test_id,))
+        test_words = {row['id']: row['word'] for row in cursor.fetchall()}
+
+        if not test_words:
+            conn.close(); return jsonify({'error': 'Test has no words'}), 400
+
+        # Grade answers
+        results = []
+        correct_count = 0
+        for answer in answers:
+            word_id = answer.get('word_id')
+            user_spelling = answer.get('spelling', '').strip().lower()
+            correct_spelling = test_words.get(word_id, '').lower()
+            is_correct = user_spelling == correct_spelling
+
+            if is_correct:
+                correct_count += 1
+
+            results.append({
+                'word_id': word_id,
+                'word': test_words.get(word_id, ''),
+                'user_spelling': answer.get('spelling', ''),
+                'is_correct': is_correct
+            })
+
+        # Save result
+        cursor.execute("""
+            INSERT INTO spelling_results (test_id, username, score, total, answers_json)
+            VALUES (?, ?, ?, ?, ?)
+        """, (test_id, u, correct_count, len(test_words), json.dumps(results)))
+
+        result_id = cursor.lastrowid
+        conn.commit(); conn.close()
+
+        return jsonify({
+            'success': True,
+            'result_id': result_id,
+            'score': correct_count,
+            'total': len(test_words),
+            'answers': results
+        }), 200
+    except Exception as e: return jsonify({'error': str(e)}), 500
+
+@app.route('/api/spelling/results/<username>', methods=['GET'])
+def get_user_spelling_results(username):
+    try:
+        u = normalize_username(username)
+
+        conn = get_db(); cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT sr.*, st.title, st.description
+            FROM spelling_results sr
+            JOIN spelling_tests st ON sr.test_id = st.id
+            WHERE sr.username = ?
+            ORDER BY sr.completed_at DESC
+        """, (u,))
+
+        results = []
+        for row in cursor.fetchall():
+            results.append({
+                'id': row['id'],
+                'test_id': row['test_id'],
+                'username': row['username'],
+                'title': row['title'],
+                'score': row['score'],
+                'total': row['total'],
+                'completed_at': row['completed_at']
+            })
+
+        conn.close()
+        return jsonify({'results': results}), 200
+    except Exception as e: return jsonify({'error': str(e)}), 500
+
+@app.route('/api/spelling/result/<int:result_id>', methods=['GET'])
+def get_spelling_result(result_id):
+    try:
+        conn = get_db(); cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT sr.*, st.title
+            FROM spelling_results sr
+            JOIN spelling_tests st ON sr.test_id = st.id
+            WHERE sr.id = ?
+        """, (result_id,))
+
+        result = cursor.fetchone()
+
+        if not result:
+            conn.close(); return jsonify({'error': 'Result not found'}), 404
+
+        answers = json.loads(result['answers_json'])
+
+        conn.close()
+
+        return jsonify({
+            'id': result['id'],
+            'test_id': result['test_id'],
+            'title': result['title'],
+            'score': result['score'],
+            'total': result['total'],
+            'completed_at': result['completed_at'],
+            'answers': answers
+        }), 200
+    except Exception as e: return jsonify({'error': str(e)}), 500
+
+@app.route('/api/spelling/retry-wrong/<int:result_id>', methods=['POST'])
+def retry_wrong_words(result_id):
+    try:
+        data = request.json
+        username = data.get('username', '').strip()
+
+        if not username: return jsonify({'error': 'Missing username'}), 400
+
+        u = normalize_username(username)
+
+        conn = get_db(); cursor = conn.cursor()
+
+        # Get the original result
+        cursor.execute("""
+            SELECT sr.*, st.title
+            FROM spelling_results sr
+            JOIN spelling_tests st ON sr.test_id = st.id
+            WHERE sr.id = ?
+        """, (result_id,))
+
+        result = cursor.fetchone()
+
+        if not result:
+            conn.close(); return jsonify({'error': 'Result not found'}), 404
+
+        # Verify ownership
+        if result['username'] != u:
+            conn.close(); return jsonify({'error': 'Unauthorized'}), 403
+
+        # Create a new test with wrong words only
+        cursor.execute("""
+            INSERT INTO spelling_tests (title, description, created_by, is_public)
+            VALUES (?, ?, ?, 0)
+        """, (f"Retry: {result['title']}", "Wrong words only", u))
+
+        new_test_id = cursor.lastrowid
+
+        # Get wrong answers
+        answers = json.loads(result['answers_json'])
+        wrong_answers = [a for a in answers if not a['is_correct']]
+
+        # Add wrong words to new test
+        for idx, answer in enumerate(wrong_answers):
+            cursor.execute("""
+                INSERT INTO spelling_words (test_id, word, definition, position)
+                SELECT ?, sw.word, sw.definition, ?
+                FROM spelling_words sw
+                WHERE sw.id = ?
+            """, (new_test_id, idx + 1, answer['word_id']))
+
+        conn.commit(); conn.close()
+
+        return jsonify({'success': True, 'test_id': new_test_id}), 201
+    except Exception as e: return jsonify({'error': str(e)}), 500
+
+@app.route('/api/spelling/fetch-audio', methods=['POST'])
+def fetch_word_audio():
+    """Generate or fetch audio URL for a word"""
+    try:
+        data = request.json
+        word = data.get('word', '').strip().lower()
+
+        if not word:
+            return jsonify({'error': 'Missing word'}), 400
+
+        # Clean the word - only keep letters and hyphens
+        import re
+        word = re.sub(r'[^a-z\-]', '', word)
+
+        if not word:
+            return jsonify({'error': 'Invalid word'}), 400
+
+        # Generate audio using gTTS and serve it from our server
+        try:
+            from gtts import gTTS
+            import os
+            import uuid
+
+            # Create audio directory if it doesn't exist
+            audio_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'audio')
+            os.makedirs(audio_dir, exist_ok=True)
+
+            # Generate unique filename
+            filename = f"{word}_{uuid.uuid4().hex[:8]}.mp3"
+            filepath = os.path.join(audio_dir, filename)
+
+            # Generate speech
+            tts = gTTS(word, lang='en', slow=False)
+            tts.save(filepath)
+
+            # Return URL to our server
+            audio_url = f"/static/audio/{filename}"
+
+            return jsonify({
+                'success': True,
+                'audio_url': audio_url,
+                'source': 'local_gtts'
+            }), 200
+
+        except Exception as e:
+            print(f"gTTS error: {e}")
+
+        # Fallback to external sources if gTTS fails
+        audio_sources = []
+
+        # Try Forvo API
+        forvo_url = f"https://apiforvo.com/api/word/{word}/"
+        try:
+            response = requests.get(forvo_url, timeout=5)
+            if response.status_code == 200:
+                import xml.etree.ElementTree as ET
+                root = ET.fromstring(response.content)
+                items = root.findall('.//item')
+                for item in items:
+                    mp3_path = item.findtext('./path')
+                    if mp3_path and mp3_path.endswith('.mp3'):
+                        audio_sources.append(('forvo', f"https://forvo.com/mp3/{mp3_path}"))
+                        break
+        except Exception as e:
+            print(f"Forvo error: {e}")
+
+        if audio_sources:
+            best_source, best_url = audio_sources[0]
+            return jsonify({
+                'success': True,
+                'audio_url': best_url,
+                'source': best_source
+            }), 200
+
+        # Last resort - return an error
+        return jsonify({'error': 'Could not generate audio for this word'}), 500
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/static/audio/<path:filename>')
+def serve_audio(filename):
+    """Serve generated audio files"""
+    return send_from_directory('static/audio', filename)
+
 # --- API ROUTES ---
 
 @app.route('/api/login', methods=['POST'])
@@ -1533,11 +2051,22 @@ def register():
     u, p = data.get('username'), data.get('password')
     if not u or not p: return jsonify({'success': False, 'message': 'Missing fields'}), 400
     if len(u) > 10: return jsonify({'success': False, 'message': 'Username must be 10 characters or less'}), 400
+    conn = None
     try:
-        conn = get_db(); cursor = conn.cursor()
+        conn = sqlite3.connect(DATABASE, timeout=10.0)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
         cursor.execute("INSERT INTO users (username, password, created_at) VALUES (?, ?, CURRENT_TIMESTAMP)", (u, p))
-        conn.commit(); conn.close(); return jsonify({'success': True}), 201
-    except: return jsonify({'success': False}), 400
+        conn.commit()
+        return jsonify({'success': True}), 201
+    except sqlite3.IntegrityError:
+        return jsonify({'success': False, 'message': 'Username already exists'}), 400
+    except sqlite3.OperationalError as e:
+        return jsonify({'success': False, 'message': 'Database busy. Try again.'}), 503
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Registration failed: {str(e)}'}), 400
+    finally:
+        if conn: conn.close()
 
 @app.route('/api/verify-admin', methods=['POST'])
 def verify_admin():
@@ -1972,6 +2501,7 @@ TEXT:
 Return a JSON list of strings only.
 Example: ["1(a)", "1(b)", "2", "3(a)(i)"]"""
 
+            found_data = []
             # Page-level timeout to prevent hanging on single pages
             page_timeout = 30  # 30 seconds per page for ID detection
             page_started = time.time()
@@ -1981,94 +2511,93 @@ Example: ["1(a)", "1(b)", "2", "3(a)(i)"]"""
                     found_data = clean_ai_json(resp.json().get('response', '[]'))
                     break  # Success, exit loop
                 except requests.exceptions.Timeout:
-                    print(f"  ⚠️  Page {page_num} ID detection timeout, skipping...", flush=True)
-                    found_data = []  # Empty = skip this page
-                except Exception as e:
-                    if "time" in str(e).lower():
-                        print(f"  ⚠️  Page {page_num} AI error (timeout/slow): {e}, skipping...", flush=True)
-                        found_data = []
+                    print(f"  ⚠️  Page {page_num} ID detection timeout, moving to fallback...", flush=True)
                     break
-                
-                # FALLBACK: Aggressive Regex for Question Markers
-                regex_found = []
-                # Match "1 ", "1(a)", "1 (a)", " (a)", etc at start of lines or after whitespace
-                # Look for numbers at start of lines (standard for main questions)
-                regex_found += re.findall(r'^\s*(\d+)\s+[A-Z]', page_content, re.MULTILINE)
-                # Look for "Question X"
-                regex_found += re.findall(r'Question\s+(\d+)', page_content, re.IGNORECASE)
-                # Look for sub-question patterns like (a), (b), (i), (ii)
-                sub_matches = re.findall(r'\(([a-z]+|[ivx]+)\)', page_content)
-                
-                # Combine AI and Regex, ensuring we have main IDs
-                if not found_data or not isinstance(found_data, list):
-                    found_data = list(set(regex_found))
-                else:
-                    found_data = list(set(found_data + regex_found))
-                
-                # Ensure all sub-ids are strings and filtered
-                found_data = [str(x) for x in found_data if x]
-                
-                print(f"  [IMPORT] Page {page_num} IDs: {found_data}", flush=True)
+                except Exception as e:
+                    print(f"  ⚠️  Page {page_num} AI error: {e}, moving to fallback...", flush=True)
+                    break
+            
+            # FALLBACK: Aggressive Regex for Question Markers (Always run to supplement AI)
+            regex_found = []
+            # Standard markers (at start of line)
+            regex_found += re.findall(r'^\s*(\d+)\s+[A-Z]', page_content, re.MULTILINE)
+            # English specific (can be preceded by "Read Text One...")
+            # Match numbers followed by descriptive verbs
+            regex_found += re.findall(r'(\d+)\s+(?:In lines|State|Using|Identify|Explain|Describe|Discuss)', page_content, re.IGNORECASE)
+            # Match "Question X"
+            regex_found += re.findall(r'Question\s+(\d+)', page_content, re.IGNORECASE)
+            # Match "(Total for Question X = Y marks)" - very reliable for English
+            regex_found += re.findall(r'\(Total for Question\s+(\d+)\s*=', page_content, re.IGNORECASE)
+            
+            # Combine AI and Regex, ensuring we have main IDs
+            if not found_data or not isinstance(found_data, list):
+                found_data = list(set(regex_found))
+            else:
+                found_data = list(set([str(x) for x in found_data] + [str(x) for x in regex_found]))
+            
+            # Ensure all sub-ids are strings and filtered
+            found_data = [str(x) for x in found_data if x]
+            
+            print(f"  [IMPORT] Page {page_num} IDs: {found_data}", flush=True)
 
-                if not found_data: continue
+            if not found_data: continue
 
-                for sub_id in sorted(found_data):
-                    try:
-                        m = re.search(r'(\d+)', str(sub_id))
-                        if not m: continue
-                        main_id = int(m.group(1))
+            for sub_id in sorted(found_data):
+                try:
+                    m = re.search(r'(\d+)', str(sub_id))
+                    if not m: continue
+                    main_id = int(m.group(1))
 
-                        q_prompt = f"""Extract FULL marking details for sub-question {sub_id} from the mark scheme AND determine the correct input format based on the question paper text.
-                        MATCHING QUESTION ID: {sub_id}
+                    target_ms_context = extract_ms_context(ms_text, sub_id)
+                    q_prompt = f"""Extract FULL marking details for sub-question {sub_id} from the mark scheme.
+                    MATCHING QUESTION ID: {sub_id}
 
-                        QUESTION PAPER TEXT (Page Context):
-                        {page_content}
+                    QUESTION PAPER TEXT (Page Context):
+                    {page_content}
 
-                        MARK SCHEME TEXT:
-                        {ms_text[:45000]}
+                    MARK SCHEME TEXT (Isolated Context):
+                    {target_ms_context}
 
-                        Return ONLY a JSON object:
-                        {{
-                        "sub_id": "{sub_id}",
-                        "type": "text/mcq/calculation/draw/list",
-                        "max_marks": 1,
-                        "lines_provided": 2,
-                        "ms_text": "Detailed marking criteria... MUST NOT BE TRUNCATED. Include all bullet points and marks.",
-                        "options": ["A", "B", "C", "D"], // ONLY if type is mcq
-                        "final_label": "",
-                        "final_unit": ""
-                        }}
+                    MANDATORY RULES for English Language B:
+                    1. For questions 1, 2, 4, 5: Look for "Indicative content" or a list of specific points. Award 1 mark per point up to the maximum.
+                    2. For questions 3, 6, 7, 8: These are LEVELS-BASED questions. Look for a levels grid (Level 1-5). Include the full grid in ms_text.
+                    3. Determine 'max_marks' correctly from the mark scheme or paper (e.g. (1), (2), (10), (15)).
+                    4. 'lines_provided': Estimate based on the dots (...) in the question paper text.
 
-                        MANDATORY RULES:
-                        1. ms_text MUST be the complete, verbatim marking criteria for THIS SPECIFIC sub-question. Do not use "(rest of...)" or placeholders.
-                        2. TYPE SELECTION:
-                           - 'mcq': if there are options A, B, C, D to choose from.
-                           - 'calculation': if it's a math/numerical problem with a specific answer line.
-                           - 'draw'/'graph': if it requires a visual response.
-                           - 'text': for descriptions/explanations.
-                        3. Determine 'max_marks' by looking for brackets like (1) or (2) in the question paper or mark scheme.
-                        """
-                        # Question-level timeout with retry
-                        q_timeout = 120  # 120 seconds per question
-                        q_started = time.time()
-                        q_success = False
-                        while time.time() - q_started < q_timeout and not q_success:
-                            try:
-                                q_resp = requests.post('http://localhost:11434/api/generate', json={'model': 'llama3:latest', 'prompt': q_prompt, 'stream': False, 'format': 'json', 'temperature': 0}, timeout=60)
-                                sq = clean_ai_json(q_resp.json().get('response', '{}'))
-                                q_success = True
-                            except requests.exceptions.Timeout:
-                                print(f"      ⚠️  Question {sub_id} AI timeout, skipping this question...", flush=True)
-                                continue
-                            except Exception as e:
-                                if "time" in str(e).lower():
-                                    print(f"      ⚠️  Question {sub_id} AI error: {e}, skipping...", flush=True)
-                                break
-                        if not q_success or not sq or not sq.get('sub_id'):
+                    Return ONLY a JSON object:
+                    {{
+                    "sub_id": "{sub_id}",
+                    "type": "text",
+                    "max_marks": 1,
+                    "lines_provided": 2,
+                    "ms_text": "FULL VERBATIM marking criteria. Include all bullet points from indicative content AND/OR the full levels grid. Do not truncate.",
+                    "options": [],
+                    "final_label": "",
+                    "final_unit": ""
+                    }}"""
+                    # Question-level timeout with retry
+                    q_timeout = 120  # 120 seconds per question
+                    q_started = time.time()
+                    q_success = False
+                    while time.time() - q_started < q_timeout and not q_success:
+                        try:
+                            q_resp = requests.post('http://localhost:11434/api/generate', json={'model': 'llama3:latest', 'prompt': q_prompt, 'stream': False, 'format': 'json', 'temperature': 0}, timeout=60)
+                            sq = clean_ai_json(q_resp.json().get('response', '{}'))
+                            q_success = True
+                        except requests.exceptions.Timeout:
+                            print(f"      ⚠️  Question {sub_id} AI timeout, skipping this question...", flush=True)
                             continue
+                        except Exception as e:
+                            if "time" in str(e).lower():
+                                print(f"      ⚠️  Question {sub_id} AI error: {e}, skipping...", flush=True)
+                            break
+                    if not q_success or not sq or not sq.get('sub_id'):
+                        continue
 
-                        # Basic validation of extracted content
-                        if sq and sq.get('ms_text') and ('rest of' in sq['ms_text'].lower() or 'placeholder' in sq['ms_text'].lower() or len(sq['ms_text']) < 10):
+                    # Basic validation of extracted content
+                    if sq and sq.get('ms_text'):
+                        ms_val = str(sq['ms_text'])
+                        if ('rest of' in ms_val.lower() or 'placeholder' in ms_val.lower() or len(ms_val) < 10):
                             print(f"      [IMPORT] Retrying sub-id {sub_id} due to low quality ms_text", flush=True)
                             # Simple retry - no timeout loop
                             try:
@@ -2077,23 +2606,20 @@ Example: ["1(a)", "1(b)", "2", "3(a)(i)"]"""
                             except:
                                 pass  # If retry fails, keep the previous result
 
-                        print(f"      [IMPORT] Sub-ID {sub_id} detail AI raw: {q_resp.json().get('response', '')[:100]}...", flush=True)
-                        if not sq or not sq.get('sub_id'): continue
+                    print(f"      [IMPORT] Sub-ID {sub_id} detail AI raw: {q_resp.json().get('response', '')[:100]}...", flush=True)
+                    if not sq or not sq.get('sub_id'): continue
 
-                        if main_id not in all_questions_map: all_questions_map[main_id] = {"id": main_id, "sub_questions": []}
-                        existing = next((s for s in all_questions_map[main_id]['sub_questions'] if s['sub_id'] == sq['sub_id']), None)
-                        if not existing:
-                            sq['qp_pages'] = [page_num]
-                            all_questions_map[main_id]['sub_questions'].append(sq)
-                        else:
-                            if page_num not in existing.get('qp_pages', []): existing.setdefault('qp_pages', []).append(page_num)
-                            if len(str(sq.get('ms_text', ''))) > len(str(existing.get('ms_text', ''))): existing['ms_text'] = sq['ms_text']
-                    except Exception as e:
-                        print(f"      ⚠️  Question {sub_id} processing error: {e}", flush=True)
-                        continue
-                    except Exception as e:
-                        print(f"  ⚠️  Page {page_num} processing error: {e}", flush=True)
-                        continue
+                    if main_id not in all_questions_map: all_questions_map[main_id] = {"id": main_id, "sub_questions": []}
+                    existing = next((s for s in all_questions_map[main_id]['sub_questions'] if s['sub_id'] == sq['sub_id']), None)
+                    if not existing:
+                        sq['qp_pages'] = [page_num]
+                        all_questions_map[main_id]['sub_questions'].append(sq)
+                    else:
+                        if page_num not in existing.get('qp_pages', []): existing.setdefault('qp_pages', []).append(page_num)
+                        if len(str(sq.get('ms_text', ''))) > len(str(existing.get('ms_text', ''))): existing['ms_text'] = sq['ms_text']
+                except Exception as e:
+                    print(f"      ⚠️  Question {sub_id} processing error: {e}", flush=True)
+                    continue
 
         import_jobs[job_id]['status'] = 'images'
         qp_img_dir = f"static/exams/{metadata['id']}/qp"; os.makedirs(qp_img_dir, exist_ok=True)
@@ -2104,103 +2630,54 @@ Example: ["1(a)", "1(b)", "2", "3(a)(i)"]"""
         extract_pages = []
         if 'english' in metadata.get('subject', '').lower() and qp_path:
             try:
-                # Extract pages from PDF
-                res = subprocess.run(['pdftotext', '-layout', qp_path, '-'], capture_output=True, text=True, check=True)
-                pages = res.stdout.split('\f')
-
-                # Strategy 1: Look for "Do not return this booklet" - unique to source booklet header
-                # This indicates the INFO page, so we start from the NEXT page
+                # Strategy 1: Look for "Extracts Booklet" or "Source Booklet" header
                 for i, page in enumerate(pages):
                     page_lower = page.lower()
-                    if 'do not return this booklet' in page_lower:
-                        if i + 1 < len(pages):
-                            next_page = pages[i + 1].lower()
-                            if 'text one' in next_page or 'text two' in next_page:
-                                # Start from i+2 (skip the info page)
-                                extract_pages = list(range(i + 2, len(pages) + 1))
+                    if ('extracts booklet' in page_lower or 'source booklet' in page_lower) and ('do not return' in page_lower):
+                        # Start from i+1 (this page is the cover, so actual extracts start i+2, but we'll include cover)
+                        # Actually, better to start from i+2 as the student only needs the content
+                        start = i + 2
+                        end = len(pages) + 1
+                        # Find the last non-blank page
+                        for k in range(len(pages) - 1, i, -1):
+                            if pages[k].strip():
+                                end = k + 2
                                 break
-
-                # Strategy 2: Look for "Paper reference" + "English Language B" + "Source Booklet"
-                # This indicates the INFO page, so we start from the NEXT page
+                        extract_pages = list(range(start, end))
+                        break
+                
+                # Strategy 2: Look for "Text One" at start of page
                 if not extract_pages:
                     for i, page in enumerate(pages):
-                        page_lower = page.lower()
-                        if 'paper reference' in page_lower and 'english language b' in page_lower and 'source booklet' in page_lower:
-                            if i + 1 < len(pages):
-                                next_page = pages[i + 1].lower()
-                                if 'text one' in next_page or 'text two' in next_page:
-                                    # Start from i+2 (skip the info page), end at last non-blank page
-                                    end = i + 2
-                                    for k in range(i + 2, len(pages)):
-                                        if pages[k].strip():
-                                            end = k + 1
-                                        else:
-                                            break
-                                    extract_pages = list(range(i + 2, end))
-                                    break
-
-                # Strategy 3: Look for "Source Booklet" header with blank lines + "Turn over"
-                # This indicates the INFO page, so we start from the NEXT page
-                if not extract_pages:
-                    for i, page in enumerate(pages):
-                        page_lower = page.lower()
-                        lines = page.split('\n')
-                        source_idx = -1
-                        for j, line in enumerate(lines):
-                            if 'source booklet' in line.lower():
-                                source_idx = j
-                                break
-                        if source_idx >= 0:
-                            for j in range(source_idx + 1, len(lines)):
-                                if lines[j].strip() == '' and j + 1 < len(lines) and 'turn over' in lines[j + 1].lower():
-                                    if i + 1 < len(pages):
-                                        next_page = pages[i + 1].lower()
-                                        if 'text one' in next_page or 'text two' in next_page:
-                                            # Start from i+2 (skip the info page), end at last non-blank page
-                                            end = i + 2
-                                            for k in range(i + 2, len(pages)):
-                                                if pages[k].strip():
-                                                    end = k + 1
-                                                else:
-                                                    break
-                                            extract_pages = list(range(i + 2, end))
-                                    break
-                            if extract_pages: break
-
-                # Strategy 4: Fallback - look for "Text One" at start of page (after blank lines)
-                if not extract_pages:
-                    for i, page in enumerate(pages):
-                        lines = page.split('\n')
-                        for j, line in enumerate(lines):
-                            stripped = line.strip()
-                            if stripped.lower().startswith('text one') or stripped.lower().startswith('text two'):
-                                if j >= 2:
-                                    prev_blank = all(lines[k].strip() == '' for k in range(j-1, max(0, j-3), -1))
-                                    if prev_blank:
-                                        start = i + 1
-                                        end = start
-                                        for k in range(start, len(pages)):
-                                            if pages[k].strip():
-                                                end = k + 1
-                                            else:
-                                                break
-                                        extract_pages = list(range(start, end))
-                                        break
-                                elif j < 10:
-                                    start = i + 1
-                                    end = start
-                                    for k in range(start, len(pages)):
-                                        if pages[k].strip():
-                                            end = k + 1
-                                        else:
-                                            break
-                                    extract_pages = list(range(start, end))
-                                    break
-                        if extract_pages: break
+                        if page.strip().lower().startswith('text one'):
+                            start = i + 1
+                            extract_pages = list(range(start, len(pages) + 1))
+                            break
             except Exception as e:
                 print(f"Could not detect reading booklet: {e}")
 
-        final_data = {"paper_id": metadata['id'], "title": metadata['title'], "subject": metadata['subject'], "qp_img_dir": f"/{qp_img_dir}/", "er_text": er_text, "questions": sorted(all_questions_map.values(), key=lambda q: q['id']), "extract_pages": extract_pages}
+        # Clean up question map: Filter out noise IDs (like margin numbers 43, 0a, etc)
+        # In English papers, question IDs are usually small integers 1-11
+        valid_questions = {}
+        for q_id, q_data in all_questions_map.items():
+            # If the ID is > 20, it's likely noise for an English paper (max ~11 questions)
+            if 'english' in metadata.get('subject', '').lower():
+                try:
+                    if int(q_id) > 20: continue
+                except: pass
+            valid_questions[q_id] = q_data
+
+        final_data = {
+            "paper_id": metadata['id'], 
+            "title": metadata['title'], 
+            "subject": metadata['subject'], 
+            "date": metadata['date'],
+            "paper": metadata['paper'],
+            "qp_img_dir": f"/{qp_img_dir}/", 
+            "er_text": er_text, 
+            "questions": sorted(valid_questions.values(), key=lambda q: int(q['id'])), 
+            "extract_pages": extract_pages
+        }
         json_path = f"exam_data/{metadata['id']}.json"
         with open(json_path, 'w') as f: json.dump(final_data, f, indent=2)
         conn = sqlite3.connect(DATABASE); cursor = conn.cursor()
@@ -2213,7 +2690,7 @@ def process_official_exam():
     try:
         data = request.json; qp_path = data.get('qp_path')
         if not qp_path: return jsonify({'success': False}), 400
-        qp_snippet = extract_pdf_text(qp_path)[:3000]
+        qp_snippet = extract_pdf_text(qp_path)[:8000]
         meta_prompt = f"Return JSON metadata (title, subject, paper, date) for: {qp_snippet}"
         try:
             resp = requests.post('http://localhost:11434/api/generate', json={'model': 'llama3:latest', 'prompt': meta_prompt, 'stream': False, 'format': 'json'}, timeout=40)
@@ -2224,16 +2701,40 @@ def process_official_exam():
 
         # Regex Fallback for Date
         if not metadata.get('date') or metadata['date'] == 'Unknown':
-            date_match = re.search(r'(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4}', qp_snippet, re.I)
-            if date_match: metadata['date'] = date_match.group(0)
+            # Look for month and year anywhere in the snippet
+            date_match = re.search(r'(January|February|March|April|May|June|July|August|September|October|November|December)\s+(20\d{2})', qp_snippet, re.I)
+            if date_match: metadata['date'] = f"{date_match.group(1)} {date_match.group(2)}"
             else:
-                year_match = re.search(r'20\d{2}', qp_snippet)
-                if year_match: metadata['date'] = year_match.group(0)
+                # Look for Paper Date like "June 2021" specifically
+                date_match = re.search(r'(?:Date|Time):?\s*(January|February|March|April|May|June|July|August|September|October|November|December)\s+(20\d{2})', qp_snippet, re.I)
+                if date_match: metadata['date'] = f"{date_match.group(1)} {date_match.group(2)}"
+                else:
+                    year_match = re.search(r'20\d{2}', qp_snippet)
+                    if year_match: metadata['date'] = year_match.group(0)
 
         metadata['title'] = metadata.get('title') or os.path.basename(qp_path).replace('.pdf', '')
         if 'biology' in qp_path.lower(): metadata['subject'] = 'Biology'
         elif 'english' in qp_path.lower(): metadata['subject'] = 'English'
-        metadata['paper'] = metadata.get('paper') or 'Paper'; metadata['date'] = metadata.get('date') or 'Unknown'
+        
+        # English specific metadata refining
+        if metadata.get('subject') == 'English':
+            # Identify Paper
+            if '1R' in qp_snippet or '1R' in os.path.basename(qp_path): metadata['paper'] = '1R'
+            elif '4EB1/01' in qp_snippet or 'Paper 1' in qp_snippet: metadata['paper'] = '1'
+            
+            # Improve title: "English Language B [Paper] - [Date]"
+            paper_str = f"Paper {metadata.get('paper', '1')}"
+            date_str = metadata.get('date', 'Unknown')
+            metadata['title'] = f"English Language B {paper_str} - {date_str}"
+            
+            # Optional: Add sub-title from filename if it has topic like "HEART OF DARKNESS"
+            filename = os.path.basename(qp_path).upper()
+            if 'que-' in filename.lower():
+                topic = filename.split('que-')[-1].replace('.PDF', '').replace('_', ' ').strip()
+                if topic: metadata['title'] += f" ({topic})"
+        
+        metadata['paper'] = metadata.get('paper') or 'Paper'
+        metadata['date'] = metadata.get('date') or 'Unknown'
         metadata['id'] = data.get('id') or str(uuid.uuid4())[:8]
         job_id = str(uuid.uuid4())
         import_jobs[job_id] = {'status': 'starting', 'paper_id': metadata['id'], 'title': metadata['title'], 'current_page': 0, 'total_pages': 0, 'questions_found': 0}
@@ -2798,6 +3299,9 @@ def paper_gallery_page(): return send_from_directory('.', 'exam_questions.html')
 
 @app.route('/official_exam_player.html')
 def exam_player_screen_page(): return send_from_directory('.', 'official_exam_player.html')
+
+@app.route('/spelling.html')
+def spelling_page(): return send_from_directory('.', 'spelling.html')
 
 @app.route('/static/<path:path>')
 def serve_static_assets(path): return send_from_directory('static', path)
