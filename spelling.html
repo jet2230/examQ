@@ -10,6 +10,11 @@
         :root {
             --primary-color: #1e3c72;
             --secondary-color: #2a5298;
+            --success-color: #28a745;
+            --success-light: #d4edda;
+            --error-color: #dc3545;
+            --error-light: #f8d7da;
+            --warning-color: #ffc107;
             --main-gradient: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -20,7 +25,7 @@
             padding: 20px;
         }
         .container {
-            max-width: 1000px;
+            max-width: 1100px;
             margin: 0 auto;
             background: white;
             border-radius: 20px;
@@ -30,364 +35,501 @@
         .header {
             background: var(--main-gradient);
             color: white;
-            padding: 40px;
+            padding: 35px 40px;
             text-align: center;
         }
+        .header h1 { font-size: 1.8em; margin-bottom: 5px; }
+        .header p { opacity: 0.85; font-size: 0.95em; }
         .navbar {
-            padding: 15px 40px;
+            padding: 12px 40px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid #eee;
             background: white;
+            flex-wrap: wrap;
+            gap: 10px;
         }
         .nav-brand { font-weight: 800; color: var(--primary-color); font-size: 1.2em; }
-        .nav-links a { text-decoration: none; color: var(--primary-color); font-weight: 600; margin-left: 20px; }
+        .nav-links { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+        .nav-links a {
+            text-decoration: none; color: var(--primary-color); font-weight: 600;
+            padding: 6px 12px; border-radius: 6px; font-size: 0.9em;
+            transition: background 0.2s;
+        }
+        .nav-links a:hover { background: #f0f4ff; }
 
-        .content { padding: 40px; }
+        .content { padding: 30px 40px; }
 
+        /* Tests List */
         .tests-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 25px;
-            margin-bottom: 40px;
+            gap: 20px;
+            margin-bottom: 30px;
         }
         .test-card {
             background: #f8f9fa;
             border-radius: 15px;
-            padding: 25px;
+            padding: 22px;
             border: 1px solid #eee;
-            transition: transform 0.2s;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
-        .test-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        .test-title { font-size: 1.3em; font-weight: 700; color: var(--primary-color); margin-bottom: 8px; }
-        .test-meta { color: #666; font-size: 0.85em; margin-bottom: 15px; }
-        .test-desc { color: #555; font-size: 0.9em; margin-bottom: 15px; line-height: 1.4; }
+        .test-card:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
+        .test-title { font-size: 1.2em; font-weight: 700; color: var(--primary-color); margin-bottom: 6px; }
+        .test-meta { color: #888; font-size: 0.82em; margin-bottom: 10px; }
+        .test-desc { color: #555; font-size: 0.88em; margin-bottom: 15px; line-height: 1.4; }
+        .test-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+        .test-score-badge {
+            display: inline-block; background: #e3f2fd; color: var(--primary-color);
+            padding: 3px 10px; border-radius: 20px; font-size: 0.8em; font-weight: 600;
+            margin-bottom: 10px;
+        }
 
+        /* Buttons */
         .btn {
             background: var(--main-gradient);
             color: white;
             border: none;
-            padding: 10px 20px;
+            padding: 10px 18px;
             border-radius: 8px;
             font-weight: 600;
             cursor: pointer;
             text-decoration: none;
             display: inline-block;
-            font-size: 0.9em;
+            font-size: 0.88em;
+            transition: opacity 0.2s, transform 0.1s;
         }
         .btn:hover { opacity: 0.9; }
+        .btn:active { transform: scale(0.97); }
         .btn-outline {
             background: transparent;
             border: 2px solid var(--primary-color);
             color: var(--primary-color);
         }
+        .btn-outline:hover { background: #f0f4ff; }
+        .btn-success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
         .btn-danger {
             background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
         }
         .btn-small { padding: 6px 12px; font-size: 0.8em; }
+        .btn-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
 
         .filter-tabs {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 25px;
-            border-bottom: 2px solid #eee;
+            display: flex; gap: 10px; margin-bottom: 20px;
+            border-bottom: 2px solid #eee; padding-bottom: 0;
         }
         .filter-tab {
-            padding: 10px 20px;
-            cursor: pointer;
-            font-weight: 600;
-            color: #666;
-            border-bottom: 3px solid transparent;
-            transition: all 0.2s;
+            padding: 10px 18px;
+            cursor: pointer; font-weight: 600; color: #888;
+            border-bottom: 3px solid transparent; transition: all 0.2s;
         }
-        .filter-tab.active {
-            color: var(--primary-color);
-            border-bottom-color: var(--primary-color);
-        }
+        .filter-tab.active { color: var(--primary-color); border-bottom-color: var(--primary-color); }
 
-        /* Share Panel */
-        .share-panel {
-            display: none;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translateY(-50%);
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-            padding: 16px;
-            min-width: 250px;
-            max-width: 320px;
-            z-index: 1000;
-        }
-        .share-panel-header {
-            font-weight: 700;
-            color: var(--primary-color);
-            margin-bottom: 12px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid #eee;
-        }
-        .share-user-btn {
-            text-align: left;
-            padding: 8px 12px;
-            border: 1px solid #eee;
-            border-radius: 8px;
-            background: #f9f9f9;
-            cursor: pointer;
-            font-size: 0.85em;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            width: 100%;
-            margin-bottom: 6px;
-        }
-        .share-user-btn:hover {
-            background: #e3f2fd !important;
-            border-color: #1e3c72 !important;
-            color: #1e3c72 !important;
-        }
-        .test-card { position: relative; }
-
-        /* Create Test View */
-        .form-group { margin-bottom: 20px; }
-        .form-label { display: block; font-weight: 600; margin-bottom: 8px; color: #333; }
+        /* Forms */
+        .form-group { margin-bottom: 18px; }
+        .form-label { display: block; font-weight: 600; margin-bottom: 6px; color: #333; }
         .form-input, .form-textarea {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 1em;
-            transition: border-color 0.2s;
+            width: 100%; padding: 11px; border: 2px solid #e0e0e0;
+            border-radius: 8px; font-size: 1em; transition: border-color 0.2s;
         }
         .form-input:focus, .form-textarea:focus { border-color: var(--primary-color); outline: none; }
         .form-textarea { min-height: 80px; resize: vertical; }
 
-        .words-list { margin-top: 20px; }
+        /* Word list (create view) */
         .word-item {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            padding: 12px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            margin-bottom: 10px;
+            display: flex; gap: 10px; align-items: center;
+            padding: 10px 12px; background: #f8f9fa;
+            border-radius: 8px; margin-bottom: 8px; flex-wrap: wrap;
         }
         .word-number {
-            background: var(--primary-color);
-            color: white;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            flex-shrink: 0;
+            background: var(--primary-color); color: white;
+            width: 28px; height: 28px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 0.85em; flex-shrink: 0;
         }
-        .word-input { flex: 1; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; }
-        .definition-input { flex: 2; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; }
+        .word-input { flex: 1; min-width: 150px; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; }
+        .definition-input { flex: 1; min-width: 150px; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; }
         .audio-btn {
-            background: #28a745;
-            color: white;
-            border: none;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 1.2em;
+            background: #28a745; color: white; border: none;
+            width: 34px; height: 34px; border-radius: 50%;
+            cursor: pointer; font-size: 1.1em; flex-shrink: 0;
         }
 
         /* Take Test View */
-        .test-view { text-align: center; max-width: 600px; margin: 0 auto; }
-        .progress-indicator {
-            font-size: 1.1em;
-            color: #666;
-            margin-bottom: 20px;
-        }
+        .test-view { text-align: center; max-width: 550px; margin: 0 auto; }
+        .progress-indicator { font-size: 1em; color: #888; margin-bottom: 15px; }
         .audio-play-btn {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            background: var(--main-gradient);
-            color: white;
-            border: none;
-            font-size: 3em;
-            cursor: pointer;
-            margin: 20px 0;
-            transition: transform 0.2s;
+            width: 90px; height: 90px; border-radius: 50%;
+            background: var(--main-gradient); color: white;
+            border: none; font-size: 2.5em; cursor: pointer;
+            margin: 15px 0; transition: transform 0.2s;
+            box-shadow: 0 5px 20px rgba(30,60,114,0.3);
         }
-        .audio-play-btn:hover { transform: scale(1.1); }
+        .audio-play-btn:hover { transform: scale(1.08); }
         .audio-play-btn:active { transform: scale(0.95); }
         .spelling-input {
-            width: 100%;
-            padding: 15px;
-            font-size: 1.5em;
-            text-align: center;
-            border: 3px solid #e0e0e0;
-            border-radius: 12px;
-            margin: 20px 0;
+            width: 100%; padding: 14px; font-size: 1.4em;
+            text-align: center; border: 3px solid #e0e0e0;
+            border-radius: 12px; margin: 15px 0;
             text-transform: lowercase;
         }
         .spelling-input:focus { border-color: var(--primary-color); outline: none; }
 
-        /* Results View */
-        .results-summary {
-            text-align: center;
-            padding: 30px;
-            background: #f8f9fa;
-            border-radius: 15px;
-            margin-bottom: 30px;
+        /* Share Panel */
+        .share-panel {
+            display: none; position: absolute;
+            background: white; border: 1px solid #ddd;
+            border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            padding: 16px; min-width: 240px; z-index: 1000;
         }
-        .score-display {
-            font-size: 3em;
-            font-weight: 800;
-            color: var(--primary-color);
-            margin-bottom: 10px;
+        .share-panel-header {
+            font-weight: 700; color: var(--primary-color);
+            margin-bottom: 10px; padding-bottom: 8px;
+            border-bottom: 1px solid #eee;
         }
-        .answers-list { max-width: 600px; margin: 0 auto; }
-        .answer-item {
-            display: flex;
-            justify-content: space-between;
+        .share-user-btn {
+            text-align: left; padding: 7px 10px; border: 1px solid #eee;
+            border-radius: 8px; background: #f9f9f9; cursor: pointer;
+            font-size: 0.83em; transition: all 0.2s; display: flex;
+            align-items: center; width: 100%; margin-bottom: 5px;
+        }
+        .share-user-btn:hover { background: #e3f2fd !important; border-color: #1e3c72 !important; }
+
+        /* ============ RESULTS VIEW (REDONE) ============ */
+        .results-view {
+            animation: fadeSlideIn 0.4s ease-out;
+        }
+        @keyframes fadeSlideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Score Hero */
+        .score-hero {
+            text-align: center; padding: 30px 20px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 20px; margin-bottom: 30px;
+        }
+        .score-hero h2 { font-size: 1.3em; color: #555; margin-bottom: 20px; }
+
+        /* Circular Progress */
+        .circular-progress {
+            width: 160px; height: 160px; border-radius: 50%;
+            background: conic-gradient(var(--success-color) 0deg, #e0e0e0 0deg);
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 20px; position: relative;
+            transition: conic-gradient 1s ease-out;
+        }
+        .circular-progress-inner {
+            width: 130px; height: 130px; border-radius: 50%;
+            background: white; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .circular-score { font-size: 2.2em; font-weight: 800; color: var(--primary-color); line-height: 1; }
+        .circular-total { font-size: 0.85em; color: #888; margin-top: 4px; }
+
+        /* Grade Badge */
+        .grade-badge {
+            display: inline-block; padding: 6px 20px;
+            border-radius: 30px; font-size: 1.1em; font-weight: 700;
+            margin-bottom: 15px;
+        }
+        .grade-a { background: #d4edda; color: #155724; }
+        .grade-b { background: #cce5ff; color: #004085; }
+        .grade-c { background: #fff3cd; color: #856404; }
+        .grade-f { background: #f8d7da; color: #721c24; }
+
+        /* Stats Bar */
+        .stats-bar {
+            display: flex; justify-content: center; gap: 30px;
+            flex-wrap: wrap; margin-top: 15px;
+        }
+        .stat-item { text-align: center; }
+        .stat-value { font-size: 1.6em; font-weight: 800; }
+        .stat-label { font-size: 0.8em; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-correct { color: var(--success-color); }
+        .stat-wrong { color: var(--error-color); }
+
+        /* Section Headers */
+        .section-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 15px; flex-wrap: wrap; gap: 10px;
+        }
+        .section-title {
+            font-size: 1.2em; font-weight: 700; color: var(--primary-color);
+            display: flex; align-items: center; gap: 8px;
+        }
+        .section-title .count {
+            background: var(--primary-color); color: white;
+            padding: 2px 10px; border-radius: 20px; font-size: 0.75em;
+        }
+
+        /* Wrong Words Section */
+        .wrong-words-section { margin-bottom: 30px; }
+        .wrong-word-card {
+            background: var(--error-light); border: 1px solid #f5c6cb;
+            border-left: 5px solid var(--error-color); border-radius: 12px;
+            padding: 18px 20px; margin-bottom: 12px;
+            display: grid; grid-template-columns: 1fr auto; gap: 10px;
             align-items: center;
-            padding: 15px;
-            background: white;
-            border: 2px solid #eee;
-            border-radius: 10px;
-            margin-bottom: 10px;
+            transition: transform 0.2s;
         }
-        .answer-correct { border-left-color: #28a745; border-left-width: 5px; }
-        .answer-wrong { border-left-color: #dc3545; border-left-width: 5px; }
-        .answer-word { font-weight: 600; font-size: 1.1em; }
-        .answer-user { color: #666; }
-        .answer-correct-answer { color: #28a745; font-weight: 600; }
-        .answer-status { font-size: 1.5em; }
+        .wrong-word-card:hover { transform: translateX(3px); }
+        .wrong-word-card.playing {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            box-shadow: 0 4px 15px rgba(255, 193, 7, 0.5);
+            transform: translateX(5px) scale(1.02);
+        }
+        .wrong-word-main { }
+        .wrong-word-label { font-size: 0.75em; text-transform: uppercase; color: var(--error-color); font-weight: 700; margin-bottom: 4px; }
+        .wrong-word-correct { font-size: 1.4em; font-weight: 800; color: #155724; margin-bottom: 6px; letter-spacing: 1px; }
+        .wrong-word-user { font-size: 0.95em; color: #721c24; }
+        .wrong-word-user span {
+            text-decoration: line-through; opacity: 0.7; margin-right: 6px;
+        }
+        .wrong-word-phonetic { font-size: 0.8em; color: #8b0000; margin-top: 4px; font-style: italic; }
+
+        /* Character Comparison */
+        .char-comparison {
+            display: flex; gap: 2px; margin-top: 8px; flex-wrap: wrap;
+        }
+        .char-box {
+            width: 28px; height: 28px; display: flex; align-items: center;
+            justify-content: center; border-radius: 4px; font-weight: 700;
+            font-size: 0.85em; border: 1px solid transparent;
+        }
+        .char-correct { background: #d4edda; color: #155724; border-color: #c3e6cb; }
+        .char-wrong { background: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+        .char-missing { background: #fff3cd; color: #856404; border-color: #ffeaa7; }
+        .char-extra { background: #f8d7da; color: #721c24; border-color: #f5c6cb; font-style: italic; }
+
+        /* All Answers Grid */
+        .answers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 12px; margin-bottom: 30px;
+        }
+        .answer-card {
+            background: white; border-radius: 12px; padding: 15px;
+            border: 2px solid #eee; transition: transform 0.2s, box-shadow 0.2s;
+            position: relative; overflow: hidden;
+        }
+        .answer-card:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+        .answer-card.is-correct { border-left: 5px solid var(--success-color); }
+        .answer-card.is-wrong { border-left: 5px solid var(--error-color); background: #fffafa; }
+        .answer-card-word {
+            font-size: 1.1em; font-weight: 700; color: #333; margin-bottom: 6px;
+        }
+        .answer-card-your {
+            font-size: 0.88em; color: #666; margin-bottom: 4px;
+        }
+        .answer-card-your span { color: var(--error-color); text-decoration: line-through; }
+        .answer-card-correct {
+            font-size: 0.88em; color: var(--success-color); font-weight: 600;
+        }
+        .answer-card-status {
+            position: absolute; top: 10px; right: 10px;
+            width: 26px; height: 26px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.85em; font-weight: 700;
+        }
+        .answer-card-status.correct { background: var(--success-light); color: var(--success-color); }
+        .answer-card-status.wrong { background: var(--error-light); color: var(--error-color); }
+
+        /* History Section */
+        .history-section { margin-bottom: 30px; }
+        .history-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 12px;
+        }
+        .history-card {
+            background: #f8f9fa; border-radius: 12px; padding: 15px;
+            border: 1px solid #eee; cursor: pointer; transition: all 0.2s;
+        }
+        .history-card:hover { background: #e3f2fd; border-color: #1e3c72; }
+        .history-card-title { font-weight: 700; color: var(--primary-color); font-size: 0.95em; margin-bottom: 4px; }
+        .history-card-meta { font-size: 0.8em; color: #888; margin-bottom: 8px; }
+        .history-card-score {
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .history-card-score .score {
+            font-size: 1.2em; font-weight: 800;
+        }
+        .history-card-score .score.pass { color: var(--success-color); }
+        .history-card-score .score.fail { color: var(--error-color); }
+        .history-card-score .pct {
+            font-size: 0.8em; color: #888;
+        }
+
+        /* History Table */
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85em;
+        }
+        .history-table th {
+            background: #f8f9fa;
+            color: var(--primary-color);
+            font-weight: 700;
+            text-align: left;
+            padding: 10px 12px;
+            border-bottom: 2px solid #ddd;
+            position: sticky;
+            top: 0;
+        }
+        .history-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #eee;
+        }
+        .history-table tr:hover {
+            background: #f0f4ff;
+            cursor: pointer;
+        }
+        .history-table .user-cell {
+            font-weight: 600;
+            color: #333;
+        }
+        .history-table .date-cell {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .history-table .score-cell {
+            text-align: center;
+        }
+        .history-table .score-val {
+            font-weight: 800;
+            font-size: 1.1em;
+        }
+        .history-table .score-val.pass { color: var(--success-color); }
+        .history-table .score-val.fail { color: var(--error-color); }
+        .history-table .pct-val {
+            font-size: 0.85em;
+            color: #888;
+        }
+        .history-table .status-cell {
+            text-align: center;
+        }
+        .history-table .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: 600;
+        }
+        .history-table .status-badge .correct-count { color: var(--success-color); }
+        .history-table .status-badge .wrong-count { color: var(--error-color); }
+        .history-table .wrong-words-cell {
+            font-size: 0.8em;
+        }
+        .history-table .wrong-words-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 3px;
+        }
+        .history-table .wrong-word-tag {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 0.75em;
+            font-weight: 600;
+        }
+        .history-table .all-correct {
+            color: var(--success-color);
+            font-size: 0.75em;
+            font-weight: 600;
+        }
+
+        /* Modal */
+        .results-modal {
+            display: none; position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 2000;
+            align-items: center; justify-content: center;
+        }
+        .results-modal.active { display: flex; }
+        .results-modal-content {
+            background: white; border-radius: 16px; padding: 30px;
+            max-width: 900px; width: 94%; max-height: 85vh;
+            overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        .results-modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #eee;
+        }
+        .results-modal-header h2 { color: var(--primary-color); margin: 0; font-size: 1.4em; }
+        .results-modal-close {
+            background: none; border: none; font-size: 1.6em;
+            cursor: pointer; color: #999; padding: 5px;
+        }
+        .results-modal-close:hover { color: #333; }
+        .detail-answers { margin-top: 15px; }
+        .detail-answer-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 14px; border-radius: 8px; margin-bottom: 6px;
+            border: 1px solid #eee;
+        }
+        .detail-answer-row.correct { background: var(--success-light); }
+        .detail-answer-row.wrong { background: var(--error-light); }
 
         /* Utility */
         .hidden { display: none !important; }
         .text-center { text-align: center; }
+        .mb-15 { margin-bottom: 15px; }
         .mb-20 { margin-bottom: 20px; }
         .mb-30 { margin-bottom: 30px; }
 
-        /* Test Results Modal */
-        .results-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 2000;
-            align-items: center;
-            justify-content: center;
-        }
-        .results-modal.active {
-            display: flex;
-        }
-        .results-modal-content {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            max-width: 700px;
-            width: 90%;
-            max-height: 80vh;
-            overflow-y: auto;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-        }
-        .results-modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #eee;
-        }
-        .results-modal-header h2 {
-            color: var(--primary-color);
-            margin: 0;
-            font-size: 1.5em;
-        }
-        .results-modal-close {
-            background: none;
-            border: none;
-            font-size: 1.5em;
-            cursor: pointer;
-            color: #999;
-            padding: 5px;
-        }
-        .results-modal-close:hover {
-            color: #333;
-        }
-        .test-history-item {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 15px;
-            border: 1px solid #eee;
-        }
-        .test-history-item:last-child {
-            margin-bottom: 0;
-        }
-        .history-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        .history-username {
-            font-weight: 700;
-            color: var(--primary-color);
-            font-size: 1.1em;
-        }
-        .history-date {
-            color: #666;
-            font-size: 0.9em;
-        }
-        .history-score {
-            font-size: 1.3em;
-            font-weight: 700;
-            margin-bottom: 5px;
-        }
-        .history-score.pass {
-            color: #28a745;
-        }
-        .history-score.fail {
-            color: #dc3545;
-        }
-        .history-percentage {
-            font-size: 0.9em;
-            color: #666;
-        }
-        .no-results {
-            text-align: center;
-            color: #999;
-            padding: 30px;
-            font-size: 1.1em;
-        }
-
-        /* Mobile */
+        /* Mobile Hamburger */
         .hamburger { display: none; cursor: pointer; }
-        .hamburger div { width: 25px; height: 3px; background: var(--primary-color); margin: 5px 0; }
+        .hamburger div { width: 25px; height: 3px; background: var(--primary-color); margin: 5px 0; border-radius: 2px; }
 
         @media (max-width: 768px) {
+            .content { padding: 20px; }
+            .header { padding: 25px 20px; }
+            .header h1 { font-size: 1.4em; }
             .nav-links {
-                display: none;
-                flex-direction: column;
-                position: absolute;
-                top: 60px;
-                right: 20px;
-                background: white;
-                padding: 20px;
-                border-radius: 10px;
-                box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+                display: none; flex-direction: column;
+                position: absolute; top: 60px; right: 20px;
+                background: white; padding: 15px; border-radius: 10px;
+                box-shadow: 0 5px 20px rgba(0,0,0,0.2); z-index: 100;
+                min-width: 200px;
             }
             .nav-links.active { display: flex; }
-            .nav-links a { margin: 10px 0; }
+            .nav-links a { margin: 5px 0; padding: 10px 15px; }
             .hamburger { display: block; }
             .word-item { flex-direction: column; align-items: stretch; }
             .word-number { align-self: flex-start; }
+            .circular-progress { width: 130px; height: 130px; }
+            .circular-progress-inner { width: 105px; height: 105px; }
+            .circular-score { font-size: 1.8em; }
+            .stats-bar { gap: 20px; }
+            .answers-grid { grid-template-columns: 1fr; }
+            .wrong-word-card { grid-template-columns: 1fr; }
+            .history-table { font-size: 0.75em; }
+            .history-table th, .history-table td { padding: 8px 6px; }
+            .results-modal-content { padding: 20px; }
+        }
+
+        @media (max-width: 480px) {
+            body { padding: 10px; }
+            .content { padding: 15px; }
+            .score-hero { padding: 20px 15px; }
+            .score-hero h2 { font-size: 1.1em; }
+            .circular-progress { width: 110px; height: 110px; }
+            .circular-progress-inner { width: 90px; height: 90px; }
+            .circular-score { font-size: 1.5em; }
+            .answer-card-word { font-size: 1em; }
+            .history-table { font-size: 0.7em; }
+            .history-table th, .history-table td { padding: 6px 4px; }
+            .results-modal-content { padding: 15px; }
+            .results-modal-header h2 { font-size: 1.1em; }
         }
     </style>
 </head>
@@ -399,6 +541,7 @@
                 <div></div><div></div><div></div>
             </div>
             <div class="nav-links" id="navLinks">
+                <span id="welcomeMsg" style="font-size:0.85em;color:#888;margin-right:10px;"></span>
                 <a href="/">🏠 Generator</a>
                 <a href="/exam_questions.html">📖 Library</a>
                 <a href="/results">📊 Results</a>
@@ -421,42 +564,29 @@
                     <div class="filter-tab active" onclick="filterTests('all')">All Tests</div>
                     <div class="filter-tab" onclick="filterTests('mine')">My Tests</div>
                 </div>
-
                 <div class="text-center mb-20">
                     <button class="btn" onclick="showCreateTestView()">+ Create New Test</button>
                 </div>
-
                 <div class="tests-grid" id="testsGrid"></div>
             </div>
 
             <!-- Create/Edit Test View -->
             <div id="createTestView" class="hidden">
                 <button class="btn btn-outline btn-small mb-20" onclick="showTestsListView()">← Back to Tests</button>
-
                 <h2 class="mb-20">Create Spelling Test</h2>
-
                 <div class="form-group">
                     <label class="form-label">Test Title</label>
                     <input type="text" class="form-input" id="testTitle" placeholder="e.g., Grade 5 Week 1">
                 </div>
-
                 <div class="form-group">
                     <label class="form-label">Description (optional)</label>
                     <textarea class="form-textarea" id="testDescription" placeholder="Brief description of this test..."></textarea>
                 </div>
-
                 <div class="form-group">
-                    <label>
-                        <input type="checkbox" id="testPublic"> Make this test visible to all students
-                    </label>
+                    <label><input type="checkbox" id="testPublic"> Make this test visible to all students</label>
                 </div>
-
-                <div class="words-list" id="wordsList">
-                    <!-- Words will be added here -->
-                </div>
-
+                <div class="words-list" id="wordsList"></div>
                 <button class="btn mb-20" onclick="addWordRow()">+ Add Word</button>
-
                 <div class="text-center">
                     <button class="btn" onclick="saveTest()">Save Test</button>
                 </div>
@@ -466,62 +596,86 @@
             <div id="takeTestView" class="hidden">
                 <button class="btn btn-outline btn-small mb-20" onclick="showTestsListView()">← Back to Tests</button>
                 <button class="btn btn-outline btn-small mb-20" id="shareTestBtn" onclick="toggleShare(event, currentTest?.id)" style="margin-left: 10px;">📤 Share Test</button>
-
                 <div class="test-view">
                     <h2 id="takeTestTitle">Test Title</h2>
-                    <p id="takeTestDesc" class="mb-20">Description</p>
-
-                    <div class="progress-indicator">
-                        Word <span id="currentWordNum">1</span> of <span id="totalWords">10</span>
-                    </div>
-
-                    <button class="audio-play-btn" onclick="playCurrentWord()" title="Play word">
-                        🔊
-                    </button>
-
-                    <p id="speechStatus" class="mb-20" style="color: #666; min-height: 20px;">Click the speaker to hear the word</p>
-
-                    <!-- Visual Word Reveal Fallback -->
+                    <p id="takeTestDesc" class="mb-20"></p>
+                    <div class="progress-indicator">Word <span id="currentWordNum">1</span> of <span id="totalWords">10</span></div>
+                    <button class="audio-play-btn" onclick="playCurrentWord()" title="Play word">🔊</button>
+                    <p id="speechStatus" class="mb-20" style="color: #888; min-height: 20px; font-size: 0.9em;">Click the speaker to hear the word</p>
                     <div id="wordReveal" class="hidden mb-20" style="text-align: center;">
-                        <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;">Audio not available? Reveal the word letter by letter:</p>
-                        <div id="revealedWord" style="font-size: 2em; letter-spacing: 5px; font-weight: 700; color: var(--primary-color);"></div>
-                        <button class="btn btn-outline btn-small" onclick="revealNextLetter()" style="margin-top: 10px;">👁️ Reveal Next Letter</button>
-                        <button class="btn btn-outline btn-small" onclick="revealFullWord()" style="margin-top: 10px; margin-left: 10px;">Show Word</button>
+                        <p style="font-size: 0.85em; color: #888; margin-bottom: 10px;">Audio not available? Reveal the word letter by letter:</p>
+                        <div id="revealedWord" style="font-size: 1.8em; letter-spacing: 5px; font-weight: 700; color: var(--primary-color);"></div>
+                        <button class="btn btn-outline btn-small" onclick="revealNextLetter()" style="margin-top: 10px;">👁️ Reveal Next</button>
+                        <button class="btn btn-outline btn-small" onclick="revealFullWord()" style="margin-top: 10px; margin-left: 10px;">Show All</button>
                     </div>
-
                     <input type="text" class="spelling-input" id="spellingInput" placeholder="Type spelling here..." autocomplete="off">
-
                     <button class="btn mb-30" onclick="submitWord()">Submit</button>
-
-                    <div id="testProgress" class="progress-indicator"></div>
                 </div>
             </div>
 
-            <!-- Share Panel for Take Test View -->
+            <!-- Share Panel -->
             <div id="share_panel_current" class="share-panel" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);">
                 <div class="share-panel-header">
                     Share with:
                     <span onclick="document.getElementById('share_panel_current').style.display='none'" style="float:right; cursor:pointer; font-size:1.2em; color:#999;">&times;</span>
                 </div>
-                <div id="share_user_list_current" style="max-height: 200px; overflow-y: auto;"></div>
+                <div id="share_user_list_current"></div>
             </div>
 
-            <!-- Results View -->
-            <div id="resultsView" class="hidden">
-                <div class="results-summary">
-                    <h2>Test Complete!</h2>
-                    <div class="score-display">
-                        <span id="scoreText">8/10</span>
+            <!-- ============ RESULTS VIEW (REDONE) ============ -->
+            <div id="resultsView" class="hidden results-view">
+                <!-- Score Hero Section -->
+                <div class="score-hero">
+                    <h2 id="resultTestTitle">Test Results</h2>
+                    <p id="resultUserLabel" style="color:#888; font-size:0.9em; margin-bottom:15px;"></p>
+                    <div class="circular-progress" id="circularProgress">
+                        <div class="circular-progress-inner">
+                            <div class="circular-score" id="circularScore">0</div>
+                            <div class="circular-total" id="circularTotal">/ 0</div>
+                        </div>
                     </div>
-                    <p id="percentageText">80%</p>
+                    <div id="gradeBadge" class="grade-badge"></div>
+                    <p id="percentageText" style="font-size:1.1em; font-weight:600; color:#555;"></p>
+                    <div class="stats-bar">
+                        <div class="stat-item">
+                            <div class="stat-value stat-correct" id="statCorrect">0</div>
+                            <div class="stat-label">Correct</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value stat-wrong" id="statWrong">0</div>
+                            <div class="stat-label">Wrong</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="statPercent" style="color: var(--primary-color);">0%</div>
+                            <div class="stat-label">Score</div>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="answers-list" id="answersList">
-                    <!-- Answers will be listed here -->
+                <!-- Wrong Words Review Section -->
+                <div id="wrongWordsSection" class="wrong-words-section hidden">
+                    <div class="section-header">
+                        <div class="section-title">
+                            ❌ Wrong Words <span class="count" id="wrongCount">0</span>
+                        </div>
+                        <button class="btn btn-small btn-outline" onclick="playWrongWordsAudio()">🔊 Listen to All</button>
+                    </div>
+                    <div id="wrongWordsList"></div>
                 </div>
 
-                <div class="text-center mb-30">
-                    <button class="btn" id="retryWrongBtn" onclick="retryWrongWords()">Retry Wrong Words</button>
+                <!-- All Answers Grid -->
+                <div class="mb-30">
+                    <div class="section-header">
+                        <div class="section-title">
+                            📝 All Words <span class="count" id="totalCount">0</span>
+                        </div>
+                    </div>
+                    <div class="answers-grid" id="answersGrid"></div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="btn-group text-center">
+                    <button class="btn btn-success" id="retryWrongBtn" onclick="retryWrongWords()">🔄 Retry Wrong Words</button>
                     <button class="btn btn-outline" onclick="showTestsListView()">Back to Tests</button>
                 </div>
             </div>
@@ -533,16 +687,14 @@
                         <h2 id="testResultsTitle">Test Results</h2>
                         <button class="results-modal-close" onclick="hideResultsModal()">&times;</button>
                     </div>
-                    <div id="testResultsContent">
-                        <!-- Results will be loaded here -->
-                    </div>
+                    <div id="testResultsContent"></div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        const username = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
+        const username = (localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username') || '').toLowerCase();
         const role = localStorage.getItem('quiz_admin_username') ? 'admin' : 'student';
 
         if (!username) {
@@ -555,9 +707,245 @@
         let currentWordIndex = 0;
         let userAnswers = [];
         let wordPositionCounter = 0;
-        let testResultsMap = {}; // test_id -> array of results
+        let testResultsMap = {};
+        let currentResultData = null; // store current results for replaying
 
-        // Show test results modal
+        // ============ RESULTS VIEW FUNCTIONS ============
+
+        function showResultsView(result) {
+            hideAllViews();
+            document.getElementById('resultsView').classList.remove('hidden');
+
+            // Re-initialize speech synthesis for results view
+            initSpeech();
+
+            currentResultData = result;
+            const total = result.total;
+            const score = result.score;
+            const pct = Math.round((score / total) * 100);
+            const wrong = total - score;
+
+            // Set test title
+            document.getElementById('resultTestTitle').textContent = (result.title || 'Spelling Test') + ' - Results';
+
+            // Set user label - show whose results these are
+            const resultUsername = result.username || 'Unknown';
+            const userLabel = document.getElementById('resultUserLabel');
+            if (resultUsername.toLowerCase() === username.toLowerCase()) {
+                userLabel.textContent = 'Your results';
+                userLabel.style.color = 'var(--success-color)';
+                userLabel.style.fontWeight = '600';
+            } else {
+                userLabel.textContent = `Results for: ${resultUsername}`;
+                userLabel.style.color = '#888';
+                userLabel.style.fontWeight = '400';
+            }
+
+            document.getElementById('resultTestTitle').textContent = (result.title || 'Spelling Test') + ' - Results';
+
+            // Circular progress
+
+            // Circular progress
+            const deg = (score / total) * 360;
+            document.getElementById('circularProgress').style.background =
+                `conic-gradient(var(--success-color) ${deg}deg, #e0e0e0 ${deg}deg)`;
+            document.getElementById('circularScore').textContent = score;
+            document.getElementById('circularTotal').textContent = '/ ' + total;
+
+            // Grade badge
+            const gradeEl = document.getElementById('gradeBadge');
+            if (pct >= 90) { gradeEl.textContent = '🌟 Excellent!'; gradeEl.className = 'grade-badge grade-a'; }
+            else if (pct >= 70) { gradeEl.textContent = '👍 Good Job!'; gradeEl.className = 'grade-badge grade-b'; }
+            else if (pct >= 50) { gradeEl.textContent = '📚 Keep Practicing'; gradeEl.className = 'grade-badge grade-c'; }
+            else { gradeEl.textContent = '💪 Don\'t Give Up!'; gradeEl.className = 'grade-badge grade-f'; }
+
+            document.getElementById('percentageText').textContent = pct + '% accuracy';
+
+            // Stats
+            document.getElementById('statCorrect').textContent = score;
+            document.getElementById('statWrong').textContent = wrong;
+            document.getElementById('statPercent').textContent = pct + '%';
+
+            // Wrong Words Section
+            const wrongAnswers = result.answers.filter(a => !a.is_correct);
+            const wrongSection = document.getElementById('wrongWordsSection');
+            const wrongList = document.getElementById('wrongWordsList');
+            wrongList.innerHTML = '';
+
+            if (wrongAnswers.length > 0) {
+                wrongSection.classList.remove('hidden');
+                document.getElementById('wrongCount').textContent = wrongAnswers.length;
+                wrongAnswers.forEach((ans, idx) => {
+                    wrongList.appendChild(createWrongWordCard(ans, idx));
+                });
+            } else {
+                wrongSection.classList.add('hidden');
+            }
+
+            // All Answers Grid
+            document.getElementById('totalCount').textContent = total;
+            const answersGrid = document.getElementById('answersGrid');
+            answersGrid.innerHTML = '';
+            result.answers.forEach((ans) => {
+                answersGrid.appendChild(createAnswerCard(ans));
+            });
+
+            // Retry button visibility - only show if there are wrong answers AND user owns the result
+            // If result.username is missing (immediate submit), assume it's the current user
+            // Use case-insensitive comparison
+            const isOwner = !result.username || result.username.toLowerCase() === username.toLowerCase();
+            document.getElementById('retryWrongBtn').classList.toggle('hidden', wrongAnswers.length === 0 || !isOwner);
+            document.getElementById('retryWrongBtn').dataset.resultId = result.id;
+        }
+
+        function createWrongWordCard(ans, idx) {
+            const card = document.createElement('div');
+            card.className = 'wrong-word-card';
+            card.id = `wrong-word-${idx}`;  // Add unique ID for scrolling
+
+            const correctLetters = ans.word.split('');
+            const userSpelling = (ans.user_spelling || '').toLowerCase();
+            const correctSpelling = ans.word.toLowerCase();
+            const charBoxes = buildCharComparison(correctSpelling, userSpelling);
+
+            // Create the audio button with proper event listener
+            const audioBtn = document.createElement('button');
+            audioBtn.className = 'audio-btn';
+            audioBtn.textContent = '🔊';
+            audioBtn.title = 'Listen to correct spelling';
+            audioBtn.style.flexShrink = '0';
+            audioBtn.onclick = () => {
+                if (ans.audio_url) {
+                    const audio = new Audio(ans.audio_url);
+                    audio.play().catch(() => speakWord(ans.word));
+                } else {
+                    speakWord(ans.word);
+                }
+            };
+
+            card.innerHTML = `
+                <div class="wrong-word-main">
+                    <div class="wrong-word-label">Word #${idx + 1}</div>
+                    <div class="wrong-word-correct">${ans.word}</div>
+                    <div class="wrong-word-user">
+                        <span>${ans.user_spelling || '(left blank)'}</span>
+                    </div>
+                    ${charBoxes.length ? '<div class="char-comparison">' + charBoxes.join('') + '</div>' : ''}
+                </div>
+            `;
+            card.appendChild(audioBtn);
+            return card;
+        }
+
+        function buildCharComparison(correct, user) {
+            const boxes = [];
+            const maxLen = Math.max(correct.length, user.length);
+            for (let i = 0; i < maxLen; i++) {
+                const c = correct[i] || null;
+                const u = user[i] || null;
+                if (c !== null && u !== null && c === u) {
+                    boxes.push(`<div class="char-box char-correct">${c}</div>`);
+                } else if (c !== null && u === null) {
+                    boxes.push(`<div class="char-box char-missing">${c}</div>`);
+                } else if (c === null && u !== null) {
+                    boxes.push(`<div class="char-box char-extra">${u}</div>`);
+                } else {
+                    boxes.push(`<div class="char-box char-wrong">${c || '?'} / ${u}</div>`);
+                }
+            }
+            return boxes;
+        }
+
+        function createAnswerCard(ans) {
+            const card = document.createElement('div');
+            card.className = 'answer-card ' + (ans.is_correct ? 'is-correct' : 'is-wrong');
+
+            card.innerHTML = `
+                <div class="answer-card-status ${ans.is_correct ? 'correct' : 'wrong'}">${ans.is_correct ? '✓' : '✗'}</div>
+                <div class="answer-card-word">${ans.word}</div>
+                <div class="answer-card-your">${ans.is_correct ?
+                    'Your answer: <span style="color:#28a745;text-decoration:none;">' + ans.user_spelling + '</span>' :
+                    'Your answer: <span>' + (ans.user_spelling || '(blank)') + '</span>'}</div>
+                ${!ans.is_correct ? '<div class="answer-card-correct">Correct: ' + ans.word + '</div>' : ''}
+            `;
+            return card;
+        }
+
+        function playWrongWordsAudio() {
+            if (!currentResultData) return;
+            const wrongAnswers = currentResultData.answers.filter(a => !a.is_correct);
+            if (wrongAnswers.length === 0) return;
+
+            // Use a sequential playback approach
+            let index = 0;
+            const playNext = () => {
+                if (index >= wrongAnswers.length) {
+                    // Remove all playing classes when done
+                    document.querySelectorAll('.wrong-word-card.playing').forEach(el => {
+                        el.classList.remove('playing');
+                    });
+                    return;
+                }
+
+                const item = wrongAnswers[index];
+                const word = item.word;
+                const audioUrl = item.audio_url;
+
+                // Remove playing class from previous card
+                document.querySelectorAll('.wrong-word-card.playing').forEach(el => {
+                    el.classList.remove('playing');
+                });
+
+                // Scroll to and highlight current word
+                const currentCard = document.getElementById(`wrong-word-${index}`);
+                if (currentCard) {
+                    currentCard.classList.add('playing');
+                    currentCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+
+                index++;
+
+                if (audioUrl) {
+                    // Use audio file if available
+                    const audio = new Audio(audioUrl);
+                    audio.onended = () => {
+                        setTimeout(playNext, 500);
+                    };
+                    audio.onerror = () => {
+                        console.error('Audio failed for:', word, 'falling back to TTS');
+                        speakWord(word);
+                        setTimeout(playNext, 1500);
+                    };
+                    audio.play().catch(() => {
+                        console.error('Audio play failed for:', word);
+                        speakWord(word);
+                        setTimeout(playNext, 1500);
+                    });
+                } else {
+                    // Fall back to TTS
+                    if ('speechSynthesis' in window) {
+                        const utterance = new SpeechSynthesisUtterance(word);
+                        utterance.lang = 'en-US';
+
+                        utterance.onend = () => {
+                            setTimeout(playNext, 500);
+                        };
+                        utterance.onerror = (e) => {
+                            console.error('TTS error for word:', word, e);
+                            setTimeout(playNext, 500);
+                        };
+
+                        window.speechSynthesis.speak(utterance);
+                    } else {
+                        setTimeout(playNext, 500);
+                    }
+                }
+            };
+
+            playNext();
+        }
+
+        // ============ MODAL FUNCTIONS ============
         function showTestResults(testId) {
             const test = currentTests.find(t => t.id === testId);
             if (!test) return;
@@ -566,101 +954,131 @@
             const title = document.getElementById('testResultsTitle');
             const content = document.getElementById('testResultsContent');
 
-            title.textContent = `${test.title} - Results History`;
-            content.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">Loading results...</p>';
+            title.textContent = test.title + ' - Results History';
+            content.innerHTML = '<p style="text-align:center;color:#888;padding:20px;">Loading...</p>';
             modal.classList.add('active');
 
             const results = testResultsMap[testId] || [];
 
-            content.innerHTML = '';
-
             if (results.length === 0) {
-                content.innerHTML = '<div class="no-results">No results found for this test.</div>';
+                content.innerHTML = '<div style="text-align:center;color:#999;padding:30px;font-size:1.05em;">No results found for this test yet.</div>';
                 return;
             }
 
-            // Sort results by date (most recent first)
             results.sort((a, b) => new Date(b.completed_at) - new Date(a.completed_at));
 
+            // Build table
+            let tableHtml = `
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Date</th>
+                            <th>Score</th>
+                            <th>Status</th>
+                            <th>Wrong Words</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
             results.forEach(result => {
-                const item = document.createElement('div');
-                item.className = 'test-history-item';
-
-                const percentage = Math.round((result.score / result.total) * 100);
-                const isPass = percentage >= 70;
-
+                const pct = Math.round((result.score / result.total) * 100);
+                const isPass = pct >= 70;
                 const date = new Date(result.completed_at);
-                const formattedDate = date.toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric'
-                });
-                const formattedTime = date.toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
+                const formatted = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                const time = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
-                item.innerHTML = `
-                    <div class="history-header">
-                        <span class="history-username">${result.username}</span>
-                        <span class="history-date">${formattedDate} at ${formattedTime}</span>
-                    </div>
-                    <div class="history-score ${isPass ? 'pass' : 'fail'}">${result.score}/${result.total}</div>
-                    <div class="history-percentage">${percentage}%</div>
+                // Build wrong words list
+                let wrongWordsHtml = '';
+                if (result.answers && result.answers.length > 0) {
+                    const wrongWords = result.answers.filter(a => !a.is_correct);
+                    const correctWords = result.answers.filter(a => a.is_correct);
+
+                    if (wrongWords.length > 0) {
+                        wrongWordsHtml = `
+                            <div class="wrong-words-list">
+                                ${wrongWords.map(w => `<span class="wrong-word-tag">${w.word}</span>`).join('')}
+                            </div>
+                        `;
+                    } else {
+                        wrongWordsHtml = '<span class="all-correct">✓ All correct!</span>';
+                    }
+                }
+
+                const displayName = result.username === username ? 'You' : result.username;
+
+                tableHtml += `
+                    <tr onclick="loadAndShowResult(${result.id});">
+                        <td class="user-cell">${displayName}</td>
+                        <td class="date-cell">${formatted}<br>${time}</td>
+                        <td class="score-cell">
+                            <span class="score-val ${isPass ? 'pass' : 'fail'}">${result.score}/${result.total}</span>
+                            <span class="pct-val">${pct}%</span>
+                        </td>
+                        <td class="status-cell">
+                            <span class="status-badge">
+                                <span class="correct-count">✓ ${result.score}</span>
+                                <span class="wrong-count">✗ ${result.total - result.score}</span>
+                            </span>
+                        </td>
+                        <td class="wrong-words-cell">${wrongWordsHtml}</td>
+                    </tr>
                 `;
-
-                content.appendChild(item);
             });
+
+            tableHtml += `
+                    </tbody>
+                </table>
+            `;
+
+            content.innerHTML = tableHtml;
         }
 
-        // Hide test results modal
         function hideResultsModal() {
-            const modal = document.getElementById('testResultsModal');
-            modal.classList.remove('active');
+            document.getElementById('testResultsModal').classList.remove('active');
         }
 
-        // Close modal when clicking outside
-        document.addEventListener('click', function(event) {
+        document.addEventListener('click', function(e) {
             const modal = document.getElementById('testResultsModal');
-            if (event.target === modal) {
-                hideResultsModal();
-            }
+            if (e.target === modal) hideResultsModal();
+        });
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') hideResultsModal();
         });
 
-        // Close modal with Escape key
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                hideResultsModal();
+        async function loadAndShowResult(resultId) {
+            try {
+                const res = await fetch(`/api/spelling/result/${resultId}`);
+                const data = await res.json();
+                if (data.id) {
+                    hideResultsModal();
+                    currentTest = { id: data.test_id, title: data.title };
+                    showResultsView(data);
+                }
+            } catch (e) {
+                console.error('Error loading result:', e);
             }
-        });
+        }
 
-        // Initialize nav links
+        // ============ NAVIGATION & VIEWS ============
         function updateNavLinks() {
             const navLinks = document.getElementById('navLinks');
             if (role === 'admin') {
-                const adminLink = document.createElement('a');
-                adminLink.href = '/admin_users.html';
-                adminLink.textContent = '⚙️ Users';
-                navLinks.insertBefore(adminLink, navLinks.children[5]);
-
-                const adminExamsLink = document.createElement('a');
-                adminExamsLink.href = '/admin_exams.html';
-                adminExamsLink.textContent = '⚙️ Exams';
-                navLinks.insertBefore(adminExamsLink, navLinks.children[6]);
+                const link1 = document.createElement('a');
+                link1.href = '/admin_users.html'; link1.textContent = '⚙️ Users';
+                navLinks.insertBefore(link1, navLinks.children[6]);
+                const link2 = document.createElement('a');
+                link2.href = '/admin_exams.html'; link2.textContent = '⚙️ Exams';
+                navLinks.insertBefore(link2, navLinks.children[7]);
             }
         }
 
-        // Welcome message
         function initNav() {
             updateNavLinks();
-            const welcome = document.createElement('span');
-            welcome.textContent = `Welcome, ${username.length > 10 ? username.substring(0, 10) + '...' : username}`;
-            welcome.style.color = '#666';
-            welcome.style.marginRight = '15px';
-
-            const navLinks = document.getElementById('navLinks');
-            if (navLinks) {
-                navLinks.insertBefore(welcome, navLinks.firstChild);
+            const welcome = document.getElementById('welcomeMsg');
+            if (welcome) {
+                welcome.textContent = username.length > 14 ? username.substring(0, 14) + '...' : username;
             }
         }
 
@@ -676,6 +1094,8 @@
 
         function showTestsListView() {
             hideAllViews();
+            currentTest = null;
+            currentResultData = null;
             document.getElementById('testsListView').classList.remove('hidden');
             loadTests();
         }
@@ -691,49 +1111,13 @@
         function showTakeTestView(test) {
             hideAllViews();
             document.getElementById('takeTestView').classList.remove('hidden');
-
             currentTest = test;
             currentWordIndex = 0;
             userAnswers = [];
-
             document.getElementById('takeTestTitle').textContent = test.title;
             document.getElementById('takeTestDesc').textContent = test.description || '';
             document.getElementById('totalWords').textContent = test.words.length;
-
             loadCurrentWord();
-        }
-
-        function showResultsView(result) {
-            hideAllViews();
-            document.getElementById('resultsView').classList.remove('hidden');
-
-            document.getElementById('scoreText').textContent = `${result.score}/${result.total}`;
-            document.getElementById('percentageText').textContent = `${Math.round((result.score / result.total) * 100)}%`;
-
-            const answersList = document.getElementById('answersList');
-            answersList.innerHTML = '';
-
-            let hasWrongAnswers = false;
-            result.answers.forEach(answer => {
-                const div = document.createElement('div');
-                div.className = `answer-item ${answer.is_correct ? 'answer-correct' : 'answer-wrong'}`;
-
-                div.innerHTML = `
-                    <div>
-                        <div class="answer-word">${answer.word}</div>
-                        <div class="answer-user">Your answer: ${answer.user_spelling || '(empty)'}</div>
-                        ${!answer.is_correct ? `<div class="answer-correct-answer">Correct: ${answer.word}</div>` : ''}
-                    </div>
-                    <div class="answer-status">${answer.is_correct ? '✓' : '✗'}</div>
-                `;
-
-                answersList.appendChild(div);
-
-                if (!answer.is_correct) hasWrongAnswers = true;
-            });
-
-            document.getElementById('retryWrongBtn').classList.toggle('hidden', !hasWrongAnswers);
-            document.getElementById('retryWrongBtn').dataset.resultId = result.id;
         }
 
         function hideAllViews() {
@@ -743,39 +1127,32 @@
             document.getElementById('resultsView').classList.add('hidden');
         }
 
+        // ============ TEST LOADING ============
         async function loadTests() {
             try {
                 const response = await fetch(`/api/spelling/tests?username=${encodeURIComponent(username)}`);
                 const data = await response.json();
-
                 if (data.tests) {
                     currentTests = data.tests;
                     await loadAllResults();
                     renderTests();
                 }
-            } catch (error) {
-                console.error('Error loading tests:', error);
-            }
+            } catch (error) { console.error('Error loading tests:', error); }
         }
 
         async function loadAllResults() {
             try {
-                const response = await fetch(`/api/spelling/results/${encodeURIComponent(username)}`);
+                // Load ALL results for all users (not just current user)
+                const response = await fetch('/api/spelling/results');
                 const data = await response.json();
-
                 testResultsMap = {};
                 if (data.results) {
                     data.results.forEach(result => {
-                        if (!testResultsMap[result.test_id]) {
-                            testResultsMap[result.test_id] = [];
-                        }
+                        if (!testResultsMap[result.test_id]) testResultsMap[result.test_id] = [];
                         testResultsMap[result.test_id].push(result);
                     });
                 }
-            } catch (error) {
-                console.error('Error loading results:', error);
-                testResultsMap = {};
-            }
+            } catch (error) { console.error('Error loading results:', error); testResultsMap = {}; }
         }
 
         function filterTests(filter) {
@@ -789,51 +1166,54 @@
             const grid = document.getElementById('testsGrid');
             grid.innerHTML = '';
 
-            const filteredTests = currentTests.filter(test => {
+            const filtered = currentTests.filter(test => {
                 if (currentFilter === 'mine') return test.created_by === username;
                 return true;
             });
 
-            if (filteredTests.length === 0) {
-                grid.innerHTML = '<p class="text-center" style="grid-column: 1/-1; color: #999;">No spelling tests found. Create one to get started!</p>';
+            if (filtered.length === 0) {
+                grid.innerHTML = '<p class="text-center" style="grid-column:1/-1;color:#999;padding:30px;">No spelling tests found. Create one to get started!</p>';
                 return;
             }
 
-            filteredTests.forEach(test => {
+            filtered.forEach(test => {
                 const card = document.createElement('div');
                 card.className = 'test-card';
-                const hasResults = testResultsMap[test.id] && testResultsMap[test.id].length > 0;
+
+                // Get user's best score for this test
+                const userResults = (testResultsMap[test.id] || []).filter(r => r.username === username);
+                let bestScore = null;
+                if (userResults.length > 0) {
+                    bestScore = userResults.reduce((max, r) => r.score > max.score ? r : max, userResults[0]);
+                }
+
                 card.innerHTML = `
                     <div class="test-title">${test.title}</div>
-                    <div class="test-meta">${test.word_count || 0} words • By ${test.created_by}</div>
+                    <div class="test-meta">${test.word_count || 0} words &bull; By ${test.created_by}</div>
+                    ${bestScore ? `<div class="test-score-badge">Best: ${bestScore.score}/${bestScore.total} (${Math.round(bestScore.score/bestScore.total*100)}%)</div>` : ''}
                     <div class="test-desc">${test.description || 'No description'}</div>
-                    <div>
+                    <div class="test-actions">
                         <button class="btn" onclick="startTest(${test.id})">Start Test</button>
                         <button class="btn btn-outline btn-small" onclick="toggleShare(event, ${test.id})">📤 Share</button>
-                        ${test.created_by === username || role === 'admin' ? `
-                            <button class="btn btn-danger btn-small" onclick="deleteTest(${test.id})" style="margin-left: 10px;">Delete</button>
-                        ` : ''}
-                        ${hasResults ? `
-                            <button class="btn btn-outline btn-small" onclick="showTestResults(${test.id})" style="margin-left: 10px; margin-top: 5px;">📊 View Results</button>
-                        ` : ''}
+                        ${test.created_by === username || role === 'admin' ? `<button class="btn btn-danger btn-small" onclick="deleteTest(${test.id})" style="margin-left:5px;">Delete</button>` : ''}
+                        ${testResultsMap[test.id] && testResultsMap[test.id].length > 0 ? `<button class="btn btn-outline btn-small" onclick="showTestResults(${test.id})" style="margin-left:5px;margin-top:5px;">📊 View Results</button>` : ''}
                     </div>
                     <div id="share_panel_${test.id}" class="share-panel">
                         <div class="share-panel-header">
                             Share with:
-                            <span onclick="document.getElementById('share_panel_${test.id}').style.display='none'" style="float:right; cursor:pointer; font-size:1.2em; color:#999;">&times;</span>
+                            <span onclick="document.getElementById('share_panel_${test.id}').style.display='none'" style="float:right;cursor:pointer;font-size:1.2em;color:#999;">&times;</span>
                         </div>
-                        <div id="share_user_list_${test.id}" style="max-height: 200px; overflow-y: auto;"></div>
+                        <div id="share_user_list_${test.id}"></div>
                     </div>
                 `;
                 grid.appendChild(card);
             });
         }
 
-        // Word Management
+        // ============ WORD MANAGEMENT ============
         function addWordRow() {
             const wordsList = document.getElementById('wordsList');
             wordPositionCounter++;
-
             const wordDiv = document.createElement('div');
             wordDiv.className = 'word-item';
             wordDiv.innerHTML = `
@@ -842,32 +1222,25 @@
                 <input type="text" class="definition-input" placeholder="Definition (optional)">
                 <input type="hidden" class="audio-url-input">
                 <button class="audio-btn" onclick="previewWord(this)" title="Preview pronunciation">🔊</button>
-                <div class="audio-status" style="font-size: 0.7em; color: #999; width: 60px; text-align: center;"></div>
+                <div class="audio-status" style="font-size:0.7em;color:#999;width:50px;text-align:center;"></div>
                 <button class="btn btn-danger btn-small" onclick="this.parentElement.remove(); renumberWords();">✕</button>
             `;
-
             wordsList.appendChild(wordDiv);
         }
 
         async function fetchAudioForWord(input) {
             const word = input.value.trim().toLowerCase();
             if (!word) return;
-
             const wordDiv = input.parentElement;
             const audioStatus = wordDiv.querySelector('.audio-status');
             const audioInput = wordDiv.querySelector('.audio-url-input');
-
             audioStatus.textContent = 'Loading...';
-
             try {
                 const response = await fetch('/api/spelling/fetch-audio', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ word })
                 });
-
                 const data = await response.json();
-
                 if (data.success && data.audio_url) {
                     audioInput.value = data.audio_url;
                     audioStatus.textContent = '✅';
@@ -884,24 +1257,16 @@
         }
 
         function renumberWords() {
-            const wordNumbers = document.querySelectorAll('.word-number');
-            wordNumbers.forEach((num, index) => {
-                num.textContent = index + 1;
-            });
-            wordPositionCounter = wordNumbers.length;
+            document.querySelectorAll('.word-number').forEach((num, i) => { num.textContent = i + 1; });
+            wordPositionCounter = document.querySelectorAll('.word-item').length;
         }
 
         function previewWord(button) {
             const word = button.parentElement.querySelector('.word-input').value;
             const audioUrl = button.parentElement.querySelector('.audio-url-input').value;
-
             if (audioUrl) {
                 const audio = new Audio(audioUrl);
-                audio.play().catch(e => {
-                    console.error('Audio play failed:', e);
-                    alert('Could not play audio. Using fallback.');
-                    speakWord(word);
-                });
+                audio.play().catch(() => speakWord(word));
             } else if (word) {
                 speakWord(word);
             } else {
@@ -909,163 +1274,104 @@
             }
         }
 
-        // Text-to-Speech
+        // ============ TEXT-TO-SPEECH ============
         let speechReady = false;
 
         function initSpeech() {
             if ('speechSynthesis' in window && !speechReady) {
+                // Trigger voice loading
                 window.speechSynthesis.getVoices();
                 speechReady = true;
+
+                // Listen for voices to load asynchronously
+                window.speechSynthesis.onvoiceschanged = () => {
+                    speechReady = true;
+                };
             }
         }
 
         function speakWord(word, retryCount = 0) {
             const statusEl = document.getElementById('speechStatus');
 
-            if ('speechSynthesis' in window) {
-                if (statusEl) statusEl.textContent = 'Playing word...';
-                window.speechSynthesis.cancel();
-
-                const voices = window.speechSynthesis.getVoices();
-                let voice = null;
-
-                for (let v of voices) {
-                    if (v.lang.startsWith('en-') && v.name.includes('Google')) {
-                        voice = v;
-                        break;
-                    }
-                }
-                if (!voice) {
-                    for (let v of voices) {
-                        if (v.lang.startsWith('en-')) {
-                            voice = v;
-                            break;
-                        }
-                    }
-                }
-
-                const utterance = new SpeechSynthesisUtterance(word);
-                utterance.rate = 0.75;
-                utterance.pitch = 1.0;
-                utterance.volume = 1.0;
-
-                if (voice) {
-                    utterance.voice = voice;
-                    utterance.lang = voice.lang;
-                } else {
-                    utterance.lang = 'en-US';
-                }
-
-                utterance.onstart = () => {
-                    if (statusEl) statusEl.textContent = '🔊 Playing...';
-                };
-                utterance.onend = () => {
-                    if (statusEl) statusEl.textContent = 'Click the speaker to hear the word again';
-                };
-                utterance.onerror = (e) => {
-                    if (retryCount === 0) {
-                        setTimeout(() => speakWord(word, 1), 100);
-                        return;
-                    }
-                    showWordReveal();
-                    if (statusEl) statusEl.innerHTML = `❌ Audio not working. Use the letter reveal below!`;
-                };
-
-                setTimeout(() => {
-                    window.speechSynthesis.speak(utterance);
-                }, 50);
-            } else {
-                if (statusEl) statusEl.innerHTML = `❌ Text-to-speech not supported. Word: <strong>${word}</strong>`;
+            if (!('speechSynthesis' in window)) {
+                console.error('Speech synthesis not supported');
+                if (statusEl) statusEl.innerHTML = `❌ TTS not supported`;
+                return;
             }
+
+            if (statusEl) statusEl.textContent = 'Playing word...';
+
+            // Create utterance - use default settings that work during test
+            const utterance = new SpeechSynthesisUtterance(word);
+            utterance.lang = 'en-US';
+
+            utterance.onstart = () => {
+                if (statusEl) statusEl.textContent = '🔊 Playing...';
+            };
+            utterance.onend = () => {
+                if (statusEl) statusEl.textContent = 'Click the speaker to hear the word again';
+            };
+            utterance.onerror = (e) => {
+                console.error('Speech error:', e, 'Word:', word);
+                // Only show word reveal if we're in the test view
+                if (document.getElementById('takeTestView') && !document.getElementById('takeTestView').classList.contains('hidden')) {
+                    showWordReveal();
+                    if (statusEl) statusEl.innerHTML = `❌ Audio not working. Use letter reveal below!`;
+                }
+            };
+
+            // Speak without cancel - just like during test
+            window.speechSynthesis.speak(utterance);
         }
 
+        // ============ SAVE TEST ============
         async function saveTest() {
             const title = document.getElementById('testTitle').value.trim();
             const description = document.getElementById('testDescription').value.trim();
             const isPublic = document.getElementById('testPublic').checked ? 1 : 0;
-
-            if (!title) {
-                alert('Please enter a test title');
-                return;
-            }
-
+            if (!title) { alert('Please enter a test title'); return; }
             const wordItems = document.querySelectorAll('.word-item');
-            if (wordItems.length === 0) {
-                alert('Please add at least one word');
-                return;
-            }
-
+            if (wordItems.length === 0) { alert('Please add at least one word'); return; }
             for (let item of wordItems) {
-                const word = item.querySelector('.word-input').value.trim();
-                if (!word) {
-                    alert('Please fill in all word fields');
-                    return;
-                }
+                if (!item.querySelector('.word-input').value.trim()) { alert('Please fill in all word fields'); return; }
             }
-
             try {
                 const response = await fetch('/api/spelling/create', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        title,
-                        description,
-                        username,
-                        is_public: isPublic
-                    })
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, description, username, is_public: isPublic })
                 });
-
                 const data = await response.json();
-
                 if (data.success) {
                     const testId = data.test_id;
-
                     for (let i = 0; i < wordItems.length; i++) {
                         const item = wordItems[i];
-                        const word = item.querySelector('.word-input').value.trim();
-                        const definition = item.querySelector('.definition-input').value.trim();
-                        const audioUrl = item.querySelector('.audio-url-input')?.value?.trim() || '';
-
                         await fetch('/api/spelling/word/add', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
                                 test_id: testId,
-                                word,
-                                definition,
-                                audio_url: audioUrl
+                                word: item.querySelector('.word-input').value.trim(),
+                                definition: item.querySelector('.definition-input').value.trim(),
+                                audio_url: item.querySelector('.audio-url-input')?.value?.trim() || ''
                             })
                         });
                     }
-
                     alert('Test created successfully!');
                     showTestsListView();
                 }
-            } catch (error) {
-                console.error('Error saving test:', error);
-                alert('Error saving test');
-            }
+            } catch (error) { console.error('Error saving test:', error); alert('Error saving test'); }
         }
 
+        // ============ TAKE TEST ============
         async function startTest(testId) {
             try {
                 const response = await fetch(`/api/spelling/test/${testId}`);
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({}));
-                    throw new Error(errorData.error || `Server error: ${response.status}`);
-                }
+                if (!response.ok) { throw new Error(`Server error: ${response.status}`); }
                 const data = await response.json();
-
                 if (data.words && data.words.length > 0) {
                     showTakeTestView(data);
                     setTimeout(() => playCurrentWord(), 500);
-                } else {
-                    alert('This test has no words yet');
-                }
-            } catch (error) {
-                console.error('Error loading test:', error);
-                alert('Error loading test: ' + error.message);
-            }
+                } else { alert('This test has no words yet'); }
+            } catch (error) { console.error('Error loading test:', error); alert('Error loading test: ' + error.message); }
         }
 
         function loadCurrentWord() {
@@ -1079,49 +1385,34 @@
             if (currentTest && currentTest.words[currentWordIndex]) {
                 const currentWord = currentTest.words[currentWordIndex];
                 const statusEl = document.getElementById('speechStatus');
-
                 if (currentWord.audio_url) {
                     if (statusEl) statusEl.textContent = '🔊 Playing audio...';
-
                     const audio = new Audio(currentWord.audio_url);
-                    audio.onended = () => {
-                        if (statusEl) statusEl.textContent = 'Click the speaker to hear the word again';
-                    };
-                    audio.onerror = (e) => {
-                        console.error('Audio file failed:', e);
-                        if (statusEl) statusEl.textContent = 'Audio file failed, trying speech...';
-                        speakWord(currentWord.word);
-                    };
-                    audio.play().catch(e => {
-                        console.error('Audio play error:', e);
-                        speakWord(currentWord.word);
-                    });
+                    audio.onended = () => { if (statusEl) statusEl.textContent = 'Click the speaker to hear the word again'; };
+                    audio.onerror = () => { if (statusEl) statusEl.textContent = 'Audio file failed, trying speech...'; speakWord(currentWord.word); };
+                    audio.play().catch(() => speakWord(currentWord.word));
                 } else {
                     speakWord(currentWord.word);
                 }
-            } else {
-                console.error('Cannot play word - test or word not loaded');
             }
         }
 
         let revealedLetters = 0;
-
         function showWordReveal() {
             const revealDiv = document.getElementById('wordReveal');
             revealDiv.classList.remove('hidden');
             revealedLetters = 0;
             document.getElementById('revealedWord').textContent = '_ '.repeat(currentTest.words[currentWordIndex].word.length);
         }
-
         function revealNextLetter() {
             const word = currentTest.words[currentWordIndex].word;
             if (revealedLetters < word.length) {
                 revealedLetters++;
-                const revealed = word.substring(0, revealedLetters) + '_ '.repeat(word.length - revealedLetters);
-                document.getElementById('revealedWord').textContent = revealed.split('').join(' ');
+                const revealed = word.substring(0, revealedLetters);
+                const remaining = word.substring(revealedLetters).split('').join('_ ');
+                document.getElementById('revealedWord').textContent = revealed + (remaining ? ' ' + remaining : '');
             }
         }
-
         function revealFullWord() {
             const word = currentTest.words[currentWordIndex].word;
             document.getElementById('revealedWord').textContent = word.split('').join(' ');
@@ -1131,239 +1422,120 @@
         function submitWord() {
             const spelling = document.getElementById('spellingInput').value.trim();
             const currentWord = currentTest.words[currentWordIndex];
-
-            userAnswers.push({
-                word_id: currentWord.id,
-                spelling: spelling
-            });
-
+            userAnswers.push({ word_id: currentWord.id, spelling: spelling });
             currentWordIndex++;
-
             if (currentWordIndex < currentTest.words.length) {
                 loadCurrentWord();
                 setTimeout(() => playCurrentWord(), 300);
-            } else {
-                submitTest();
-            }
+            } else { submitTest(); }
         }
 
         document.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter' && document.getElementById('takeTestView').classList.contains('hidden') === false) {
+            if (e.key === 'Enter' && !document.getElementById('takeTestView').classList.contains('hidden')) {
                 const input = document.getElementById('spellingInput');
-                if (document.activeElement === input) {
-                    submitWord();
-                }
+                if (document.activeElement === input) submitWord();
             }
         });
 
         async function submitTest() {
             try {
                 const response = await fetch('/api/spelling/submit', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        test_id: currentTest.id,
-                        username,
-                        answers: userAnswers
-                    })
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ test_id: currentTest.id, username, answers: userAnswers })
                 });
-
                 const data = await response.json();
-
-                if (data.success) {
-                    showResultsView(data);
-                }
-            } catch (error) {
-                console.error('Error submitting test:', error);
-                alert('Error submitting test');
-            }
+                if (data.success) { showResultsView(data); }
+            } catch (error) { console.error('Error submitting test:', error); alert('Error submitting test'); }
         }
 
+        // ============ DELETE TEST ============
         async function deleteTest(testId) {
             if (!confirm('Are you sure you want to delete this test?')) return;
-
             try {
-                const response = await fetch(`/api/spelling/test/${testId}?username=${encodeURIComponent(username)}`, {
-                    method: 'DELETE'
-                });
-
+                const response = await fetch(`/api/spelling/test/${testId}?username=${encodeURIComponent(username)}`, { method: 'DELETE' });
                 const data = await response.json();
-
-                if (data.success) {
-                    alert('Test deleted successfully');
-                    loadTests();
-                }
-            } catch (error) {
-                console.error('Error deleting test:', error);
-                alert('Error deleting test');
-            }
+                if (data.success) { alert('Test deleted'); loadTests(); }
+            } catch (error) { console.error('Error deleting test:', error); alert('Error deleting test'); }
         }
 
+        // ============ RETRY WRONG WORDS ============
         async function retryWrongWords() {
             const resultId = document.getElementById('retryWrongBtn').dataset.resultId;
-
             try {
                 const response = await fetch(`/api/spelling/retry-wrong/${resultId}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username })
                 });
-
                 const data = await response.json();
-
-                if (data.success) {
-                    startTest(data.test_id);
-                }
-            } catch (error) {
-                console.error('Error creating retry test:', error);
-                alert('Error creating retry test');
-            }
+                if (data.success) { startTest(data.test_id); }
+            } catch (error) { console.error('Error creating retry test:', error); alert('Error creating retry test'); }
         }
 
+        // ============ SHARE ============
         function shareTest(testId, testTitle) {
             const shareUrl = `${window.location.origin}/spelling.html?test=${testId}`;
-
             if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(shareUrl).then(() => {
-                    alert(`Share link copied to clipboard!\n\n${shareUrl}`);
-                }).catch(() => {
-                    prompt('Copy this link to share the test:', shareUrl);
-                });
-            } else {
-                prompt('Copy this link to share the test:', shareUrl);
-            }
-        }
-
-        function shareCurrentTest() {
-            if (currentTest && currentTest.id) {
-                shareTest(currentTest.id, currentTest.title);
-            }
+                navigator.clipboard.writeText(shareUrl).then(() => alert(`Share link copied!\n\n${shareUrl}`)).catch(() => prompt('Copy this link:', shareUrl));
+            } else { prompt('Copy this link to share:', shareUrl); }
         }
 
         async function toggleShare(event, testId) {
-            if (event) {
-                event.preventDefault();
-                event.stopPropagation();
-            }
-
-            if (!testId && currentTest) {
-                testId = currentTest.id;
-            }
-
+            if (event) { event.preventDefault(); event.stopPropagation(); }
+            if (!testId && currentTest) testId = currentTest.id;
             if (!testId) return;
-
-            const panelId = (document.getElementById('share_panel_current') && document.getElementById('takeTestView').classList.contains('hidden') === false)
-                ? 'share_panel_current'
-                : `share_panel_${testId}`;
-
+            const panelId = document.getElementById('share_panel_current') && !document.getElementById('takeTestView').classList.contains('hidden')
+                ? 'share_panel_current' : `share_panel_${testId}`;
             const panel = document.getElementById(panelId);
             const listContainer = document.getElementById(panelId === 'share_panel_current' ? 'share_user_list_current' : `share_user_list_${testId}`);
             const isOpening = panel.style.display !== 'block';
-
             document.querySelectorAll('.share-panel').forEach(p => p.style.display = 'none');
-
             if (isOpening) {
                 panel.style.display = 'block';
-
-                const rect = panel.getBoundingClientRect();
-                const viewportHeight = window.innerHeight;
-                if (rect.bottom > viewportHeight) {
-                    panel.style.top = 'auto';
-                    panel.style.bottom = '0';
-                    panel.style.transform = 'none';
-                } else if (rect.top < 0) {
-                    panel.style.top = '0';
-                    panel.style.transform = 'none';
-                } else {
-                    panel.style.top = '50%';
-                    panel.style.transform = 'translateY(-50%)';
-                }
-
                 try {
                     const res = await fetch('/api/users/all');
                     const data = await res.json();
                     if (data.success) {
                         const currentUser = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
-                        const users = data.users
-                            .filter(u => u.username !== currentUser)
-                            .sort((a, b) => {
-                                if (a.is_online === b.is_online) return a.username.localeCompare(b.username);
-                                return a.is_online ? -1 : 1;
-                            });
-
-                        if (users.length === 0) {
-                            listContainer.innerHTML = '<div style="font-size:0.8em; color:#888; text-align:center; padding:10px;">No other users found.</div>';
-                        } else {
-                            listContainer.innerHTML = users.map(u => {
+                        const users = data.users.filter(u => u.username !== currentUser).sort((a, b) => {
+                            if (a.is_online === b.is_online) return a.username.localeCompare(b.username);
+                            return a.is_online ? -1 : 1;
+                        });
+                        listContainer.innerHTML = users.length === 0
+                            ? '<div style="font-size:0.8em;color:#888;text-align:center;padding:10px;">No other users found.</div>'
+                            : users.map(u => {
                                 const display = u.username.length > 10 ? u.username.substring(0, 10) + '...' : u.username;
-                                const statusDot = u.is_online ?
-                                    '<div style="width:8px; height:8px; background:#28a745; border-radius:50%; box-shadow:0 0 4px #28a745; margin-right:8px;"></div>' :
-                                    '<div style="width:8px; height:8px; background:#ccc; border-radius:50%; margin-right:8px;"></div>';
-
-                                return `
-                                    <button onclick="shareSpellingTest(${testId}, '${u.username}')" class="share-user-btn">
-                                        ${statusDot}
-                                        <span title="${u.username}" style="font-weight:600; color:${u.is_online ? '#28a745' : '#333'}; flex:1;">${display}</span>
-                                        ${u.role === 'admin' ? '<span style="font-size:0.6em; background:#d63384; color:white; padding:1px 4px; border-radius:3px; margin-left:5px;">ADMIN</span>' : ''}
-                                    </button>
-                                `;
+                                const dot = u.is_online ? '<div style="width:8px;height:8px;background:#28a745;border-radius:50%;margin-right:8px;box-shadow:0 0 4px #28a745;"></div>' : '<div style="width:8px;height:8px;background:#ccc;border-radius:50%;margin-right:8px;"></div>';
+                                return `<button onclick="shareSpellingTest(${testId},'${u.username}')" class="share-user-btn">${dot}<span title="${u.username}" style="font-weight:600;color:${u.is_online ? '#28a745' : '#333'};flex:1;">${display}</span>${u.role === 'admin' ? '<span style="font-size:0.6em;background:#d63384;color:white;padding:1px 4px;border-radius:3px;margin-left:5px;">ADMIN</span>' : ''}</button>`;
                             }).join('');
-                        }
                     }
-                } catch (e) { console.error("Failed to load users for sharing", e); }
-            } else {
-                panel.style.display = 'none';
+                } catch (e) { console.error("Share error", e); }
             }
         }
 
         async function shareSpellingTest(testId, recipient) {
             const sender = localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username');
-
             if (!recipient) return;
-
             try {
                 const res = await fetch(`/api/spelling/test/${testId}`);
                 const test = await res.json();
-                const testTitle = test.title || 'Spelling Test';
-                const testUrl = `${window.location.origin}/spelling.html?test=${testId}`;
-                const message = `Check out this spelling test I shared with you: ${testTitle}\nLink: ${testUrl}`;
-
-                try {
-                    const msgRes = await fetch('/api/messages/send', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({ sender, recipient, message })
-                    });
-                    const msgData = await msgRes.json();
-                    if (msgData.success) {
-                        alert(`Test shared with ${recipient}!`);
-                        const currentPanel = document.getElementById('share_panel_current');
-                        if (currentPanel && currentPanel.style.display === 'block') {
-                            currentPanel.style.display = 'none';
-                        } else {
-                            document.getElementById(`share_panel_${testId}`).style.display = 'none';
-                        }
-                    } else {
-                        alert("Failed to share test.");
-                    }
-                } catch (e) {
-                    console.error("Share error:", e);
-                    alert("Error sharing test.");
-                }
-            } catch (e) {
-                console.error("Error getting test details:", e);
-                alert("Error sharing test.");
-            }
+                const message = `Check out this spelling test I shared: ${test.title || 'Spelling Test'}\\nLink: ${window.location.origin}/spelling.html?test=${testId}`;
+                const msgRes = await fetch('/api/messages/send', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ sender, recipient, message })
+                });
+                const msgData = await msgRes.json();
+                if (msgData.success) {
+                    alert(`Test shared with ${recipient}!`);
+                    document.querySelectorAll('.share-panel').forEach(p => p.style.display = 'none');
+                } else { alert("Failed to share test."); }
+            } catch (e) { console.error("Share error", e); alert("Error sharing test."); }
         }
 
+        // ============ URL PARAM CHECK ============
         function checkUrlForTest() {
             const urlParams = new URLSearchParams(window.location.search);
             const testId = urlParams.get('test');
-
-            if (testId) {
-                startTest(parseInt(testId));
-                window.history.replaceState({}, document.title, '/spelling.html');
-            }
+            if (testId) { startTest(parseInt(testId)); window.history.replaceState({}, document.title, '/spelling.html'); }
         }
 
         document.addEventListener('click', function(e) {

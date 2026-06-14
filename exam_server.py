@@ -1414,11 +1414,13 @@ def get_spelling_tests():
         is_admin = u in users and users[u].get('role') == 'admin'
 
         # Admins see all tests, others see public + their own + all admin-created tests
+        # Exclude retry tests (they're created dynamically for retrying wrong words)
         if is_admin:
             cursor.execute("""
                 SELECT st.*, COUNT(sw.id) as word_count
                 FROM spelling_tests st
                 LEFT JOIN spelling_words sw ON st.id = sw.test_id
+                WHERE st.title NOT LIKE 'Retry:%'
                 GROUP BY st.id
                 ORDER BY st.created_at DESC
             """)
@@ -1427,7 +1429,8 @@ def get_spelling_tests():
                 SELECT st.*, COUNT(sw.id) as word_count
                 FROM spelling_tests st
                 LEFT JOIN spelling_words sw ON st.id = sw.test_id
-                WHERE st.is_public = 1 OR st.created_by = ? OR st.created_by IN (SELECT username FROM users WHERE role = 'admin')
+                WHERE (st.is_public = 1 OR st.created_by = ? OR st.created_by IN (SELECT username FROM users WHERE role = 'admin'))
+                AND st.title NOT LIKE 'Retry:%'
                 GROUP BY st.id
                 ORDER BY st.created_at DESC
             """, (u,))
@@ -1655,6 +1658,11 @@ def submit_spelling_test():
 
         conn = get_db(); cursor = conn.cursor()
 
+        # Get test info
+        cursor.execute("SELECT title FROM spelling_tests WHERE id = ?", (test_id,))
+        test_info = cursor.fetchone()
+        test_title = test_info['title'] if test_info else 'Spelling Test'
+
         # Get test words
         cursor.execute("SELECT id, word FROM spelling_words WHERE test_id = ? ORDER BY position", (test_id,))
         test_words = {row['id']: row['word'] for row in cursor.fetchall()}
@@ -1674,11 +1682,17 @@ def submit_spelling_test():
             if is_correct:
                 correct_count += 1
 
+            # Get audio_url for this word
+            cursor.execute("SELECT audio_url FROM spelling_words WHERE id = ?", (word_id,))
+            word_row = cursor.fetchone()
+            audio_url = word_row['audio_url'] if word_row else None
+
             results.append({
                 'word_id': word_id,
                 'word': test_words.get(word_id, ''),
                 'user_spelling': answer.get('spelling', ''),
-                'is_correct': is_correct
+                'is_correct': is_correct,
+                'audio_url': audio_url
             })
 
         # Save result
@@ -1692,43 +1706,61 @@ def submit_spelling_test():
 
         return jsonify({
             'success': True,
+            'id': result_id,
             'result_id': result_id,
+            'test_id': test_id,
+            'title': test_title,
             'score': correct_count,
             'total': len(test_words),
             'answers': results
         }), 200
     except Exception as e: return jsonify({'error': str(e)}), 500
 
-@app.route('/api/spelling/results/<username>', methods=['GET'])
-def get_user_spelling_results(username):
+@app.route('/api/spelling/results', methods=['GET'])
+def get_all_spelling_results():
+    """Get all spelling results for all users"""
     try:
-        u = normalize_username(username)
-
         conn = get_db(); cursor = conn.cursor()
 
         cursor.execute("""
             SELECT sr.*, st.title, st.description
             FROM spelling_results sr
             JOIN spelling_tests st ON sr.test_id = st.id
-            WHERE sr.username = ?
             ORDER BY sr.completed_at DESC
-        """, (u,))
+        """)
 
         results = []
         for row in cursor.fetchall():
+            # Convert row to dict for easier access
+            row_dict = dict(row)
+
+            # Parse answers_json if available
+            answers = []
+            if row_dict.get('answers_json'):
+                try:
+                    answers = json.loads(row_dict['answers_json'])
+                except:
+                    answers = []
+
             results.append({
-                'id': row['id'],
-                'test_id': row['test_id'],
-                'username': row['username'],
-                'title': row['title'],
-                'score': row['score'],
-                'total': row['total'],
-                'completed_at': row['completed_at']
+                'id': row_dict['id'],
+                'test_id': row_dict['test_id'],
+                'username': row_dict['username'],
+                'title': row_dict['title'],
+                'score': row_dict['score'],
+                'total': row_dict['total'],
+                'completed_at': row_dict['completed_at'],
+                'answers': answers
             })
 
         conn.close()
         return jsonify({'results': results}), 200
     except Exception as e: return jsonify({'error': str(e)}), 500
+
+@app.route('/api/spelling/results/<username>', methods=['GET'])
+def get_user_spelling_results(username):
+    """Get spelling results for a specific user (legacy endpoint, now redirects to all results)"""
+    return get_all_spelling_results()
 
 @app.route('/api/spelling/result/<int:result_id>', methods=['GET'])
 def get_spelling_result(result_id):
@@ -1754,6 +1786,7 @@ def get_spelling_result(result_id):
         return jsonify({
             'id': result['id'],
             'test_id': result['test_id'],
+            'username': result['username'],
             'title': result['title'],
             'score': result['score'],
             'total': result['total'],
@@ -1787,8 +1820,8 @@ def retry_wrong_words(result_id):
         if not result:
             conn.close(); return jsonify({'error': 'Result not found'}), 404
 
-        # Verify ownership
-        if result['username'] != u:
+        # Verify ownership (case-insensitive)
+        if result['username'].lower() != u.lower():
             conn.close(); return jsonify({'error': 'Unauthorized'}), 403
 
         # Create a new test with wrong words only
@@ -1806,8 +1839,8 @@ def retry_wrong_words(result_id):
         # Add wrong words to new test
         for idx, answer in enumerate(wrong_answers):
             cursor.execute("""
-                INSERT INTO spelling_words (test_id, word, definition, position)
-                SELECT ?, sw.word, sw.definition, ?
+                INSERT INTO spelling_words (test_id, word, definition, position, audio_url)
+                SELECT ?, sw.word, sw.definition, ?, sw.audio_url
                 FROM spelling_words sw
                 WHERE sw.id = ?
             """, (new_test_id, idx + 1, answer['word_id']))
