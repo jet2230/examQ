@@ -486,6 +486,64 @@
         .mb-20 { margin-bottom: 20px; }
         .mb-30 { margin-bottom: 30px; }
 
+        /* Toast notifications (replaces alert/prompt) */
+        .toast-container {
+            position: fixed; top: 20px; right: 20px;
+            display: flex; flex-direction: column; gap: 10px;
+            z-index: 3000; max-width: 360px;
+        }
+        .toast {
+            display: flex; align-items: flex-start; gap: 10px;
+            padding: 12px 14px; border-radius: 10px;
+            background: white; box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+            border-left: 4px solid var(--primary-color);
+            font-size: 0.9em; color: #333;
+            opacity: 0; transform: translateX(20px);
+            transition: opacity 0.25s ease, transform 0.25s ease;
+        }
+        .toast.show { opacity: 1; transform: translateX(0); }
+        .toast.toast-success { border-left-color: var(--success-color); }
+        .toast.toast-error { border-left-color: var(--error-color); }
+        .toast.toast-info { border-left-color: var(--primary-color); }
+        .toast-icon { font-size: 1.1em; line-height: 1.2; flex-shrink: 0; }
+        .toast-msg { flex: 1; word-break: break-word; }
+        .toast-close {
+            background: none; border: none; color: #999;
+            cursor: pointer; font-size: 1.2em; line-height: 1;
+            padding: 0 2px; flex-shrink: 0;
+        }
+        .toast-close:hover { color: #333; }
+
+        /* Inline confirm bar (replaces window.confirm) */
+        .confirm-bar {
+            position: fixed; top: 0; left: 0; right: 0;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white; padding: 14px 20px;
+            display: flex; align-items: center; gap: 14px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+            z-index: 2500;
+            transform: translateY(-100%);
+            transition: transform 0.3s ease;
+        }
+        .confirm-bar.show { transform: translateY(0); }
+        .confirm-bar-msg { flex: 1; font-weight: 600; font-size: 0.95em; }
+        .confirm-bar-btn {
+            background: white; color: var(--primary-color);
+            border: none; padding: 7px 16px; border-radius: 6px;
+            font-weight: 700; cursor: pointer; font-size: 0.9em;
+            transition: opacity 0.2s;
+        }
+        .confirm-bar-btn:hover { opacity: 0.85; }
+        .confirm-bar-btn.danger {
+            background: var(--error-color); color: white;
+        }
+        .confirm-bar-close {
+            background: none; border: none; color: white;
+            cursor: pointer; font-size: 1.4em; line-height: 1;
+            padding: 0 4px; opacity: 0.85;
+        }
+        .confirm-bar-close:hover { opacity: 1; }
+
         /* Mobile Hamburger */
         .hamburger { display: none; cursor: pointer; }
         .hamburger div { width: 25px; height: 3px; background: var(--primary-color); margin: 5px 0; border-radius: 2px; }
@@ -581,9 +639,6 @@
                 <div class="form-group">
                     <label class="form-label">Description (optional)</label>
                     <textarea class="form-textarea" id="testDescription" placeholder="Brief description of this test..."></textarea>
-                </div>
-                <div class="form-group">
-                    <label><input type="checkbox" id="testPublic"> Make this test visible to all students</label>
                 </div>
                 <div class="words-list" id="wordsList"></div>
                 <button class="btn mb-20" onclick="addWordRow()">+ Add Word</button>
@@ -693,6 +748,16 @@
         </div>
     </div>
 
+    <!-- Toast notifications (replaces alert) -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Inline confirm bar (replaces window.confirm) -->
+    <div class="confirm-bar" id="confirmBar">
+        <div class="confirm-bar-msg" id="confirmBarMsg"></div>
+        <button class="confirm-bar-btn danger" id="confirmBarYes">Confirm</button>
+        <button class="confirm-bar-close" id="confirmBarNo" title="Cancel">&times;</button>
+    </div>
+
     <script>
         const username = (localStorage.getItem('quiz_username') || localStorage.getItem('quiz_admin_username') || '').toLowerCase();
         const role = localStorage.getItem('quiz_admin_username') ? 'admin' : 'student';
@@ -709,6 +774,7 @@
         let wordPositionCounter = 0;
         let testResultsMap = {};
         let currentResultData = null; // store current results for replaying
+        let draftAudioUrls = []; // track audio files created during this session
 
         // ============ RESULTS VIEW FUNCTIONS ============
 
@@ -1092,7 +1158,19 @@
             window.location.href = '/login.html';
         }
 
-        function showTestsListView() {
+        async function cleanupDraftAudio() {
+            if (draftAudioUrls.length === 0) return;
+            try {
+                await fetch('/api/spelling/cleanup-audio', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ draft_urls: draftAudioUrls, final_urls: [] })
+                });
+            } catch (e) { console.error('Draft audio cleanup failed:', e); }
+            draftAudioUrls = [];
+        }
+
+        async function showTestsListView() {
+            await cleanupDraftAudio();
             hideAllViews();
             currentTest = null;
             currentResultData = null;
@@ -1103,8 +1181,11 @@
         function showCreateTestView() {
             hideAllViews();
             document.getElementById('createTestView').classList.remove('hidden');
+            document.getElementById('testTitle').value = '';
+            document.getElementById('testDescription').value = '';
             document.getElementById('wordsList').innerHTML = '';
             wordPositionCounter = 0;
+            draftAudioUrls = []; // Clear draft audio URLs when starting new test
             addWordRow();
         }
 
@@ -1223,7 +1304,7 @@
                 <input type="hidden" class="audio-url-input">
                 <button class="audio-btn" onclick="previewWord(this)" title="Preview pronunciation">🔊</button>
                 <div class="audio-status" style="font-size:0.7em;color:#999;width:50px;text-align:center;"></div>
-                <button class="btn btn-danger btn-small" onclick="this.parentElement.remove(); renumberWords();">✕</button>
+                <button class="btn btn-danger btn-small" onclick="deleteWordRow(this)">✕</button>
             `;
             wordsList.appendChild(wordDiv);
         }
@@ -1234,6 +1315,13 @@
             const wordDiv = input.parentElement;
             const audioStatus = wordDiv.querySelector('.audio-status');
             const audioInput = wordDiv.querySelector('.audio-url-input');
+
+            // Track old audio URL before it gets overwritten
+            const oldAudioUrl = audioInput.value;
+            if (oldAudioUrl) {
+                draftAudioUrls.push(oldAudioUrl);
+            }
+
             audioStatus.textContent = 'Loading...';
             try {
                 const response = await fetch('/api/spelling/fetch-audio', {
@@ -1261,6 +1349,25 @@
             wordPositionCounter = document.querySelectorAll('.word-item').length;
         }
 
+        async function deleteWordRow(button) {
+            const wordDiv = button.parentElement;
+            const audioUrl = wordDiv.querySelector('.audio-url-input')?.value?.trim() || '';
+            // Remove from draft tracking if present
+            const draftIdx = draftAudioUrls.indexOf(audioUrl);
+            if (draftIdx !== -1) draftAudioUrls.splice(draftIdx, 1);
+            // Clean up orphaned audio file on the server
+            if (audioUrl) {
+                try {
+                    await fetch('/api/spelling/cleanup-orphan-audio', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ audio_url: audioUrl })
+                    });
+                } catch (e) { console.error('Audio cleanup failed:', e); }
+            }
+            wordDiv.remove();
+            renumberWords();
+        }
+
         function previewWord(button) {
             const word = button.parentElement.querySelector('.word-input').value;
             const audioUrl = button.parentElement.querySelector('.audio-url-input').value;
@@ -1270,8 +1377,61 @@
             } else if (word) {
                 speakWord(word);
             } else {
-                alert('Please enter a word first');
+                showToast('Please enter a word first', 'error');
             }
+        }
+
+        // ============ TOAST / CONFIRM HELPERS ============
+        // Animated replacement for window.alert(). type: 'success' | 'error' | 'info'
+        function showToast(message, type = 'info', duration = 3500) {
+            const container = document.getElementById('toastContainer');
+            if (!container) { console.warn('toast container missing'); return; }
+
+            const icons = { success: '✅', error: '⚠️', info: 'ℹ️' };
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.innerHTML = `
+                <div class="toast-icon">${icons[type] || icons.info}</div>
+                <div class="toast-msg">${message}</div>
+                <button class="toast-close" title="Dismiss">&times;</button>
+            `;
+
+            const close = () => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            };
+
+            toast.querySelector('.toast-close').addEventListener('click', close);
+            container.appendChild(toast);
+            // Animate in
+            requestAnimationFrame(() => toast.classList.add('show'));
+            // Auto-dismiss
+            if (duration > 0) setTimeout(close, duration);
+            return toast;
+        }
+
+        // Animated replacement for window.confirm() — slides down from top
+        // onConfirm fires when user clicks "Confirm"; cancel/close resolves without calling it
+        function showConfirm(message, onConfirm) {
+            const bar = document.getElementById('confirmBar');
+            const msg = document.getElementById('confirmBarMsg');
+            const yesBtn = document.getElementById('confirmBarYes');
+            const noBtn = document.getElementById('confirmBarNo');
+            if (!bar || !msg) return;
+
+            msg.textContent = message;
+            bar.classList.add('show');
+
+            const cleanup = () => {
+                yesBtn.removeEventListener('click', onYes);
+                noBtn.removeEventListener('click', onNo);
+                bar.classList.remove('show');
+            };
+            const onYes = () => { cleanup(); try { onConfirm && onConfirm(); } catch (e) { console.error(e); } };
+            const onNo  = () => { cleanup(); };
+
+            yesBtn.addEventListener('click', onYes);
+            noBtn.addEventListener('click', onNo);
         }
 
         // ============ TEXT-TO-SPEECH ============
@@ -1328,37 +1488,67 @@
         async function saveTest() {
             const title = document.getElementById('testTitle').value.trim();
             const description = document.getElementById('testDescription').value.trim();
-            const isPublic = document.getElementById('testPublic').checked ? 1 : 0;
-            if (!title) { alert('Please enter a test title'); return; }
+            if (!title) { showToast('Please enter a test title', 'error'); return; }
             const wordItems = document.querySelectorAll('.word-item');
-            if (wordItems.length === 0) { alert('Please add at least one word'); return; }
+            if (wordItems.length === 0) { showToast('Please add at least one word', 'error'); return; }
             for (let item of wordItems) {
-                if (!item.querySelector('.word-input').value.trim()) { alert('Please fill in all word fields'); return; }
+                if (!item.querySelector('.word-input').value.trim()) { showToast('Please fill in all word fields', 'error'); return; }
             }
             try {
                 const response = await fetch('/api/spelling/create', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ title, description, username, is_public: isPublic })
+                    body: JSON.stringify({ title, description, username, is_public: 1 })
                 });
                 const data = await response.json();
                 if (data.success) {
                     const testId = data.test_id;
+
+                    // Collect final audio URLs (the ones actually being used)
+                    const finalAudioUrls = [];
                     for (let i = 0; i < wordItems.length; i++) {
                         const item = wordItems[i];
+                        const audioUrl = item.querySelector('.audio-url-input')?.value?.trim() || '';
+                        finalAudioUrls.push(audioUrl);
+
                         await fetch('/api/spelling/word/add', {
                             method: 'POST', headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
                                 test_id: testId,
                                 word: item.querySelector('.word-input').value.trim(),
                                 definition: item.querySelector('.definition-input').value.trim(),
-                                audio_url: item.querySelector('.audio-url-input')?.value?.trim() || ''
+                                audio_url: audioUrl
                             })
                         });
                     }
-                    alert('Test created successfully!');
+
+                    // Clean up draft audio files that weren't used
+                    if (draftAudioUrls.length > 0) {
+                        try {
+                            await fetch('/api/spelling/cleanup-audio', {
+                                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    draft_urls: draftAudioUrls,
+                                    final_urls: finalAudioUrls
+                                })
+                            });
+                        } catch (e) {
+                            console.error('Audio cleanup failed:', e);
+                        }
+                    }
+
+                    // Comprehensive orphan cleanup (safety net — catches anything client-side missed)
+                    try {
+                        await fetch('/api/spelling/cleanup-all-orphans', {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' }
+                        });
+                    } catch (e) {
+                        console.error('Comprehensive cleanup failed:', e);
+                    }
+
+                    showToast('Test created successfully!', 'success');
                     showTestsListView();
                 }
-            } catch (error) { console.error('Error saving test:', error); alert('Error saving test'); }
+            } catch (error) { console.error('Error saving test:', error); showToast('Error saving test', 'error'); }
         }
 
         // ============ TAKE TEST ============
@@ -1370,8 +1560,8 @@
                 if (data.words && data.words.length > 0) {
                     showTakeTestView(data);
                     setTimeout(() => playCurrentWord(), 500);
-                } else { alert('This test has no words yet'); }
-            } catch (error) { console.error('Error loading test:', error); alert('Error loading test: ' + error.message); }
+                } else { showToast('This test has no words yet', 'error'); }
+            } catch (error) { console.error('Error loading test:', error); showToast('Error loading test: ' + error.message, 'error'); }
         }
 
         function loadCurrentWord() {
@@ -1445,17 +1635,18 @@
                 });
                 const data = await response.json();
                 if (data.success) { showResultsView(data); }
-            } catch (error) { console.error('Error submitting test:', error); alert('Error submitting test'); }
+            } catch (error) { console.error('Error submitting test:', error); showToast('Error submitting test', 'error'); }
         }
 
         // ============ DELETE TEST ============
         async function deleteTest(testId) {
-            if (!confirm('Are you sure you want to delete this test?')) return;
-            try {
-                const response = await fetch(`/api/spelling/test/${testId}?username=${encodeURIComponent(username)}`, { method: 'DELETE' });
-                const data = await response.json();
-                if (data.success) { alert('Test deleted'); loadTests(); }
-            } catch (error) { console.error('Error deleting test:', error); alert('Error deleting test'); }
+            showConfirm('Are you sure you want to delete this test?', async () => {
+                try {
+                    const response = await fetch(`/api/spelling/test/${testId}?username=${encodeURIComponent(username)}`, { method: 'DELETE' });
+                    const data = await response.json();
+                    if (data.success) { showToast('Test deleted', 'success'); loadTests(); }
+                } catch (error) { console.error('Error deleting test:', error); showToast('Error deleting test', 'error'); }
+            });
         }
 
         // ============ RETRY WRONG WORDS ============
@@ -1468,15 +1659,18 @@
                 });
                 const data = await response.json();
                 if (data.success) { startTest(data.test_id); }
-            } catch (error) { console.error('Error creating retry test:', error); alert('Error creating retry test'); }
+            } catch (error) { console.error('Error creating retry test:', error); showToast('Error creating retry test', 'error'); }
         }
 
         // ============ SHARE ============
         function shareTest(testId, testTitle) {
             const shareUrl = `${window.location.origin}/spelling.html?test=${testId}`;
+            const copyFallback = () => showToast(`Copy this link: ${shareUrl}`, 'info', 8000);
             if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(shareUrl).then(() => alert(`Share link copied!\n\n${shareUrl}`)).catch(() => prompt('Copy this link:', shareUrl));
-            } else { prompt('Copy this link to share:', shareUrl); }
+                navigator.clipboard.writeText(shareUrl)
+                    .then(() => showToast(`Share link copied! ${shareUrl}`, 'success', 5000))
+                    .catch(copyFallback);
+            } else { copyFallback(); }
         }
 
         async function toggleShare(event, testId) {
@@ -1525,10 +1719,10 @@
                 });
                 const msgData = await msgRes.json();
                 if (msgData.success) {
-                    alert(`Test shared with ${recipient}!`);
+                    showToast(`Test shared with ${recipient}!`, 'success');
                     document.querySelectorAll('.share-panel').forEach(p => p.style.display = 'none');
-                } else { alert("Failed to share test."); }
-            } catch (e) { console.error("Share error", e); alert("Error sharing test."); }
+                } else { showToast("Failed to share test.", 'error'); }
+            } catch (e) { console.error("Share error", e); showToast("Error sharing test.", 'error'); }
         }
 
         // ============ URL PARAM CHECK ============

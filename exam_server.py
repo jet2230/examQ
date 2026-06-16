@@ -1458,18 +1458,18 @@ def create_spelling_test():
         title = data.get('title', '').strip()
         description = data.get('description', '').strip()
         username = data.get('username', '').strip()
-        is_public = data.get('is_public', 0)
 
         if not title or not username:
             return jsonify({'error': 'Missing title or username'}), 400
 
         u = normalize_username(username)
 
+        # Spelling tests are always visible to all students
         conn = get_db(); cursor = conn.cursor()
         cursor.execute("""
             INSERT INTO spelling_tests (title, description, created_by, is_public)
-            VALUES (?, ?, ?, ?)
-        """, (title, description, u, is_public))
+            VALUES (?, ?, ?, 1)
+        """, (title, description, u))
         test_id = cursor.lastrowid
         conn.commit(); conn.close()
 
@@ -1479,6 +1479,7 @@ def create_spelling_test():
 @app.route('/api/spelling/test/<int:test_id>', methods=['GET'])
 def get_spelling_test(test_id):
     try:
+        import re
         conn = get_db(); cursor = conn.cursor()
 
         cursor.execute("SELECT * FROM spelling_tests WHERE id = ?", (test_id,))
@@ -1490,12 +1491,35 @@ def get_spelling_test(test_id):
         cursor.execute("SELECT * FROM spelling_words WHERE test_id = ? ORDER BY position", (test_id,))
         words = []
         for row in cursor.fetchall():
+            audio_url = row['audio_url']
+            # Verify audio file exists; regenerate if missing
+            if audio_url and audio_url.startswith('/static/audio/'):
+                filename = audio_url.split('/')[-1]
+                audio_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'audio')
+                filepath = os.path.join(audio_dir, filename)
+                if not os.path.exists(filepath):
+                    try:
+                        from gtts import gTTS
+                        import uuid
+                        word_clean = re.sub(r'[^a-z\-]', '', row['word'].lower())
+                        if word_clean:
+                            new_filename = f"{word_clean}_{uuid.uuid4().hex[:8]}.mp3"
+                            new_filepath = os.path.join(audio_dir, new_filename)
+                            tts = gTTS(word_clean, lang='en', slow=False)
+                            tts.save(new_filepath)
+                            new_url = f"/static/audio/{new_filename}"
+                            cursor.execute("UPDATE spelling_words SET audio_url = ? WHERE id = ?", (new_url, row['id']))
+                            conn.commit()
+                            print(f"Regenerated missing audio for word '{row['word']}': {audio_url} -> {new_url}")
+                            audio_url = new_url
+                    except Exception as e:
+                        print(f"Failed to regenerate audio for '{row['word']}': {e}")
             words.append({
                 'id': row['id'],
                 'word': row['word'],
                 'definition': row['definition'],
                 'position': row['position'],
-                'audio_url': row['audio_url']
+                'audio_url': audio_url
             })
 
         conn.close()
@@ -1533,10 +1557,29 @@ def delete_spelling_test(test_id):
         if not is_admin and test['created_by'] != u:
             conn.close(); return jsonify({'error': 'Unauthorized'}), 403
 
+        # Get all audio URLs for this test before deleting
+        cursor.execute("SELECT audio_url FROM spelling_words WHERE test_id = ?", (test_id,))
+        audio_urls = [row['audio_url'] for row in cursor.fetchall() if row['audio_url']]
+
+        # Delete from database
         cursor.execute("DELETE FROM spelling_words WHERE test_id = ?", (test_id,))
         cursor.execute("DELETE FROM spelling_results WHERE test_id = ?", (test_id,))
         cursor.execute("DELETE FROM spelling_tests WHERE id = ?", (test_id,))
         conn.commit(); conn.close()
+
+        # Delete audio files from filesystem
+        import os
+        for audio_url in audio_urls:
+            # Extract filename from URL (e.g., /static/audio/word_abc123.mp3 -> word_abc123.mp3)
+            if audio_url.startswith('/static/audio/'):
+                filename = audio_url.split('/')[-1]
+                filepath = os.path.join('static', 'audio', filename)
+                try:
+                    if os.path.exists(filepath):
+                        os.remove(filepath)
+                        print(f"Deleted audio file: {filepath}")
+                except Exception as e:
+                    print(f"Failed to delete audio file {filepath}: {e}")
 
         return jsonify({'success': True}), 200
     except Exception as e: return jsonify({'error': str(e)}), 500
@@ -1637,8 +1680,25 @@ def delete_spelling_word(word_id):
         if not is_admin and test['created_by'] != u:
             conn.close(); return jsonify({'error': 'Unauthorized'}), 403
 
+        # Get audio URL before deleting
+        cursor.execute("SELECT audio_url FROM spelling_words WHERE id = ?", (word_id,))
+        audio_row = cursor.fetchone()
+        audio_url = audio_row['audio_url'] if audio_row else None
+
         cursor.execute("DELETE FROM spelling_words WHERE id = ?", (word_id,))
         conn.commit(); conn.close()
+
+        # Delete audio file if it exists
+        if audio_url and audio_url.startswith('/static/audio/'):
+            import os
+            filename = audio_url.split('/')[-1]
+            filepath = os.path.join('static', 'audio', filename)
+            try:
+                if os.path.exists(filepath):
+                    os.remove(filepath)
+                    print(f"Deleted audio file: {filepath}")
+            except Exception as e:
+                print(f"Failed to delete audio file {filepath}: {e}")
 
         return jsonify({'success': True}), 200
     except Exception as e: return jsonify({'error': str(e)}), 500
@@ -1927,6 +1987,106 @@ def fetch_word_audio():
         # Last resort - return an error
         return jsonify({'error': 'Could not generate audio for this word'}), 500
 
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/spelling/cleanup-audio', methods=['POST'])
+def cleanup_draft_audio():
+    """Delete draft audio files that weren't used in the final test"""
+    try:
+        data = request.json
+        draft_urls = data.get('draft_urls', [])
+        final_urls = data.get('final_urls', [])
+
+        import os
+
+        # Create a set of final URLs for easy lookup
+        final_urls_set = set(final_urls)
+
+        # Delete draft URLs that weren't used in the final test
+        deleted_count = 0
+        for draft_url in draft_urls:
+            if draft_url and draft_url not in final_urls_set:
+                if draft_url.startswith('/static/audio/'):
+                    filename = draft_url.split('/')[-1]
+                    filepath = os.path.join('static', 'audio', filename)
+                    try:
+                        if os.path.exists(filepath):
+                            os.remove(filepath)
+                            deleted_count += 1
+                            print(f"Deleted draft audio: {filepath}")
+                    except Exception as e:
+                        print(f"Failed to delete draft audio {filepath}: {e}")
+
+        return jsonify({'success': True, 'deleted_count': deleted_count}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/spelling/cleanup-all-orphans', methods=['POST'])
+def cleanup_all_audio_orphans():
+    """Comprehensive cleanup: delete any .mp3 files on disk not referenced by any test in the DB.
+    This is a safety net that catches orphaned audio files from abandoned drafts."""
+    try:
+        import os
+
+        audio_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'audio')
+
+        # Get all audio URLs referenced in the database
+        conn = get_db(); cursor = conn.cursor()
+        cursor.execute('SELECT audio_url FROM spelling_words WHERE audio_url IS NOT NULL AND audio_url != ""')
+        db_filenames = set()
+        for row in cursor.fetchall():
+            url = row['audio_url'].strip()
+            for prefix in ['http://localhost:5001', 'http://127.0.0.1:5001', 'https://localhost:5001']:
+                if url.startswith(prefix):
+                    url = url[len(prefix):]
+            if '/static/audio/' in url:
+                url = url.split('/static/audio/')[-1]
+            db_filenames.add(os.path.basename(url))
+        conn.close()
+
+        # List on-disk files and delete orphans
+        if not os.path.exists(audio_dir):
+            return jsonify({'success': True, 'deleted_count': 0, 'note': 'audio dir not found'}), 200
+
+        disk_files = set(f for f in os.listdir(audio_dir) if f.endswith('.mp3'))
+        orphaned = disk_files - db_filenames
+
+        deleted_count = 0
+        for f in orphaned:
+            filepath = os.path.join(audio_dir, f)
+            try:
+                os.remove(filepath)
+                deleted_count += 1
+                print(f"Orphan cleanup: deleted {f} (not referenced in DB)")
+            except Exception as e:
+                print(f"Orphan cleanup: failed to delete {f}: {e}")
+
+        return jsonify({'success': True, 'deleted_count': deleted_count, 'disk_files': len(disk_files)}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/spelling/cleanup-orphan-audio', methods=['POST'])
+def cleanup_orphan_audio():
+    """Delete a single orphaned audio file (called when a word row is deleted during draft editing)"""
+    try:
+        data = request.json
+        audio_url = data.get('audio_url', '').strip()
+        if not audio_url:
+            return jsonify({'success': True, 'deleted_count': 0}), 200
+
+        import os
+        if audio_url.startswith('/static/audio/'):
+            filename = audio_url.split('/')[-1]
+            filepath = os.path.join('static', 'audio', filename)
+            try:
+                if os.path.exists(filepath):
+                    os.remove(filepath)
+                    print(f"Deleted orphan audio: {filepath}")
+                    return jsonify({'success': True, 'deleted_count': 1}), 200
+            except Exception as e:
+                print(f"Failed to delete orphan audio {filepath}: {e}")
+        return jsonify({'success': True, 'deleted_count': 0}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
